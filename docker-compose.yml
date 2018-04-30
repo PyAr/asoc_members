@@ -17,17 +17,28 @@ services:
   web:
       #image: pyar/pyarweb:dev
       build: .
-      command: python3 website/manage.py runserver 0.0.0.0:8000
+      command: ["/bin/bash", "-c", "./docker-entrypoint.sh"]   #"gunicorn website.wsgi -b 0.0.0.0:8000"
       volumes:
         - .:/code
-      ports:
-        - "8000:8000"
       links:
         - postgres
       depends_on:
         - postgres
+      expose:
+        - "8000"
       environment:
         - DB_USER=postgres
         - DB_NAME=postgres
         - DB_PASS=secret
         - DB_SERVICE=postgres
+
+  nginx:
+    image: nginx
+    container_name: ng01
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./website:/website
+      - ./config/nginx:/etc/nginx/conf.d
+    depends_on:
+      - web
