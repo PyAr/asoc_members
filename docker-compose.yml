@@ -6,7 +6,7 @@ volumes:
 services:
   postgres:
       restart: always
-      image: postgres:9.4.4  # Lets update later...
+      image: postgres  # Lets update later...
       ports:
         - "5432:5432"
       volumes:
