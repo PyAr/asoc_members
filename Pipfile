@@ -7,8 +7,11 @@ name = "pypi"
 django = "==2.0.4"
 django-extensions = "==2.0.7"
 pillow = "*"
+python-dotenv = "*"
+mercadopago = "*"
 
 [dev-packages]
+ipython = "*"
 
 [requires]
 python_version = "3.6"
