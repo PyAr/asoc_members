@@ -14,3 +14,19 @@ make makemigrations
 make migrate
 make start
 ```
+
+If you need to create a Django's superuser:
+
+```bash
+$ make dockershell
+docker-compose run --rm web /bin/bash
+Starting asoc_members_postgres_1 ... done
+root@f494fb4e420a:/code# cd website/
+root@f494fb4e420a:/code/website# ./manage.py createsuperuser
+Username (leave blank to use 'root'): admin
+Email address: admin@example.com
+Password:
+Password (again):
+Superuser created successfully.
+
+```
