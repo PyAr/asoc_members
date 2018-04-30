@@ -30,9 +30,7 @@ class Member(TimeStampedModel):
     has_subscription_letter = models.BooleanField(default=False)
 
     def __str__(self):
-        return "{} - {}".format(
-            "%s".zfill(5) % self.legal_id,
-            self.person)
+        return f"{str(self.legal_id).zfill(5)} - {self.person}"
 
 
 class Person(TimeStampedModel):
@@ -64,7 +62,7 @@ class Person(TimeStampedModel):
 
 
     def __str__(self):
-        return "%s, %s" % (self.last_name, self.first_name)
+        return f"{self.last_name}, {self.first_name}"
 
 
 class Organization(TimeStampedModel):
