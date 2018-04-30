@@ -19,8 +19,9 @@ def get_payments_from_mercadopago(filters, output=None):
     logger.debug('Connecting with mercadopago')
 
     response = mp.search_payment(filters,
-                                 limit=filters['limit'],
-                                 offset=filters['offset'])
+                                 limit=filters.get('limit', 200),
+                                 offset=filters.get('offset', 0),
+                                 )
     logger.info('Getting response from mercadopago')
 
     if output is None:
@@ -74,7 +75,7 @@ def _write_payments_file_from_list(payments, output=None):
 
     with open(output, 'w') as output_file:
         for item in payments:
-            output_file.write('%s\n'.format(item))
+            output_file.write('{}\n'.format(item))
     logger.info('Saved file -> %s', output)
 
     return output
@@ -100,9 +101,8 @@ if __name__ == '__main__':
     filters = {
             'status': 'approved',
             'offset': 0,
-            'limit': 10,
+            #'limit': 200,
         }
     payments_file = get_payments_from_mercadopago(filters)
     payments = process_file_for_import(payments_file)
 
-    print(json.dumps(payments, indent=2))
