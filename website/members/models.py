@@ -42,8 +42,7 @@ class Person(TimeStampedModel):
     membership = models.OneToOneField(
         'Member',
         null=True,
-        on_delete=models.SET_NULL,
-        related_name='person'
+        on_delete=models.SET_NULL
     )
 
     document_number = models.CharField(max_length=DEFAULT_MAX_LEN, blank=True)
@@ -60,6 +59,9 @@ class Person(TimeStampedModel):
     province = models.CharField(max_length=DEFAULT_MAX_LEN, blank=True)
     country = models.CharField(max_length=DEFAULT_MAX_LEN, blank=True)
 
+    @property
+    def full_name(self):
+        return str(self)  # We may want a different representation of str(self) changes
 
     def __str__(self):
         return f"{self.last_name}, {self.first_name}"
@@ -90,6 +92,9 @@ class Category(TimeStampedModel):
     fee = models.DecimalField(max_digits=18, decimal_places=2)
     # There is a foreign keys to Membership
 
+    def __str__(self):
+        return self.name
+
 
 class Patron(TimeStampedModel):
     """Somebody that pays a Membership fee.
@@ -99,6 +104,9 @@ class Patron(TimeStampedModel):
     name = models.CharField(max_length=DEFAULT_MAX_LEN)
     email = models.EmailField(max_length=1024)
     comments = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
 
 
 class PaymentStrategy(TimeStampedModel):
