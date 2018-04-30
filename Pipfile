@@ -9,6 +9,7 @@ django-extensions = "==2.0.7"
 pillow = "*"
 python-dotenv = "*"
 mercadopago = "*"
+"psycopg2-binary" = "*"
 
 [dev-packages]
 ipython = "*"
