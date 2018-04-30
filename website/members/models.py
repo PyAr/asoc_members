@@ -29,6 +29,9 @@ class Member(TimeStampedModel):
     has_student_certificate = models.BooleanField(default=False)
     has_subscription_letter = models.BooleanField(default=False)
 
+    def __str__(self):
+        return f"{str(self.legal_id).zfill(5)} - {self.person}"
+
 
 class Person(TimeStampedModel):
     """Human being, member of PyAr ONG."""
@@ -56,6 +59,10 @@ class Person(TimeStampedModel):
     city = models.CharField(max_length=DEFAULT_MAX_LEN, blank=True)
     province = models.CharField(max_length=DEFAULT_MAX_LEN, blank=True)
     country = models.CharField(max_length=DEFAULT_MAX_LEN, blank=True)
+
+
+    def __str__(self):
+        return f"{self.last_name}, {self.first_name}"
 
 
 class Organization(TimeStampedModel):
