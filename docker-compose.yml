@@ -24,6 +24,8 @@ services:
         - postgres
       depends_on:
         - postgres
+      ports:
+      - "8008:8008"
       expose:
         - "8000"
       environment:
