@@ -112,7 +112,7 @@ class Patron(TimeStampedModel):
 
     """
     name = models.CharField(_('nombre'), max_length=DEFAULT_MAX_LEN)
-    email = models.EmailField(_('correo electrónico'), max_length=1024)
+    email = models.EmailField(_('correo electrónico'), max_length=1024, unique=True)
     comments = models.TextField(_('comentarios'), blank=True)
 
     def __str__(self):
