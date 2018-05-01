@@ -74,8 +74,7 @@ def _write_payments_file_from_list(payments, output=None):
         output = 'payments_{}.json'.format(datetime.utcnow().isoformat())
 
     with open(output, 'w') as output_file:
-        for item in payments:
-            output_file.write('{}\n'.format(item))
+        json.dump(payments, output_file)
     logger.info('Saved file -> %s', output)
 
     return output
