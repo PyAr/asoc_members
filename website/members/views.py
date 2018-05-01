@@ -5,7 +5,7 @@ from django.utils.translation import ugettext as _
 from django.shortcuts import render
 from django.views.generic import TemplateView, CreateView
 from members.models import Person, Organization, Category
-from members.forms import SignupPersonForm
+from members.forms import SignupPersonForm, SignupOrganizationForm
 
 
 class SignupInitialView(TemplateView):
@@ -29,9 +29,10 @@ class SignupPersonFormView(CreateView):
 
 
 class SignupOrganizationsFormView(CreateView):
-    fields = '__all__'
+    form_class = SignupOrganizationForm
     model = Organization
-    template_name = 'members/signup_form.html'
+    template_name = 'members/signup_org_form.html'
+    success_url = reverse_lazy('signup_thankyou')
 
 
 class SignupThankyouView(TemplateView):

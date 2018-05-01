@@ -1,0 +1,13 @@
+{% extends "members/signup_initial.html" %}
+{% load crispy_forms_tags %}
+{% block inner-content %}
+    <p>Si querés el detalle completo podes consultarlo en la página 5 de nuestro estatuto:
+            <a href="http://bit.ly/pyar-estatuto">http://bit.ly/pyar-estatuto</a>
+        </p>
+    <form method="POST" novalidate  enctype="multipart/form-data">
+        {% crispy form %}
+        <a class="btn btn-default" href="{% url 'signup' %}">Volver</a>
+        <input type="submit" class="btn btn-success" value="Enviar solicitud" />
+    </form>
+</div>
+{% endblock %}

@@ -109,3 +109,41 @@ class SignupPersonForm(forms.ModelForm):
     def clean_occupation(self):
         data = self.cleaned_data.get('occupation', '')
         return data.title()
+
+
+class SignupOrganizationForm(forms.ModelForm):
+
+    class Meta:
+        model = Organization
+        fields = ('name', 'contact_info', 'document_number', 'address', 'social_media')
+
+    def __init__(self, *args, **kwargs):
+        super(SignupOrganizationForm, self).__init__(*args, **kwargs)
+        # make all fields required
+        for field in self.fields:
+            self.fields[field].required = True
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.form_class = 'form-horizontal'
+        self.helper.layout = Layout(
+            'name', 'contact_info',
+            Row(
+                Div('document_number', css_class='col-xs-6'),
+                Div('address', css_class='col-xs-6'),
+            ),
+            'social_media'
+        )
+
+    def clean(self):
+        super(SignupOrganizationForm, self).clean()
+
+        # check that name, lastname and street cannot be all uppercase or lowercase
+        name = self.cleaned_data.get("name", "")
+        if name and (name == name.upper() or name == name.lower()):
+            self.add_error('name', _('No escriba todo en minúsculas o todo en mayúsculas.'))
+
+        street = self.cleaned_data.get("address", "")
+        if street and (street == street.upper() or street == street.lower()):
+            self.add_error('address', _('No escriba todo en minúsculas o todo en mayúsculas.'))
+
+        return self.cleaned_data
