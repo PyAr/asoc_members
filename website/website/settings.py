@@ -38,7 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_extensions',
-    'members'
+    'members',
+
+    'crispy_forms',
 ]
 
 MIDDLEWARE = [
@@ -119,8 +121,18 @@ USE_L10N = True
 
 USE_TZ = True
 
+DATE_INPUT_FORMATS = ('%d/%M/%Y','%d-%M-%Y')
+
+LOCALE_PATHS = (os.path.join(BASE_DIR, "locale"), )
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, '..', 'static')
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+
+CRISPY_TEMPLATE_PACK = 'bootstrap3'

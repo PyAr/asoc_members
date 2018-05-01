@@ -1,0 +1,44 @@
+{% extends "members/signup_initial.html" %}
+{% load crispy_forms_tags %}
+{% block inner-content %}
+<div class="categories">
+    <h3>Selecciona la categoría que es mejor para vos.</h3>
+    <p>
+        Tenemos distintas categorías de socios, cada una tiene diferentes características.<br>
+        <small>* Docentes, Investigadores, Estudiantes (becados), residentes del Interior del país
+            o pertenezcan a algún grupo que fomente la Diversidad, pueden acceder a una exención o cuota reducida.
+            </small>
+    </p>
+    <h4>
+        A continuación el resumen de cada categoría.
+    </h4>
+    <p>Si querés el detalle completo podes consultarlo en la página 5 de nuestro estatuto:
+            <a href="http://bit.ly/pyar-estatuto">http://bit.ly/pyar-estatuto</a>
+    </h5>
+
+    <div class="row">
+        {% for cat in categories %}
+        <div class="col-sm-4">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    Socio {{ cat.name }}
+                </div>
+                <div class="panel-body">
+                    {{ cat.description}}<br>
+                    <strong>Cuota:  ${{ cat.fee }} Mensual </strong>
+                </div>
+            </div>
+        </div>
+        {% if forloop.counter|divisibleby:3 %}
+            </div><div class="row">
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <form method="POST" novalidate  enctype="multipart/form-data">
+        {% crispy form %}
+        <a class="btn btn-default" href="{% url 'signup' %}">Volver</a>
+        <input type="submit" class="btn btn-success" value="Enviar solicitud" />
+    </form>
+</div>
+{% endblock %}
