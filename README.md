@@ -9,24 +9,41 @@
 ### con Docker
 
 ```bash
-make build
-make makemigrations
-make migrate
-make start
+make build-dev
+make start-dev
 ```
 
 If you need to create a Django's superuser:
 
 ```bash
-$ make dockershell
-docker-compose run --rm web /bin/bash
-Starting asoc_members_postgres_1 ... done
-root@f494fb4e420a:/code# cd website/
-root@f494fb4e420a:/code/website# ./manage.py createsuperuser
+$ make createsuperuser
 Username (leave blank to use 'root'): admin
 Email address: admin@example.com
 Password:
 Password (again):
 Superuser created successfully.
+```
 
+# Producción
+
+### con Docker
+
+```bash
+# Actualizar el .env (copiado a partir del .env.dist)
+export $(cat .env)
+make build-prod
+make up-prod
+make migrate
+make collectstatic
+```
+
+If you need to create a Django's superuser:
+
+```bash
+$ make createsuperuser
+Username (leave blank to use 'root'): admin
+Email address: admin@example.com
+Password:
+Password (again):
+Superuser created successfully.
 ```
