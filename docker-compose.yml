@@ -5,7 +5,6 @@ volumes:
 
 services:
   postgres:
-      restart: always
       image: postgres  # Lets update later...
       ports:
         - "5432:5432"
@@ -39,8 +38,9 @@ services:
     container_name: ng01
     ports:
       - "8000:8000"
+    volumes_from:
+      - web
     volumes:
-      - ./website:/website
       - ./config/nginx:/etc/nginx/conf.d
     depends_on:
       - web

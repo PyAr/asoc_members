@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<!--
+		Boxer Template
+		http://www.templatemo.com/tm-446-boxer
+		-->
+		<meta charset="utf-8">
+		<title>Python Argentina - Asociación Civil</title>
+		<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="keywords" content="">
+		<meta name="description" content="">
+
+		<link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+
+		<!-- animate css -->
+		<link rel="stylesheet" href="{% static 'css/animate.min.css' %}">
+		<!-- bootstrap css -->
+		<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+		<!-- font-awesome -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+		<!-- google font -->
+	    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,300,400italic,700,800' rel='stylesheet' type='text/css'>
+
+		<!-- custom css -->
+		<link rel="stylesheet" href="{% static 'css/templatemo-style.css' %}">
+
+	</head>
+	<body>
+		<!-- start preloader -->
+		<!-- <div class="preloader">
+			<div class="sk-spinner sk-spinner-rotating-plane"></div>
+		 </div> -->
+		<!-- end preloader -->
+		<!-- start navigation -->
+		<nav class="navbar navbar-default navbar-fixed-top templatemo-nav" role="navigation">
+			<div class="container">
+				<div class="navbar-header">
+					<button class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+						<span class="icon icon-bar"></span>
+						<span class="icon icon-bar"></span>
+						<span class="icon icon-bar"></span>
+					</button>
+					<img src="{% static 'images/acpyar.png' %}" href="#" class="navbar-brand" alt="Asociación Civil Python Argentina"/>
+				</div>
+				<div class="collapse navbar-collapse">
+					<ul class="nav navbar-nav text-uppercase">
+						<!-- <li><a href="#feature">Misión</a></li> -->
+						<li><a href="https://ac.python.org.ar">Asociación Civil</a></li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+		<!-- end navigation -->
+		<!-- start home -->
+		<div id="content">
+			{% if messages %}
+				<div class="container">
+					{% for message in messages %}
+					<p class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">{{ message }}</p>
+					{% endfor %}
+				</div>
+			{% endif %}
+			{% block content %}{% endblock %}
+		</div>
+
+		<script src="{% static 'js/jquery.js' %}"></script>
+		<script src="{% static 'js/bootstrap.min.js' %}"></script>
+		<script src="{% static 'js/jquery.singlePageNav.min.js' %}"></script>
+	</body>
+</html>
