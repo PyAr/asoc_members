@@ -31,7 +31,7 @@ class Command(BaseCommand):
             person.membership, created = Member.objects.update_or_create(
                 legal_id=member_value[0].strip(),
                 defaults={
-                    'registration_date': datetime.strptime(member_value[1].strip(), "%d/%M/%Y"),
+                    'registration_date': datetime.strptime(member_value[1].strip(), "%d/%m/%Y"),
                     'category': category,
                     'patron': patron,
                     'has_student_certificate': True if category.name == CAT_ESTUDIANTE else False,
