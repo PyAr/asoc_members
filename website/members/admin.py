@@ -5,12 +5,27 @@ from .models import Member, Person, Organization, Patron, Payment, PaymentStrate
 
 
 class PersonNoMembers(SimpleListFilter):
-    title = 'person no member' # or use _('country') for translated title
+    title = 'signup process'
     parameter_name = 'membership'
 
     def lookups(self, request, model_admin):
        return (
-           ('filtered', 'Member in progress'),
+           ('filtered', 'Signup in progress'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'filtered':
+            return queryset.filter(membership__isnull=True)
+        return queryset
+
+
+class OrganizationNoMembers(SimpleListFilter):
+    title = 'signup process'
+    parameter_name = 'membership'
+
+    def lookups(self, request, model_admin):
+       return (
+           ('filtered', 'Signup in progress'),
         )
 
     def queryset(self, request, queryset):
@@ -34,6 +49,7 @@ class MemberAdmin(admin.ModelAdmin):
 
 
 class OrganizationAdmin(admin.ModelAdmin):
+    list_filter = (OrganizationNoMembers, )
     list_display = ('name', 'document_number', 'address', )
     search_fields = ('^name', '^document_number', )
     list_display_links = ('name', )
