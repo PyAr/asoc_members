@@ -1,46 +1,9 @@
 version: '2'
 
-volumes:
-  pgdata:
-
 services:
-  postgres:
-      image: postgres  # Lets update later...
-      ports:
-        - "5432:5432"
-      volumes:
-        - pgdata:/var/lib/postgresql/data/
-      environment:
-        - POSTGRES_PASSWORD=secret
-
   web:
-      #image: pyar/pyarweb:dev
-      build: .
-      command: ["/bin/bash", "-c", "./docker-entrypoint.sh"]   #"gunicorn website.wsgi -b 0.0.0.0:8000"
-      volumes:
-        - .:/code
-      links:
-        - postgres
-      depends_on:
-        - postgres
-      ports:
-      - "8008:8008"
-      expose:
-        - "8000"
-      environment:
-        - DB_USER=postgres
-        - DB_NAME=postgres
-        - DB_PASS=secret
-        - DB_SERVICE=postgres
-
-  nginx:
-    image: nginx
-    container_name: ng01
+    build: .
     ports:
       - "8000:8000"
-    volumes_from:
-      - web
     volumes:
-      - ./config/nginx:/etc/nginx/conf.d
-    depends_on:
-      - web
+      - .:/code
