@@ -8,9 +8,17 @@ RUN echo "[global]\nindex-url=http://10.42.0.82:3141/root/pypi/+simple/\ntrusted
 
 RUN mkdir /code
 RUN mkdir /config
-ADD /config/requirements.txt /config/
+
+# Install dependencies
+COPY /config/requirements.txt /config/
 RUN pip install --no-cache-dir -r /config/requirements.txt
 
+# Copy code
 WORKDIR /code
 COPY . /code/
-RUN pip install .
+
+VOLUME /code/static
+EXPOSE 8000
+
+WORKDIR /code/website
+CMD ["tail", "-f", "/dev/null"]
