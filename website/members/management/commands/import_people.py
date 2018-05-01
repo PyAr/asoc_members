@@ -38,7 +38,7 @@ class Command(BaseCommand):
                 'nationality': values['Nacionalidad'].strip(),
                 'marital_status': values['Estado Civil'].strip(),
                 'occupation': values['Profesión'].strip(),
-                'birth_date': datetime.strptime(values['Fecha Nacimiento'].strip(), "%d/%M/%Y"),
+                'birth_date': datetime.strptime(values['Fecha Nacimiento'].strip(), "%d/%m/%Y"),
                 'street_address': values['Domicilio'].strip(),
                 'comments': "Tipo de socio elegido: %s" % values["Tipo socio"].strip()
             })

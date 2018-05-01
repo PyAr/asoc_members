@@ -41,8 +41,7 @@ class Base(Configuration):
         'django.contrib.messages',
         'django.contrib.staticfiles',
         'django_extensions',
-        'members',
-
+        'members.apps.MembersConfig',
         'crispy_forms',
     ]
 

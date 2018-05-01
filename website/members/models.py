@@ -3,10 +3,43 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from django_extensions.db.models import TimeStampedModel
-
+from dateutil.rrule import rrule, MONTHLY
+from datetime import datetime, timedelta
 
 DEFAULT_MAX_LEN = 317  # Almost random
 LONG_MAX_LEN = 2048  # Random but bigger
+
+
+class Quota(TimeStampedModel):
+    """Like cuota in Spanish... exactly that. A monthly fee some member pays."""
+
+    payment = models.ForeignKey('Payment', verbose_name=_('pago'),  on_delete=models.CASCADE)
+    month = models.PositiveSmallIntegerField(
+        _('mes'), validators=[MaxValueValidator(12), MinValueValidator(1)])
+    year = models.PositiveSmallIntegerField(_('año'), validators=[MinValueValidator(2015)])
+    amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
+    member = models.ForeignKey('Member', verbose_name=_('miembro'),  on_delete=models.SET_NULL, null=True)
+    invoice_id = models.CharField(_('ID de factura'), max_length=DEFAULT_MAX_LEN, blank=True)
+
+    @property
+    def code(self):
+        return f'{self.year}{self.month}'
+
+    @classmethod
+    def decode(cls, code):
+        return int(code[:2]), int(code[2:])
+
+    @classmethod
+    def code_from_date(cls, when):
+        return when.strftime('%y%m')
+
+    @classmethod
+    def generate_codes(cls, start, end):
+        total_quotes = rrule(freq=MONTHLY,
+                             dtstart=start.replace(day=1),
+                             until=end
+                             )
+        return [cls.code_from_date(d) for d in total_quotes]
 
 
 class Member(TimeStampedModel):
@@ -35,6 +68,11 @@ class Member(TimeStampedModel):
 
     def __str__(self):
         return f"{str(self.legal_id).zfill(5)} - {self.person}"
+
+    def expected_quote_codes(self, until=None):
+        if until is None:
+            until = datetime.now()
+        return Quota.generate_codes(start=self.registration_date, end=until)
 
 
 class Person(TimeStampedModel):
@@ -135,6 +173,9 @@ class PaymentStrategy(TimeStampedModel):
     comments = models.TextField(_('comentarios'), blank=True)
     patron = models.ForeignKey('Patron', verbose_name=_('mecenas'),  on_delete=models.SET_NULL, null=True)
 
+    def __str__(self):
+        return f'{self.patron} ({self.platform})'
+
 
 class Payment(TimeStampedModel):
     """Record a pay event."""
@@ -144,14 +185,27 @@ class Payment(TimeStampedModel):
     strategy = models.ForeignKey('PaymentStrategy', verbose_name=_('estrategia de pago'),  on_delete=models.SET_NULL, null=True)
     comments = models.TextField(_('comentarios'), blank=True)
 
+    def to_quotes(self):
+        # TODO: if patron hast more than one beneficiary, KABOOM!
+        member = self.strategy.patron.beneficiary.get()
+        quantity = self.amount / member.category.fee
+        if quantity != quantity.to_integral_value():
+            raise ValueError('Something went wrong!')
+        # Calculamos una guasada de cuotas esperadas, por 2 años.
+        future = datetime.now() + timedelta(days=720)
+        expected_quote_codes = set(member.expected_quote_codes(until=future))
+        quotes = Quota.objects.filter(member=member)
+        payed_quotes = {q.code for q in quotes}
+        quotes_for_pay = sorted(expected_quote_codes.difference(payed_quotes))
 
-class Quota(TimeStampedModel):
-    """Like cuota in Spanish... exactly that. A monthly fee some member pays."""
+        for code in quotes_for_pay[:int(quantity)]:
+            year, month = Quota.decode(code)
+            quota = Quota.objects.create(
+                    payment=self,
+                    year=year,
+                    month=month,
+                    member=member,
+                    amount=member.category.fee,
+                    )
 
-    payment = models.ForeignKey('Payment', verbose_name=_('pago'),  on_delete=models.CASCADE)
-    month = models.PositiveSmallIntegerField(
-        _('mes'), validators=[MaxValueValidator(12), MinValueValidator(1)])
-    year = models.PositiveSmallIntegerField(_('año'), validators=[MinValueValidator(2015)])
-    amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
-    member = models.ForeignKey('Member', verbose_name=_('miembro'),  on_delete=models.SET_NULL, null=True)
-    invoice_id = models.CharField(_('ID de factura'), max_length=DEFAULT_MAX_LEN, blank=True)
+
