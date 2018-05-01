@@ -10,6 +10,7 @@ pillow = "*"
 python-dotenv = "*"
 mercadopago = "*"
 "psycopg2-binary" = "*"
+google-api-python-client = "*"
 
 [dev-packages]
 ipython = "*"
