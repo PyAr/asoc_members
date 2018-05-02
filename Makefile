@@ -26,6 +26,9 @@ start-dev:
 	${MANAGE} migrate
 	${MANAGE} runserver 0.0.0.0:8000
 
+install-dev:
+	${RUN} pip install -r /code/config/requirements-dev.txt
+
 createsuperuser:
 	${MANAGE} createsuperuser
 
