@@ -11,6 +11,7 @@
 ```bash
 make build-dev
 make start-dev
+make install-dev
 ```
 
 If you need to create a Django's superuser:
