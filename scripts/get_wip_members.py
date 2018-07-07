@@ -23,7 +23,7 @@ DEFAULT_SPREADSHEET = '16hC6CUFksOGctFbKZNuvWjfi6Yzdsfv4yYyYWVHKezM'
 
 def download_spreadsheet(spreadsheet_id):
     # Please, adjust this values as needed:
-    RANGE_NAME = 'Alta!F8:Q'
+    RANGE_NAME = 'Alta!B8:Q'
 
     # Setup the Sheets API
     SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
