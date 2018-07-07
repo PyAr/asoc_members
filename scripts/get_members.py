@@ -17,12 +17,12 @@ from httplib2 import Http
 from oauth2client import file, client, tools
 
 
-DEFAULT_SPREADSHEET = '1eewdZtKJY3cDOiRaB6sAYo2lQ7jTEeZoV4f-U1dzRIY'
+DEFAULT_SPREADSHEET = '16hC6CUFksOGctFbKZNuvWjfi6Yzdsfv4yYyYWVHKezM'
 
 
 def download_spreadsheet(spreadsheet_id):
     # Please, adjust this values as needed:
-    RANGE_NAME = 'Humanos!A2:T'
+    RANGE_NAME = 'Humanos!A1:T'
 
     # Setup the Sheets API
     SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
