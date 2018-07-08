@@ -1,10 +1,60 @@
+import datetime
 import csv
 import os
-from datetime import datetime
+import re
 
 from django.core.management.base import BaseCommand, CommandError
 
-from members.models import Person, Patron
+from members.models import Person, Patron, Category, Member
+
+MONTHS = {
+    'ene.': 1,
+    'feb.': 2,
+    'mar.': 3,
+    'abr.': 4,
+    'may.': 5,
+    'jun.': 6,
+    'jul.': 7,
+    'ago.': 8,
+    'sep.': 9,
+    'oct.': 10,
+    'nov.': 11,
+    'dic.': 12,
+}
+
+
+def get_date(date_string):
+    """Transform the date from spreadsheet to a datetime object.
+
+    The source format is quite weird, but the only option to not get confused about
+    language-dependant ordering, e.g.:
+
+        25-abr.-2018
+        1-jul.-2016
+    """
+    day, monthname, year = date_string.split("-")
+    return datetime.date(year=int(year), month=MONTHS[monthname], day=int(day))
+
+
+def split_address(complete):
+    """Split one line of address in its components."""
+    if complete.count(",") == 2:
+        streetadd, city_pc, prov = [x.strip() for x in complete.split(",")]
+        country = "Argentina"
+    elif complete.count(",") == 3:
+        streetadd, city_pc, prov, country = [x.strip() for x in complete.split(",")]
+    else:
+        streetadd, city_pc, prov, country = ("", "", "", "")
+
+    m = re.match("(.*) \((.*)\)", city_pc)
+    if m:
+        city, postcode = m.groups()
+    else:
+        city, postcode = ("", "")
+
+    if "" in (complete, streetadd, city, prov, country):
+        print("======== address", (complete, streetadd, city, postcode, prov, country))
+    return streetadd, city, postcode, prov, country
 
 
 class Command(BaseCommand):
@@ -24,30 +74,48 @@ class Command(BaseCommand):
         with open(options["filename"]) as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                person = self.get_or_create_person_and_patron(row)
-                self.stdout.write("Person imported: {}".format(person))
+                member = self.create(row)
+                self.stdout.write("Member imported: {}".format(member))
 
-    def get_or_create_person_and_patron(self, values):
-        person, created = Person.objects.update_or_create(
-            first_name=values['Nombre'].strip(),
-            last_name=values['Apellido'].strip(),
-            email=values['EMail'].strip(),
-            defaults={
-                'document_number': values['DNI'].strip(),
-                'nickname': values['Nick'].strip(),
-                'nationality': values['Nacionalidad'].strip(),
-                'marital_status': values['Estado Civil'].strip(),
-                'occupation': values['Profesión'].strip(),
-                'birth_date': datetime.strptime(values['Fecha Nacimiento'].strip(), "%d/%m/%Y"),
-                'street_address': values['Domicilio'].strip(),
-                'comments': "Tipo de socio elegido: %s" % values["Tipo socio"].strip()
-            })
+    def create(self, row):
+        first_name = row['Nombre'].strip()
+        last_name = row['Apellido'].strip()
+        email = row['EMail'].strip()
+        patron = Patron(
+            name="{} {}".format(first_name, last_name),
+            email=email,
+            comments='Automatically loaded with PyCamp 2018 script',
+        )
+        patron.save()
 
-        Patron.objects.update_or_create(
-            name=person.full_name,
-            email=person.email,
-            defaults={
-                'comments': 'Automatically loaded with PyCAmp 2018 script',
-            })
+        category = Category.objects.get(name=row["Tipo socio"].strip())
+        member = Member(
+            category=category,
+            patron=patron,
+            has_student_certificate=row['C.Estud'].strip() == "✓",
+            has_subscription_letter=row['Firmó'].strip() == "✓"
+        )
+        member.save()
 
-        return person
+        street_address, city, zip_code, province, country = split_address(row['Domicilio'].strip())
+        person = Person(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            document_number=row['DNI'].strip(),
+            nickname=row['Nick'].strip(),
+            nationality=row['Nacionalidad'].strip(),
+            marital_status=row['Estado Civil'].strip(),
+            occupation=row['Profesión'].strip(),
+            birth_date=get_date(row['Fecha Nacimiento'].strip()),
+            street_address=street_address,
+            city=city,
+            zip_code=zip_code,
+            province=province,
+            country=country,
+            membership=member,
+            comments='Automatically loaded with PyCamp 2018 script',
+        )
+        person.save()
+
+        return member
