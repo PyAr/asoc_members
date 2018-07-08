@@ -105,5 +105,4 @@ static/
 website/pictures/
 mercadopago*.json
 payments*.json
-scripts/*.csv
 scripts/credentials.json
