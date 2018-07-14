@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
 
-from .models import Member, Person, Organization, Patron, Payment, PaymentStrategy, Quota
+from .models import Member, Person, Organization, Patron, Payment, PaymentStrategy, Quota, Category
 
 
 class PersonNoMembers(SimpleListFilter):
@@ -9,8 +9,8 @@ class PersonNoMembers(SimpleListFilter):
     parameter_name = 'membership'
 
     def lookups(self, request, model_admin):
-       return (
-           ('filtered', 'Signup in progress'),
+        return (
+            ('filtered', 'Signup in progress'),
         )
 
     def queryset(self, request, queryset):
@@ -24,8 +24,8 @@ class OrganizationNoMembers(SimpleListFilter):
     parameter_name = 'membership'
 
     def lookups(self, request, model_admin):
-       return (
-           ('filtered', 'Signup in progress'),
+        return (
+            ('filtered', 'Signup in progress'),
         )
 
     def queryset(self, request, queryset):
@@ -36,9 +36,13 @@ class OrganizationNoMembers(SimpleListFilter):
 
 class PersonAdmin(admin.ModelAdmin):
     list_filter = (PersonNoMembers, )
-    list_display = ('first_name', 'last_name', 'document_number', 'nickname' )
+    list_display = ('first_name', 'last_name', 'document_number', 'nickname')
     search_fields = ('^first_name', '^last_name', '^document_number', )
     list_display_links = ('first_name', 'last_name', )
+
+
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'fee', 'description')
 
 
 class MemberAdmin(admin.ModelAdmin):
@@ -76,7 +80,6 @@ class PaymentAdmin(admin.ModelAdmin):
     list_display_links = ('timestamp', )
 
 
-
 class QuotaAdmin(admin.ModelAdmin):
     list_filter = ('year', 'month', )
     list_display = ('payment', 'year', 'month', 'amount', 'member')
@@ -84,10 +87,11 @@ class QuotaAdmin(admin.ModelAdmin):
     list_display_links = ('payment', )
 
 
+admin.site.register(Category, CategoryAdmin)
 admin.site.register(Member, MemberAdmin)
-admin.site.register(Person, PersonAdmin)
 admin.site.register(Organization, OrganizationAdmin)
 admin.site.register(Patron, PatronAdmin)
 admin.site.register(Payment, PaymentAdmin)
 admin.site.register(PaymentStrategy, PaymentStrategyAdmin)
+admin.site.register(Person, PersonAdmin)
 admin.site.register(Quota, QuotaAdmin)

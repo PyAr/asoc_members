@@ -13,12 +13,13 @@ LONG_MAX_LEN = 2048  # Random but bigger
 class Quota(TimeStampedModel):
     """Like cuota in Spanish... exactly that. A monthly fee some member pays."""
 
-    payment = models.ForeignKey('Payment', verbose_name=_('pago'),  on_delete=models.CASCADE)
+    payment = models.ForeignKey('Payment', verbose_name=_('pago'), on_delete=models.CASCADE)
     month = models.PositiveSmallIntegerField(
         _('mes'), validators=[MaxValueValidator(12), MinValueValidator(1)])
     year = models.PositiveSmallIntegerField(_('año'), validators=[MinValueValidator(2015)])
     amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
-    member = models.ForeignKey('Member', verbose_name=_('miembro'),  on_delete=models.SET_NULL, null=True)
+    member = models.ForeignKey(
+        'Member', verbose_name=_('miembro'), on_delete=models.SET_NULL, null=True)
     invoice_id = models.CharField(_('ID de factura'), max_length=DEFAULT_MAX_LEN, blank=True)
 
     @property
@@ -45,8 +46,8 @@ class Quota(TimeStampedModel):
 class Member(TimeStampedModel):
     """Base Model for the Membership to the ONG. People and Organizations can be members."""
 
-    legal_id = models.PositiveIntegerField(_('ID legal'), unique=True)
-    registration_date = models.DateField(_('fecha de alta'))
+    legal_id = models.PositiveIntegerField(_('ID legal'), unique=True, blank=True, null=True)
+    registration_date = models.DateField(_('fecha de alta'), blank=True, null=True)
 
     category = models.ForeignKey(
         'Category',
@@ -63,11 +64,13 @@ class Member(TimeStampedModel):
         related_name='beneficiary'
     )
     # Flags
-    has_student_certificate = models.BooleanField(_('tiene certificado de estudiante?'), default=False)
+    has_student_certificate = models.BooleanField(
+        _('tiene certificado de estudiante?'), default=False)
     has_subscription_letter = models.BooleanField(_('ha firmado la carta?'), default=False)
 
     def __str__(self):
-        return f"{str(self.legal_id).zfill(5)} - {self.person}"
+        legal_id = "∅" if self.legal_id is None else f'{self.legal_id:05d}'
+        return f"{legal_id} - {self.person}"
 
     def expected_quote_codes(self, until=None):
         if until is None:
@@ -84,19 +87,23 @@ class Person(TimeStampedModel):
     membership = models.OneToOneField(
         'Member',
         verbose_name=_('membresía'),
-        null=True,
-        on_delete=models.SET_NULL
+        related_name='person',
+        on_delete=models.CASCADE,
     )
 
-    document_number = models.CharField(_('N° de documento'), max_length=DEFAULT_MAX_LEN, blank=True)
+    document_number = models.CharField(
+        _('N° de documento'), max_length=DEFAULT_MAX_LEN, blank=True)
     email = models.EmailField(_('correo electrónico'), max_length=1024)
-    nickname = models.CharField(_('nick'), max_length=DEFAULT_MAX_LEN, blank=True, help_text=_('Nick o sobrenombre'))
+    nickname = models.CharField(
+        _('nick'), max_length=DEFAULT_MAX_LEN, blank=True, help_text=_('Nick o sobrenombre'))
     picture = models.ImageField(
         _('avatar'), upload_to='pictures', null=True,
         help_text=_('Foto o imagen cuadrada para el carnet'))
     nationality = models.CharField(_('nacionalidad'), max_length=DEFAULT_MAX_LEN, blank=True)
     marital_status = models.CharField(_('estado civil'), max_length=DEFAULT_MAX_LEN, blank=True)
-    occupation = models.CharField(_('profesión'), max_length=DEFAULT_MAX_LEN, blank=True, help_text=_('Profesión o ocupación'))
+    occupation = models.CharField(
+        _('profesión'), max_length=DEFAULT_MAX_LEN, blank=True,
+        help_text=_('Profesión o ocupación'))
     birth_date = models.DateField(_('fecha de nacimiento'), null=True, blank=True)
     street_address = models.CharField(_('dirección'), max_length=DEFAULT_MAX_LEN, blank=True)
     zip_code = models.CharField(_('código postal'), max_length=DEFAULT_MAX_LEN, blank=True)
@@ -135,6 +142,9 @@ class Organization(TimeStampedModel):
 
 class Category(TimeStampedModel):
     """Membership category."""
+    class Meta:
+        verbose_name_plural = "categories"
+
     name = models.CharField(_('nombre'), max_length=DEFAULT_MAX_LEN)
     description = models.TextField(_('descipción'), )
     fee = models.DecimalField(_('cuota mensual'), max_digits=18, decimal_places=2)
@@ -146,6 +156,7 @@ class Category(TimeStampedModel):
 
 class Patron(TimeStampedModel):
     """Somebody that pays a Membership fee.
+
     Either for an Organization or Person, who may or may not be himself.
 
     """
@@ -167,11 +178,13 @@ class PaymentStrategy(TimeStampedModel):
         ('transfer', 'transferencia bancaria'),
     )
 
-    platform = models.CharField(_('plataforma'), max_length=DEFAULT_MAX_LEN, choices=PLATFORM_CHOICES,
-                                default=MERCADO_PAGO)
+    platform = models.CharField(
+        _('plataforma'), max_length=DEFAULT_MAX_LEN,
+        choices=PLATFORM_CHOICES, default=MERCADO_PAGO)
     id_in_platform = models.CharField(_('ID de plataforma'), max_length=DEFAULT_MAX_LEN)
     comments = models.TextField(_('comentarios'), blank=True)
-    patron = models.ForeignKey('Patron', verbose_name=_('mecenas'),  on_delete=models.SET_NULL, null=True)
+    patron = models.ForeignKey(
+        'Patron', verbose_name=_('mecenas'), on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return f'{self.patron} ({self.platform})'
@@ -182,7 +195,9 @@ class Payment(TimeStampedModel):
 
     timestamp = models.DateTimeField(_('fecha y hora'))
     amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
-    strategy = models.ForeignKey('PaymentStrategy', verbose_name=_('estrategia de pago'),  on_delete=models.SET_NULL, null=True)
+    strategy = models.ForeignKey(
+        'PaymentStrategy', verbose_name=_('estrategia de pago'),
+        on_delete=models.SET_NULL, null=True)
     comments = models.TextField(_('comentarios'), blank=True)
 
     def to_quotes(self):
@@ -200,12 +215,5 @@ class Payment(TimeStampedModel):
 
         for code in quotes_for_pay[:int(quantity)]:
             year, month = Quota.decode(code)
-            quota = Quota.objects.create(
-                    payment=self,
-                    year=year,
-                    month=month,
-                    member=member,
-                    amount=member.category.fee,
-                    )
-
-
+            Quota.objects.create(
+                payment=self, year=year, month=month, member=member, amount=member.category.fee)
