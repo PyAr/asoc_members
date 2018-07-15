@@ -3,8 +3,6 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from django_extensions.db.models import TimeStampedModel
-from dateutil.rrule import rrule, MONTHLY
-from datetime import datetime, timedelta
 
 DEFAULT_MAX_LEN = 317  # Almost random
 LONG_MAX_LEN = 2048  # Random but bigger
@@ -17,10 +15,11 @@ class Quota(TimeStampedModel):
     month = models.PositiveSmallIntegerField(
         _('mes'), validators=[MaxValueValidator(12), MinValueValidator(1)])
     year = models.PositiveSmallIntegerField(_('año'), validators=[MinValueValidator(2015)])
-    amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
     member = models.ForeignKey(
         'Member', verbose_name=_('miembro'), on_delete=models.SET_NULL, null=True)
-    invoice_id = models.CharField(_('ID de factura'), max_length=DEFAULT_MAX_LEN, blank=True)
+
+    class Meta:
+        get_latest_by = ['year', 'month']
 
     @property
     def code(self):
@@ -33,14 +32,6 @@ class Quota(TimeStampedModel):
     @classmethod
     def code_from_date(cls, when):
         return when.strftime('%y%m')
-
-    @classmethod
-    def generate_codes(cls, start, end):
-        total_quotes = rrule(freq=MONTHLY,
-                             dtstart=start.replace(day=1),
-                             until=end
-                             )
-        return [cls.code_from_date(d) for d in total_quotes]
 
 
 class Member(TimeStampedModel):
@@ -63,6 +54,10 @@ class Member(TimeStampedModel):
         on_delete=models.SET_NULL,
         related_name='beneficiary'
     )
+    first_payment_month = models.PositiveSmallIntegerField(
+        _('primer pago mes'), validators=[MaxValueValidator(12), MinValueValidator(1)], null=True)
+    first_payment_year = models.PositiveSmallIntegerField(
+        _('primer pago año'), validators=[MinValueValidator(2015)], null=True)
     # Flags
     has_student_certificate = models.BooleanField(
         _('tiene certificado de estudiante?'), default=False)
@@ -71,11 +66,6 @@ class Member(TimeStampedModel):
     def __str__(self):
         legal_id = "∅" if self.legal_id is None else f'{self.legal_id:05d}'
         return f"{legal_id} - {self.person}"
-
-    def expected_quote_codes(self, until=None):
-        if until is None:
-            until = datetime.now()
-        return Quota.generate_codes(start=self.registration_date, end=until)
 
 
 class Person(TimeStampedModel):
@@ -172,10 +162,12 @@ class PaymentStrategy(TimeStampedModel):
     """This class models the different ways that there are to pay for a membership."""
 
     MERCADO_PAGO = 'mercado pago'
+    TODO_PAGO = 'todo pago'
+    TRANSFER = 'transfer'
     PLATFORM_CHOICES = (
         (MERCADO_PAGO, 'Mercado Pago'),
-        ('todo pago', 'Todo Pago'),
-        ('transfer', 'transferencia bancaria'),
+        (TODO_PAGO, 'Todo Pago'),
+        (TRANSFER, 'transferencia bancaria'),
     )
 
     platform = models.CharField(
@@ -199,21 +191,4 @@ class Payment(TimeStampedModel):
         'PaymentStrategy', verbose_name=_('estrategia de pago'),
         on_delete=models.SET_NULL, null=True)
     comments = models.TextField(_('comentarios'), blank=True)
-
-    def to_quotes(self):
-        # TODO: if patron hast more than one beneficiary, KABOOM!
-        member = self.strategy.patron.beneficiary.get()
-        quantity = self.amount / member.category.fee
-        if quantity != quantity.to_integral_value():
-            raise ValueError('Something went wrong!')
-        # Calculamos una guasada de cuotas esperadas, por 2 años.
-        future = datetime.now() + timedelta(days=720)
-        expected_quote_codes = set(member.expected_quote_codes(until=future))
-        quotes = Quota.objects.filter(member=member)
-        payed_quotes = {q.code for q in quotes}
-        quotes_for_pay = sorted(expected_quote_codes.difference(payed_quotes))
-
-        for code in quotes_for_pay[:int(quantity)]:
-            year, month = Quota.decode(code)
-            Quota.objects.create(
-                payment=self, year=year, month=month, member=member, amount=member.category.fee)
+    invoice_id = models.CharField(_('ID de factura'), max_length=DEFAULT_MAX_LEN, blank=True)

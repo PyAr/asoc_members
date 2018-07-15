@@ -74,15 +74,14 @@ class PaymentStrategyAdmin(admin.ModelAdmin):
 
 class PaymentAdmin(admin.ModelAdmin):
     list_filter = ('strategy', )
-    list_display = (
-        'timestamp', 'amount', 'comments')
+    list_display = ('timestamp', 'amount', 'comments')
     search_fields = ('^patron__name', )
     list_display_links = ('timestamp', )
 
 
 class QuotaAdmin(admin.ModelAdmin):
     list_filter = ('year', 'month', )
-    list_display = ('payment', 'year', 'month', 'amount', 'member')
+    list_display = ('payment', 'year', 'month', 'member')
     search_fields = ('^member__person__first_name', '^member__person__last_name', )
     list_display_links = ('payment', )
 
