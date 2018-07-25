@@ -65,7 +65,14 @@ class Member(TimeStampedModel):
 
     def __str__(self):
         legal_id = "∅" if self.legal_id is None else f'{self.legal_id:05d}'
-        return f"{legal_id} - {self.person}"
+        try:
+            name = self.person
+        except Person.DoesNotExist:
+            try:
+                name = self.organization
+            except Organization.DoesNotExist:
+                name = "None"
+        return f"{legal_id} - [{self.category}] {name}"
 
 
 class Person(TimeStampedModel):
@@ -167,7 +174,7 @@ class PaymentStrategy(TimeStampedModel):
     PLATFORM_CHOICES = (
         (MERCADO_PAGO, 'Mercado Pago'),
         (TODO_PAGO, 'Todo Pago'),
-        (TRANSFER, 'transferencia bancaria'),
+        (TRANSFER, 'Transferencia Bancaria'),
     )
 
     platform = models.CharField(
@@ -192,3 +199,9 @@ class Payment(TimeStampedModel):
         on_delete=models.SET_NULL, null=True)
     comments = models.TextField(_('comentarios'), blank=True)
     invoice_id = models.CharField(_('ID de factura'), max_length=DEFAULT_MAX_LEN, blank=True)
+
+    class Meta:
+        get_latest_by = ['timestamp']
+
+    def __str__(self):
+        return f"<Payment {self.amount} [{self.timestamp}] from {self.strategy}>"
