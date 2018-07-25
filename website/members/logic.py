@@ -103,3 +103,23 @@ def create_recurring_payments(recurring_records):
                 payer, member, remaining_payments)
             for payment_info in remaining_payments:
                 create_payment(member, payment_info['timestamp'], payment_info['amount'], strategy)
+
+
+def get_debt_state(member, limit_year, limit_month):
+    """Return if the member is in debt, and the last payment she did (if any).
+
+    If the last payment is exactly the given limit year/month, it's considered in debt.
+    """
+    try:
+        last_quota = Quota.objects.filter(member=member).latest()
+    except Quota.DoesNotExist:
+        return True, None
+
+    in_debt = False
+    if last_quota.year < limit_year:
+        in_debt = True
+    elif last_quota.year == limit_year:
+        if last_quota.month <= limit_month:
+            in_debt = True
+
+    return in_debt, last_quota

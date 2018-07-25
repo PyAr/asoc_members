@@ -23,7 +23,7 @@ class Quota(TimeStampedModel):
 
     @property
     def code(self):
-        return f'{self.year}{self.month}'
+        return f'{self.year}-{self.month:02d}'
 
     @classmethod
     def decode(cls, code):
@@ -63,15 +63,24 @@ class Member(TimeStampedModel):
         _('tiene certificado de estudiante?'), default=False)
     has_subscription_letter = models.BooleanField(_('ha firmado la carta?'), default=False)
 
+    @property
+    def entity(self):
+        """Return the Person or Organization for the member, if any."""
+        try:
+            return self.person
+        except Person.DoesNotExist:
+            pass
+
+        try:
+            return self.organization
+        except Organization.DoesNotExist:
+            pass
+
     def __str__(self):
         legal_id = "∅" if self.legal_id is None else f'{self.legal_id:05d}'
-        try:
-            name = self.person
-        except Person.DoesNotExist:
-            try:
-                name = self.organization
-            except Organization.DoesNotExist:
-                name = "None"
+        name = self.entity
+        if name is None:
+            name = "None"
         return f"{legal_id} - [{self.category}] {name}"
 
 

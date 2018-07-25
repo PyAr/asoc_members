@@ -338,3 +338,63 @@ class CreateRecurringPaymentTestCase(TestCase):
         # recorded and two new retrieved)
         self.assertEqual(len(Quota.objects.all()), 2)
         self.assertLoggedError("Payment not found", str(tstamp2), "2017, 2, 7", "2017, 2, 8")
+
+
+class GetDebtStateTestCase(TestCase):
+    """Tests for the debt state."""
+
+    def test_no_payment(self):
+        member = create_member()
+        in_debt, last_quota = logic.get_debt_state(member, 2018, 8)
+        self.assertTrue(in_debt)
+        self.assertIsNone(last_quota)
+
+    def test_previous_year(self):
+        member = create_member(first_payment_year=2017, first_payment_month=6)
+        ps = create_payment_strategy()
+        logic.create_payment(member, now(), DEFAULT_FEE, ps)
+
+        in_debt, last_quota = logic.get_debt_state(member, 2018, 2)
+        self.assertTrue(in_debt)
+        self.assertEqual(last_quota.year, 2017)
+        self.assertEqual(last_quota.month, 6)
+
+    def test_next_year(self):
+        member = create_member(first_payment_year=2017, first_payment_month=6)
+        ps = create_payment_strategy()
+        logic.create_payment(member, now(), DEFAULT_FEE, ps)
+
+        in_debt, last_quota = logic.get_debt_state(member, 2016, 2)
+        self.assertFalse(in_debt)
+        self.assertEqual(last_quota.year, 2017)
+        self.assertEqual(last_quota.month, 6)
+
+    def test_same_year_previous_month(self):
+        member = create_member(first_payment_year=2017, first_payment_month=6)
+        ps = create_payment_strategy()
+        logic.create_payment(member, now(), DEFAULT_FEE, ps)
+
+        in_debt, last_quota = logic.get_debt_state(member, 2017, 2)
+        self.assertFalse(in_debt)
+        self.assertEqual(last_quota.year, 2017)
+        self.assertEqual(last_quota.month, 6)
+
+    def test_same_year_next_month(self):
+        member = create_member(first_payment_year=2017, first_payment_month=6)
+        ps = create_payment_strategy()
+        logic.create_payment(member, now(), DEFAULT_FEE, ps)
+
+        in_debt, last_quota = logic.get_debt_state(member, 2017, 11)
+        self.assertTrue(in_debt)
+        self.assertEqual(last_quota.year, 2017)
+        self.assertEqual(last_quota.month, 6)
+
+    def test_same_year_same_month(self):
+        member = create_member(first_payment_year=2017, first_payment_month=6)
+        ps = create_payment_strategy()
+        logic.create_payment(member, now(), DEFAULT_FEE, ps)
+
+        in_debt, last_quota = logic.get_debt_state(member, 2017, 6)
+        self.assertTrue(in_debt)
+        self.assertEqual(last_quota.year, 2017)
+        self.assertEqual(last_quota.month, 6)
