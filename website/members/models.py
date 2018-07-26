@@ -51,6 +51,7 @@ class Member(TimeStampedModel):
         'Patron',
         verbose_name=_('mecenas'),
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         related_name='beneficiary'
     )
@@ -103,7 +104,7 @@ class Person(TimeStampedModel):
     nickname = models.CharField(
         _('nick'), max_length=DEFAULT_MAX_LEN, blank=True, help_text=_('Nick o sobrenombre'))
     picture = models.ImageField(
-        _('avatar'), upload_to='pictures', null=True,
+        _('avatar'), upload_to='pictures', null=True, blank=True,
         help_text=_('Foto o imagen cuadrada para el carnet'))
     nationality = models.CharField(_('nacionalidad'), max_length=DEFAULT_MAX_LEN, blank=True)
     marital_status = models.CharField(_('estado civil'), max_length=DEFAULT_MAX_LEN, blank=True)

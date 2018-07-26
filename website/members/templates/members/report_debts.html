@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        {% block heading %}
+        <h1 class="text-center">Reportes</h1>
+        <h2 class="text-center">Socios con deudas</h2>
+        {% endblock %}
+        <div class="inner-content">
+            {% block inner-content %}
+                <div>
+                    <form action="{% url 'report_debts' %}" t>
+                        Socies que pagaron solamente hasta (inclusive): 
+                        <input type="text" name="limit_year" value="{{ limit_year }}" style="text-align: right; width: 4em;"/>
+                        <input type="text" name="limit_month" value="{{ limit_month }}" style="text-align: right; width: 4em;"/>
+                        <button id="filter" type="submit">Filtrar</button>
+                </div>
+                <br/>
+                <div>
+                <table class="table">
+                <tr> 
+                    <th>Nro de socie</th>
+                    <th>Tipo</th>
+                    <th>Entity</th>
+                    <th>Mail</th>
+                    <th>Last paid</th>
+                </tr>
+                {% for item in debts %}
+                    <tr> 
+                        <td>{{ item.member.legal_id }}</td>
+                        <td>{{ item.member.category }}</td>
+                        <td>{{ item.member.entity }}</td>
+                        <td>{{ item.member.entity.email }}</td>
+                        <td>{{ item.last_payment }}</td>
+                    </tr>
+                {% endfor %}
+                </table>
+                </div>
+            {% endblock %}
+        </div>
+    </div>
+
+{% endblock %}
