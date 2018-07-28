@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path
 
 from members import views
@@ -11,4 +13,5 @@ urlpatterns = [
 
     path('reportes/', views.reports_main, name='reports_main'),
     path('reportes/deudas', views.report_debts, name='report_debts'),
-]
+    path('reportes/faltantes', views.report_missing, name='report_missing'),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
