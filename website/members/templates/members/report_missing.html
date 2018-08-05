@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        {% block heading %}
+        <h1 class="text-center">Reportes</h1>
+        <h2 class="text-center">Personas con faltantes para terminar de ser socias</h2>
+        {% endblock %}
+        <div class="inner-content">
+            {% block inner-content %}
+                <div>
+                <table class="table">
+                <tr> 
+                    <th>Nombre</th>
+                    <th>Mail</th>
+                    <th>Falta firmar</th>
+                    <th>Falta certif estud</th>
+                    <th>Falta pagar</th>
+                    <th>Falta nick</th>
+                    <th>Falta foto</th>
+                    <th>Falta aceptar colaborar</th>
+                </tr>
+                {% for item in incompletes %}
+                    <tr> 
+                        <td>{{ item.member.entity }}</td>
+                        <td>{{ item.member.entity.email }}</td>
+                        <td>{{ item.missing_signed_letter }}</td>
+                        <td>{{ item.missing_student_certif }}</td>
+                        <td>{{ item.missing_payment }}</td>
+                        <td>{{ item.missing_nickname }}</td>
+                        <td>{{ item.missing_picture }}</td>
+                        <td>{{ item.missing_collab_accept }}</td>
+                    </tr>
+                {% endfor %}
+                </table>
+                </div>
+            {% endblock %}
+        </div>
+    </div>
+
+{% endblock %}

@@ -59,10 +59,13 @@ class Member(TimeStampedModel):
         _('primer pago mes'), validators=[MaxValueValidator(12), MinValueValidator(1)], null=True)
     first_payment_year = models.PositiveSmallIntegerField(
         _('primer pago año'), validators=[MinValueValidator(2015)], null=True)
+
     # Flags
     has_student_certificate = models.BooleanField(
         _('tiene certificado de estudiante?'), default=False)
     has_subscription_letter = models.BooleanField(_('ha firmado la carta?'), default=False)
+    has_collaborator_acceptance = models.BooleanField(
+        _('ha aceptado ser colaborador?'), default=False)
 
     @property
     def entity(self):
@@ -146,14 +149,37 @@ class Organization(TimeStampedModel):
     address = models.CharField(_('dirección'), max_length=LONG_MAX_LEN, blank=True)
     social_media = models.TextField(_('redes sociales'), blank=True)
 
+    def __str__(self):
+        return self.name
+
 
 class Category(TimeStampedModel):
     """Membership category."""
+    ACTIVE = "Activo"
+    SUPPORTER = "Adherente"
+    STUDENT = "Estudiante"
+    COLLABORATOR = "Colaborador"
+    TEENAGER = "Cadete"
+    BENEFACTOR_PLATINUM = "Benefactora Platino"
+    BENEFACTOR_GOLD = "Benefactora Oro"
+    BENEFACTOR_SILVER = "Benefactora Plata"
+    CATEGORY_CHOICES = (
+        (ACTIVE, ACTIVE),
+        (SUPPORTER, SUPPORTER),
+        (STUDENT, STUDENT),
+        (COLLABORATOR, COLLABORATOR),
+        (TEENAGER, TEENAGER),
+        (BENEFACTOR_PLATINUM, BENEFACTOR_PLATINUM),
+        (BENEFACTOR_GOLD, BENEFACTOR_GOLD),
+        (BENEFACTOR_SILVER, BENEFACTOR_SILVER),
+    )
+
     class Meta:
         verbose_name_plural = "categories"
 
-    name = models.CharField(_('nombre'), max_length=DEFAULT_MAX_LEN)
-    description = models.TextField(_('descipción'), )
+    name = models.CharField(
+        _('nombre'), max_length=DEFAULT_MAX_LEN, choices=CATEGORY_CHOICES)
+    description = models.TextField(_('descripción'), )
     fee = models.DecimalField(_('cuota mensual'), max_digits=18, decimal_places=2)
     # There is a foreign keys to Membership
 
