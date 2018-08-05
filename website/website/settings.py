@@ -127,6 +127,9 @@ class Base(Configuration):
 
     CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR
+
 
 class Dev(Base):
     """

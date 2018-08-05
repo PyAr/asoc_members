@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
+from django.utils.safestring import mark_safe
 
 from .models import Member, Person, Organization, Patron, Payment, PaymentStrategy, Quota, Category
 
@@ -39,6 +40,11 @@ class PersonAdmin(admin.ModelAdmin):
     list_display = ('first_name', 'last_name', 'document_number', 'nickname')
     search_fields = ('^first_name', '^last_name', '^document_number', )
     list_display_links = ('first_name', 'last_name', )
+    readonly_fields = ('picture_extra',)
+
+    def picture_extra(self, obj):
+        return mark_safe('<img src="{}" width="150" height="150"/>'.format(obj.picture.url))
+    picture_extra.short_description = 'Fotito'
 
 
 class CategoryAdmin(admin.ModelAdmin):
