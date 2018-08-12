@@ -13,5 +13,5 @@ urlpatterns = [
 
     path('reportes/', views.reports_main, name='reports_main'),
     path('reportes/deudas', views.report_debts, name='report_debts'),
-    path('reportes/faltantes', views.report_missing, name='report_missing'),
+    path('reportes/incompletos', views.report_missing, name='report_missing'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
