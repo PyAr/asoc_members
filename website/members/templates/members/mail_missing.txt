@@ -1,0 +1,98 @@
+Hola!
+
+Te mando este mail porque falta algo todavía para que termines el trámite de asociarte a la Asociación Civil de Python Argentina...
+
+{% if missing_signed_letter %}
+Tenés que mandar una carta en papel, firmada, expresando tu intención de querer asociarte (es un paso necesario desde el punto de vista legal).
+
+La carta es corta, pero tenés que poner tus datos, podés bajarte el .odt y editarla o el .pdf e imprimirla y llenarla a mano...
+
+    ODT: https://drive.google.com/open?id=1pWlMe347uXeyFxFz5V5JRFH16-xd8Xgh
+    PDF: https://drive.google.com/open?id=1UQg_33OeOqka-RSblJe6Qqqb_weX9AAk
+
+Para acelerar el trámite, sacale una foto y mandánosla, pero también la vas a tener que mandar por correo postal o llevarla en mano a la sede de la Asociación Civil [0] (o traerla a algún evento de PyAr y dársela a cualquiera de la Comisión Directiva).  {% endif %}
+
+{% if missing_student_certif %}
+Como sos socia/o "Estudiante", necesitamos un Certificado de Alumna/o Regular.
+
+Cuando lo consigas, para acelerar el trámite, sacale una foto y mandánosla, pero también la vas a tener que mandar por correo postal o llevarla en mano a la sede de la Asociación Civil [0] (o traerla a algún evento de PyAr y dársela a cualquiera de la Comisión Directiva).  {% endif %}
+
+{% if missing_payment %}
+Tenés que pagar la cuota social. En tu caso, para Socia/o tipo {{ member.category }}, son ${{ member.category.fee }} por mes, y lo podés abonar de distintas maneras:
+
+Débito mensual, usando una tarjeta de crédito:
+
+    {% if member.category == member.category.ACTIVE %}
+        http://mpago.la/c0H8
+
+    {% elif member.category == member.category.SUPPORTER %}
+        http://mpago.la/4rHr
+
+    {% elif member.category == member.category.STUDENT %}
+      http://mpago.la/GONo
+
+    {% else %}
+        {{ on_purpose_missing_var }} {% endif %}
+
+También podés pagar el año entero (un total de ${{ annual_fee }}) directamente por transferencia o depósito a...
+
+    Asociación Civil Python Argentina
+    Banco Credicoop
+    Cuenta Corriente en pesos
+    Nro. 191-153-009748/3
+    CBU 19101530-55015300974832
+
+... o con tarjetas de crédito, débito, pagofácil, rapipago, etc:
+
+    {% if member.category == member.category.ACTIVE %}
+        https://forms.todopago.com.ar/formulario/commands?command=formulario&fr=1&m=4dee293be8f02f0a40d94e9d580c306b
+
+    {% elif member.category == member.category.SUPPORTER %}
+        https://forms.todopago.com.ar/formulario/commands?command=formulario&fr=1&m=7bc16ade2a98bf5953aca03084d433b6
+
+    {% elif member.category == member.category.STUDENT %}
+        https://forms.todopago.com.ar/formulario/commands?command=formulario&fr=1&m=b8a3f2eca8bbfe68faa22bf6eac42952
+
+    {% else %}
+        {{ on_purpose_missing_var }} {% endif %}
+
+{% endif %}
+
+{% if missing_nickname %}
+Pasanos un nick o sobrenombre, para el carnet de asociada/o, totalmente opcional (pero si no querés avisanos así dejamos de pedirte).
+{% endif %}
+
+{% if missing_picture %}
+Pasanos una foto cuadrada o cualquier imagen cuadrada, para el carnet de asociada/o, totalmente opcional (pero si no querés avisanos así dejamos de pedirte).
+{% endif %}
+
+{% if missing_collab_accept %}
+Como sos socia/o "Colaborador/a", tenés que anotarte para colaborar.
+
+La dinámica es la siguiente: tenemos un grupo de Telegram donde distintos responsables de la Asociación Civil podemos pedir cosas y vos u otro/a socio/a lo pueden agarrar para hacer. Ejemplo de un pedido posible: "hay que arreglar un bug en el sistema de gestión de la Asoc Civil (hecho en Django) que no muestra tal cosa en tal lugar".
+
+Obvio, cada uno agarrará lo que pueda resolver, pero la idea es que colaboren  Participar en ese canal y realmente colaborar con lo que la Asociación Civil necesite es condición necesaria para que al año se renueve la posibilidad de ser socio/a Colaborador/a.
+
+Entonces, pasame por favor tu handle de Telegram así te invito al grupo.
+{% endif %}
+
+
+{% if missing_signed_letter or missing_student_certif %}
+[0] La dirección de la sede:
+
+    Asociación Civil Python Argentina
+    Chile 1155, piso 1
+    CABA (C1098AAW)
+    Buenos Aires, Argentina
+{% endif %}
+
+Bueno, nada más. Cualquier detalle o consulta, preguntá sin drama.
+
+Saludos,
+
+--
+.   Lalita
+.
+Asociación Civil Python Argentina: http://ac.python.org.ar/
+
+(claro, este mail es automático, soy une bot, pero contestá el mail sin problemas que le va a llegar al humane correspondiente)
