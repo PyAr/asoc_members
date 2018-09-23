@@ -22,6 +22,14 @@ from members.models import Person, Organization, Category, Member
 logger = logging.getLogger(__name__)
 
 
+def _clean_double_empty_lines(oldtext):
+    while True:
+        newtext = re.sub("\n *?\n *?\n", "\n\n", oldtext)
+        if newtext == oldtext:
+            return newtext
+        oldtext = newtext
+
+
 class SignupInitialView(TemplateView):
     template_name = 'members/signup_initial.html'
 
@@ -60,10 +68,82 @@ class ReportsInitialView(TemplateView):
 class ReportDebts(View):
     """Handle the report about debts."""
 
-    def _produce_report(self, request, limit_year, limit_month):
+    MAIL_SUBJECT = "Cuotas adeudadas a la Asociación Civil Python Argentina"
+    MAIL_FROM = 'Lalita <lalita@ac.python.org.ar>'
+    MAIL_MANAGER = 'presidencia@ac.python.org.ar>'
+
+    def post(self, request):
+        raw_sendmail = parse.parse_qs(request.body)[b'sendmail']
+        to_send_mail_ids = map(int, raw_sendmail)
+        limit_year, limit_month = self._get_yearmonth(request)
+
+        sent_error = 0
+        sent_ok = 0
+        tini = time.time()
+        errors_code = str(uuid.uuid4())
+        for member_id in to_send_mail_ids:
+            member = Member.objects.get(id=member_id)
+
+            in_debt, last_quota = logic.get_debt_state(member, limit_year, limit_month)
+            debt_info = {
+                'last_quota': None if last_quota is None else last_quota.code,
+                'member': member,
+                'annual_fee': member.category.fee * 12,
+                'on_purpose_missing_var': "ERROR",
+            }
+            text = render_to_string('members/mail_indebt.txt', debt_info)
+            text = _clean_double_empty_lines(text)
+            if 'ERROR' in text:
+                # badly built template
+                logger.error(
+                    "Error when building the report missing mail result, info: %s", debt_info)
+                return HttpResponse("Error al armar la página")
+            recipient = f"{member.entity.full_name} <{member.entity.email}>"
+            msg = EmailMessage(
+                self.MAIL_SUBJECT, text, self.MAIL_FROM, [recipient],
+                cc=[self.MAIL_MANAGER], reply_to=[self.MAIL_MANAGER])
+            try:
+                msg.send()
+            except Exception as err:
+                sent_error += 1
+                logger.error(
+                    "Problems sending email [%s] to member %s: %r", errors_code, member, err)
+            else:
+                sent_ok += 1
+        deltat = time.time() - tini
+
+        context = {
+            'sent_ok': sent_ok,
+            'sent_error': sent_error,
+            'errors_code': errors_code,
+            'deltamsec': int(deltat * 1000),
+        }
+        return render(request, 'members/mail_sent.html', context)
+
+    def _get_yearmonth(self, request):
+        try:
+            year = int(request.GET['limit_year'])
+            month = int(request.GET['limit_month'])
+        except (KeyError, ValueError):
+            # get by default two months before now, as users would be ok until paying that month
+            # inclusive, as the last month is the first month not really paid (current month is
+            # not yet finished)
+            currently = now()
+            year = currently.year
+            month = currently.month - 2
+            if month <= 0:
+                year -= 1
+                month += 12
+        return year, month
+
+    def get(self, request):
         """Produce the report with the given year/month limits."""
+        limit_year, limit_month = self._get_yearmonth(request)
+
         # get those already confirmed members
-        members = Member.objects.filter(legal_id__isnull=False, category__fee__gt=0).all()
+        members = Member.objects\
+            .filter(legal_id__isnull=False, category__fee__gt=0)\
+            .order_by('legal_id').all()
 
         debts = []
         for member in members:
@@ -82,23 +162,6 @@ class ReportDebts(View):
         }
         return render(request, 'members/report_debts.html', context)
 
-    def get(self, request):
-        try:
-            year = int(request.GET['limit_year'])
-            month = int(request.GET['limit_month'])
-        except (KeyError, ValueError):
-            # get by default two months before now, as users would be ok until paying that month
-            # inclusive, as the last month is the first month not really paid (current month is
-            # not yet finished)
-            currently = now()
-            year = currently.year
-            month = currently.month - 2
-            if month <= 0:
-                year -= 1
-                month += 12
-
-        return self._produce_report(request, year, month)
-
 
 class ReportMissing(View):
     """Handle the report about what different people miss to get approved as a member."""
@@ -106,13 +169,6 @@ class ReportMissing(View):
     MAIL_SUBJECT = "Continuación del trámite de inscripción a la Asociación Civil Python Argentina"
     MAIL_FROM = 'Lalita <lalita@ac.python.org.ar>'
     MAIL_MANAGER = 'presidencia@ac.python.org.ar>'
-
-    def _clean_double_empty_lines(self, oldtext):
-        while True:
-            newtext = re.sub("\n *?\n *?\n", "\n\n", oldtext)
-            if newtext == oldtext:
-                return newtext
-            oldtext = newtext
 
     def post(self, request):
         raw_sendmail = parse.parse_qs(request.body)[b'sendmail']
@@ -128,7 +184,7 @@ class ReportMissing(View):
             missing_info['member'] = member
             missing_info['on_purpose_missing_var'] = "ERROR"
             text = render_to_string('members/mail_missing.txt', missing_info)
-            text = self._clean_double_empty_lines(text)
+            text = _clean_double_empty_lines(text)
             if 'ERROR' in text:
                 # badly built template
                 logger.error(

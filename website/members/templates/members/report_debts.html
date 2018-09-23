@@ -14,6 +14,14 @@
                         <input type="text" name="limit_year" value="{{ limit_year }}" style="text-align: right; width: 4em;"/>
                         <input type="text" name="limit_month" value="{{ limit_month }}" style="text-align: right; width: 4em;"/>
                         <button id="filter" type="submit">Filtrar</button>
+                    </form>
+                </div>
+                <br/>
+                <div>
+                    <form method="post" action"{% url 'report_missing' %}">
+                        {% csrf_token %}
+                        ¿Mandar mails a los seleccionados?
+                        <button id="selected" type="submit">Mandar</button>
                 </div>
                 <br/>
                 <div>
@@ -24,6 +32,7 @@
                     <th>Entity</th>
                     <th>Mail</th>
                     <th>Last paid</th>
+                    <th>¿Mandar mail?</th>
                 </tr>
                 {% for item in debts %}
                     <tr> 
@@ -32,9 +41,13 @@
                         <td>{{ item.member.entity }}</td>
                         <td>{{ item.member.entity.email }}</td>
                         <td>{{ item.last_payment }}</td>
+                        <td>
+                            <input type="checkbox" name="sendmail" value="{{ item.member.id }}" />
+                        </td>
                     </tr>
                 {% endfor %}
                 </table>
+                </form>
                 </div>
             {% endblock %}
         </div>

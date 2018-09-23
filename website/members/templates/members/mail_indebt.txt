@@ -1,0 +1,61 @@
+Hola!
+
+{% if last_quota is None %}
+Te mando este mail porque no encontre ningún registro de pago de tu parte.
+{% else %}
+Te mando este mail porque según mis registros debés alguna cuota de la Asociación Civil. La última que tengo saldada es la que corresponde a {{ last_quota }}.
+{% endif %}
+
+Tu aporte es importante para el funcionamiento de la Asociación, nos permite mantener la estructura y encarar diversas acciones.
+
+Para ponerte al día, en tu caso de Socie tipo {{ member.category }}, son ${{ member.category.fee }} por mes, y podés abonar de distintas maneras:
+
+Podés pagar el año entero (un total de ${{ annual_fee }}) directamente por transferencia o depósito a...
+
+    Asociación Civil Python Argentina
+    Banco Credicoop
+    Cuenta Corriente en pesos
+    Nro. 191-153-009748/3
+    CBU 19101530-55015300974832
+
+... o con tarjetas de crédito, débito, pagofácil, rapipago, etc:
+
+    {% if member.category == member.category.ACTIVE %}
+        https://forms.todopago.com.ar/formulario/commands?command=formulario&fr=1&m=4dee293be8f02f0a40d94e9d580c306b
+
+    {% elif member.category == member.category.SUPPORTER %}
+        https://forms.todopago.com.ar/formulario/commands?command=formulario&fr=1&m=7bc16ade2a98bf5953aca03084d433b6
+
+    {% elif member.category == member.category.STUDENT %}
+        https://forms.todopago.com.ar/formulario/commands?command=formulario&fr=1&m=b8a3f2eca8bbfe68faa22bf6eac42952
+
+    {% else %}
+        {{ on_purpose_missing_var }} {% endif %}
+
+Lo más sencillo es anotarse al débito automático mensual, usando una tarjeta de crédito:
+
+    {% if member.category == member.category.ACTIVE %}
+        http://mpago.la/c0H8
+
+    {% elif member.category == member.category.SUPPORTER %}
+        http://mpago.la/4rHr
+
+    {% elif member.category == member.category.STUDENT %}
+      http://mpago.la/GONo
+
+    {% else %}
+        {{ on_purpose_missing_var }} {% endif %}
+
+Tené en cuenta que el débito automático cuenta "desde ahora" y tendrías que saldar lo adeudado por transferencia o depósito.
+
+Bueno, nada más. Cualquier detalle o consulta, preguntá sin drama. Y obvio, si le estoy errando al analizar los registros internos, avisame y lo re-chequeamos usando inteligencia no-artificial :)
+
+¡Muchas gracias! Saludos,
+
+--
+.   Lalita
+.
+Asociación Civil Python Argentina
+http://ac.python.org.ar/
+
+(claro, este mail es automático, soy une bot, pero contestá el mail sin problemas que le va a llegar al humane correspondiente)
