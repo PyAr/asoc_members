@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        {% block heading %}
+        <h1 class="text-center">Reportes</h1>
+        <h2 class="text-center">Mails enviados</h2>
+        {% endblock %}
+        <div class="inner-content">
+            {% block inner-content %}
+            <div>
+                <h3>Proceso terminado!  {% if sent_error == 0 %} Todo OK {% else %} Con errores :( {% endif %} </h3> 
+                Tiempo de proceso: {{ deltamsec }} mseg <br/>
+                {% if sent_error > 0 %} 
+                    Mails enviados ok: {{ sent_ok }}<br/>
+                    Mails con error: {{ sent_error }}<br/>
+                    Código de error: {{ errors_code }}<br/>
+                {% endif %}
+                </table>
+            </div>
+            {% endblock %}
+        </div>
+    </div>
+
+{% endblock %}
+

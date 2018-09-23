@@ -18,9 +18,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class Base(Configuration):
-    """
-        Base configuration for django app
-    """
+    """Base configuration for django app."""
     # Quick-start development settings - unsuitable for production
     # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
@@ -103,7 +101,6 @@ class Base(Configuration):
         },
     ]
 
-
     # Internationalization
     # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
@@ -131,17 +128,21 @@ class Base(Configuration):
     MEDIA_ROOT = BASE_DIR
 
 
-class Dev(Base):
-    """
-        Development configuration
-    """
-    pass
+try:
+    from local_settings import LocalSettings
+except ImportError as err:
+    print("Error importing local settings", repr(err))
+
+    class LocalSettings:
+        pass
+
+
+class Dev(LocalSettings, Base):
+    """Development configuration."""
 
 
 class Prod(Base):
-    """
-        Production configuration
-    """
+    """Production configuration."""
     DEBUG = False
     TEMPLATE_DEBUG = False
     SECRET_KEY = os.getenv(
@@ -161,3 +162,10 @@ class Prod(Base):
             'PORT': os.environ.get('POSTGRES_PORT', 5432),
         }
     }
+
+    EMAIL_HOST = os.environ.get('EMAIL_HOST')
+    EMAIL_PORT = os.environ.get('EMAIL_PORT')
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
+    MAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')

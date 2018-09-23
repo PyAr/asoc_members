@@ -125,7 +125,7 @@ class Person(TimeStampedModel):
 
     @property
     def full_name(self):
-        return str(self)  # We may want a different representation of str(self) changes
+        return f"{self.first_name} {self.last_name}"
 
     def __str__(self):
         return f"{self.last_name}, {self.first_name}"
@@ -185,6 +185,16 @@ class Category(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+    def __eq__(self, other):
+        if isinstance(other, Category):
+            other_name = other.name
+        elif isinstance(other, str):
+            other_name = other
+        else:
+            return False
+
+        return self.name == other_name
 
 
 class Patron(TimeStampedModel):
