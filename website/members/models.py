@@ -106,6 +106,8 @@ class Person(TimeStampedModel):
     email = models.EmailField(_('correo electrónico'), max_length=1024)
     nickname = models.CharField(
         _('nick'), max_length=DEFAULT_MAX_LEN, blank=True, help_text=_('Nick o sobrenombre'))
+    # picture in "False" means that the person doesn't want a photo (can not use Null as it's
+    # swallowed by ImageField to disassociate from a filename)
     picture = models.ImageField(
         _('avatar'), upload_to='pictures', null=True, blank=True,
         help_text=_('Foto o imagen cuadrada para el carnet'))
