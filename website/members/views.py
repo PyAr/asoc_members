@@ -225,7 +225,9 @@ class ReportMissing(View):
 
         # info from Person
         missing_nickname = member.person.nickname is None
-        missing_picture = not member.person.picture
+        # picture is complicated, bool() is used to check if the Image field has an associated
+        # filename, and False itself is used as the "dont want a picture!" flag
+        missing_picture = not member.person.picture and member.person.picture is not False
 
         # info from Member itself
         missing_payment = member.first_payment_month is None and member.category.fee > 0
