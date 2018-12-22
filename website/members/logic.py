@@ -66,7 +66,8 @@ def create_recurring_payments(recurring_records):
                 strategy = PaymentStrategy.objects.get(
                     platform=PaymentStrategy.MERCADO_PAGO, id_in_platform=payer)
             except PaymentStrategy.DoesNotExist:
-                logger.error("PaymentStrategy not found for payer %r", payer)
+                payment = retrieved_payments[0]
+                logger.error("PaymentStrategy not found for payer %r: %s", payer, payment)
                 continue
 
             # get latest payment done with this strategy
@@ -106,20 +107,32 @@ def create_recurring_payments(recurring_records):
 
 
 def get_debt_state(member, limit_year, limit_month):
-    """Return if the member is in debt, and the last payment she did (if any).
+    """Return if the member is in debt, and the missing quotas.
 
-    If the last payment is exactly the given limit year/month, it's considered in debt.
+    The quotas verified are from first payment up to the given year/month limit (including).
     """
-    try:
-        last_quota = Quota.objects.filter(member=member).latest()
-    except Quota.DoesNotExist:
-        return True, None
+    # verify the limit is after member started paying
+    if member.first_payment_year == limit_year:
+        if member.first_payment_month > limit_month:
+            return []
+    elif member.first_payment_year > limit_year:
+        return []
 
-    in_debt = False
-    if last_quota.year < limit_year:
-        in_debt = True
-    elif last_quota.year == limit_year:
-        if last_quota.month <= limit_month:
-            in_debt = True
+    # build a set for the year/month of paid quotas
+    quotas = Quota.objects.filter(member=member).all()
+    yearmonths_paid = {(q.year, q.month) for q in quotas}
 
-    return in_debt, last_quota
+    # build a set of all the year/month the member should have paid up to (including) the limit
+    year_to_check = member.first_payment_year
+    month_to_check = member.first_payment_month
+    should_have_paid = set()
+    while True:
+        should_have_paid.add((year_to_check, month_to_check))
+        year_to_check, month_to_check = _increment_year_month(year_to_check, month_to_check)
+        if year_to_check == limit_year:
+            if month_to_check > limit_month:
+                break
+        elif year_to_check > limit_year:
+            break
+
+    return sorted(should_have_paid - yearmonths_paid)

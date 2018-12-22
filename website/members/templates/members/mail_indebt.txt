@@ -1,10 +1,6 @@
 Hola!
 
-{% if last_quota is None %}
-Te mando este mail porque no encontre ningún registro de pago de tu parte.
-{% else %}
-Te mando este mail porque según mis registros debés alguna cuota de la Asociación Civil. La última que tengo saldada es la que corresponde a {{ last_quota }}.
-{% endif %}
+Te mando este mail porque según mis registros debés cuotas de la Asociación Civil: {{ debt }}.
 
 Tu aporte es importante para el funcionamiento de la Asociación, nos permite mantener la estructura y encarar diversas acciones.
 
