@@ -52,7 +52,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 class MemberAdmin(admin.ModelAdmin):
-    list_display = ('legal_id', 'person', 'organization', 'registration_date')
+    list_display = ('legal_id', 'person', 'organization', 'registration_date', 'shutdown_date')
     list_filter = ('category', )
     search_fields = ('^legal_id', 'person__first_name', 'person__last_name', )
     list_display_links = ('legal_id', )

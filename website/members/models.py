@@ -39,6 +39,7 @@ class Member(TimeStampedModel):
 
     legal_id = models.PositiveIntegerField(_('ID legal'), unique=True, blank=True, null=True)
     registration_date = models.DateField(_('fecha de alta'), blank=True, null=True)
+    shutdown_date = models.DateField(_('fecha de baja'), blank=True, null=True)
 
     category = models.ForeignKey(
         'Category',
@@ -82,10 +83,8 @@ class Member(TimeStampedModel):
 
     def __str__(self):
         legal_id = "∅" if self.legal_id is None else f'{self.legal_id:05d}'
-        name = self.entity
-        if name is None:
-            name = "None"
-        return f"{legal_id} - [{self.category}] {name}"
+        shutdown = "" if self.shutdown_date is None else ", DADO DE BAJA"
+        return f"{legal_id} - [{self.category}{shutdown}] {self.entity}"
 
 
 class Person(TimeStampedModel):

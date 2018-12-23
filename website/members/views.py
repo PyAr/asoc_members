@@ -154,7 +154,7 @@ class ReportDebts(View):
 
         # get those already confirmed members
         members = Member.objects\
-            .filter(legal_id__isnull=False, category__fee__gt=0)\
+            .filter(legal_id__isnull=False, category__fee__gt=0, shutdown_date__isnull=True)\
             .order_by('legal_id').all()
 
         debts = []
