@@ -4,7 +4,7 @@ import logassert
 from django.test import TestCase
 from django.utils.timezone import now, make_aware
 
-from members import logic
+from members import logic, views
 from members.models import Member, Patron, Category, PaymentStrategy, Quota
 
 
@@ -343,58 +343,83 @@ class CreateRecurringPaymentTestCase(TestCase):
 class GetDebtStateTestCase(TestCase):
     """Tests for the debt state."""
 
-    def test_no_payment(self):
-        member = create_member()
-        in_debt, last_quota = logic.get_debt_state(member, 2018, 8)
-        self.assertTrue(in_debt)
-        self.assertIsNone(last_quota)
-
     def test_previous_year(self):
-        member = create_member(first_payment_year=2017, first_payment_month=6)
+        member = create_member(first_payment_year=2017, first_payment_month=8)
         ps = create_payment_strategy()
         logic.create_payment(member, now(), DEFAULT_FEE, ps)
 
-        in_debt, last_quota = logic.get_debt_state(member, 2018, 2)
-        self.assertTrue(in_debt)
-        self.assertEqual(last_quota.year, 2017)
-        self.assertEqual(last_quota.month, 6)
+        debt = logic.get_debt_state(member, 2018, 2)
+        self.assertEqual(debt, [
+            (2017, 9), (2017, 10), (2017, 11), (2017, 12),
+            (2018, 1), (2018, 2)])
 
     def test_next_year(self):
         member = create_member(first_payment_year=2017, first_payment_month=6)
         ps = create_payment_strategy()
         logic.create_payment(member, now(), DEFAULT_FEE, ps)
 
-        in_debt, last_quota = logic.get_debt_state(member, 2016, 2)
-        self.assertFalse(in_debt)
-        self.assertEqual(last_quota.year, 2017)
-        self.assertEqual(last_quota.month, 6)
+        debt = logic.get_debt_state(member, 2016, 2)
+        self.assertEqual(debt, [])
 
     def test_same_year_previous_month(self):
         member = create_member(first_payment_year=2017, first_payment_month=6)
         ps = create_payment_strategy()
         logic.create_payment(member, now(), DEFAULT_FEE, ps)
 
-        in_debt, last_quota = logic.get_debt_state(member, 2017, 2)
-        self.assertFalse(in_debt)
-        self.assertEqual(last_quota.year, 2017)
-        self.assertEqual(last_quota.month, 6)
+        debt = logic.get_debt_state(member, 2017, 2)
+        self.assertEqual(debt, [])
 
     def test_same_year_next_month(self):
         member = create_member(first_payment_year=2017, first_payment_month=6)
         ps = create_payment_strategy()
         logic.create_payment(member, now(), DEFAULT_FEE, ps)
 
-        in_debt, last_quota = logic.get_debt_state(member, 2017, 11)
-        self.assertTrue(in_debt)
-        self.assertEqual(last_quota.year, 2017)
-        self.assertEqual(last_quota.month, 6)
+        debt = logic.get_debt_state(member, 2017, 11)
+        self.assertEqual(debt, [
+            (2017, 7), (2017, 8), (2017, 9), (2017, 10), (2017, 11)])
 
     def test_same_year_same_month(self):
         member = create_member(first_payment_year=2017, first_payment_month=6)
         ps = create_payment_strategy()
         logic.create_payment(member, now(), DEFAULT_FEE, ps)
 
-        in_debt, last_quota = logic.get_debt_state(member, 2017, 6)
-        self.assertTrue(in_debt)
-        self.assertEqual(last_quota.year, 2017)
-        self.assertEqual(last_quota.month, 6)
+        debt = logic.get_debt_state(member, 2017, 6)
+        self.assertEqual(debt, [])
+
+    def test_multiyear(self):
+        member = create_member(first_payment_year=2017, first_payment_month=8)
+        ps = create_payment_strategy()
+        logic.create_payment(member, now(), DEFAULT_FEE, ps)
+
+        debt = logic.get_debt_state(member, 2020, 2)
+        self.assertEqual(debt, [
+            (2017, 9), (2017, 10), (2017, 11), (2017, 12),
+            (2018, 1), (2018, 2), (2018, 3), (2018, 4), (2018, 5), (2018, 6),
+            (2018, 7), (2018, 8), (2018, 9), (2018, 10), (2018, 11), (2018, 12),
+            (2019, 1), (2019, 2), (2019, 3), (2019, 4), (2019, 5), (2019, 6),
+            (2019, 7), (2019, 8), (2019, 9), (2019, 10), (2019, 11), (2019, 12),
+            (2020, 1), (2020, 2)])
+
+
+class BuildDebtStringTestCase(TestCase):
+    """Tests for the string debt building utility."""
+
+    def test_empty(self):
+        result = views._build_debt_string([])
+        self.assertEqual(result, "-")
+
+    def test_1(self):
+        result = views._build_debt_string([(2018, 8)])
+        self.assertEqual(result, "1 (2018-08)")
+
+    def test_2(self):
+        result = views._build_debt_string([(2018, 8), (2018, 9)])
+        self.assertEqual(result, "2 (2018-08, 2018-09)")
+
+    def test_3(self):
+        result = views._build_debt_string([(2018, 8), (2018, 9), (2018, 10)])
+        self.assertEqual(result, "3 (2018-08, 2018-09, 2018-10)")
+
+    def test_exceeding(self):
+        result = views._build_debt_string([(2018, 8), (2018, 9), (2018, 10), (2018, 11)])
+        self.assertEqual(result, "4 (2018-08, 2018-09, 2018-10, ...)")

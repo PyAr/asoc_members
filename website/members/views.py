@@ -30,6 +30,18 @@ def _clean_double_empty_lines(oldtext):
         oldtext = newtext
 
 
+def _build_debt_string(debt):
+    """Build a nice string to represent the debt."""
+    if not debt:
+        return "-"
+
+    # convert tuples to nice string format (only first 3, the used ones)
+    debt_nicer = ["{}-{:02d}".format(*d) for d in debt[:3]]
+    exceeding = "" if len(debt) <= 3 else ", ..."
+    result = "{} ({}{})".format(len(debt), ", ".join(debt_nicer), exceeding)
+    return result
+
+
 class SignupInitialView(TemplateView):
     template_name = 'members/signup_initial.html'
 
@@ -84,9 +96,9 @@ class ReportDebts(View):
         for member_id in to_send_mail_ids:
             member = Member.objects.get(id=member_id)
 
-            in_debt, last_quota = logic.get_debt_state(member, limit_year, limit_month)
+            debt = logic.get_debt_state(member, limit_year, limit_month)
             debt_info = {
-                'last_quota': None if last_quota is None else last_quota.code,
+                'debt': _build_debt_string(debt),
                 'member': member,
                 'annual_fee': member.category.fee * 12,
                 'on_purpose_missing_var': "ERROR",
@@ -147,12 +159,11 @@ class ReportDebts(View):
 
         debts = []
         for member in members:
-            in_debt, last_quota = logic.get_debt_state(member, limit_year, limit_month)
-            if in_debt:
-                last_payment = "-" if last_quota is None else last_quota.code
+            debt = logic.get_debt_state(member, limit_year, limit_month)
+            if debt:
                 debts.append({
                     'member': member,
-                    'last_payment': last_payment,
+                    'debt': _build_debt_string(debt),
                 })
 
         context = {

@@ -46,15 +46,25 @@ class Command(BaseCommand):
         payments = []
         for item in mercadopago_response['response']['results']:
             info = item['collection']
+
+            # needed information to record the payment
             timestamp = parse_datetime(info['date_approved'])
             amount = Decimal(info['total_paid_amount'])
             payer_id = info['payer']['id']
             assert payer_id is not None
             payer_id = str(payer_id)
 
+            # some info to identify the payer in case it's not in our DB
+            id_helper = {
+                'cardholder': info['cardholder'],
+                'reason': info['reason'],
+                'payment_id': info['id'],
+            }
+
             payments.append({
                 'timestamp': timestamp,
                 'amount': amount,
                 'payer_id': payer_id,
+                'id_helper': id_helper,
             })
         return payments

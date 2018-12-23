@@ -54,7 +54,7 @@ clean-prod:
 	${COMPOSE_PROD} down
 
 test:
-	${MANAGE} test -v2 --noinput
+	${MANAGE} test -v2 --noinput $(ARGS)
 
 dockershell:
 	${RUN} /bin/bash
