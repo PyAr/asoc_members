@@ -57,9 +57,10 @@ class Member(TimeStampedModel):
         related_name='beneficiary'
     )
     first_payment_month = models.PositiveSmallIntegerField(
-        _('primer pago mes'), validators=[MaxValueValidator(12), MinValueValidator(1)], null=True)
+        _('primer pago mes'), validators=[MaxValueValidator(12), MinValueValidator(1)],
+        null=True, blank=True)
     first_payment_year = models.PositiveSmallIntegerField(
-        _('primer pago año'), validators=[MinValueValidator(2015)], null=True)
+        _('primer pago año'), validators=[MinValueValidator(2015)], null=True, blank=True)
 
     # Flags
     has_student_certificate = models.BooleanField(
