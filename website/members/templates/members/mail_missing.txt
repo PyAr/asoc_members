@@ -28,9 +28,6 @@ Débito mensual, usando una tarjeta de crédito:
     {% elif member.category == member.category.SUPPORTER %}
         http://mpago.la/4rHr
 
-    {% elif member.category == member.category.STUDENT %}
-      http://mpago.la/GONo
-
     {% else %}
         {{ on_purpose_missing_var }} {% endif %}
 
@@ -49,9 +46,6 @@ También podés pagar el año entero (un total de ${{ annual_fee }}) directament
 
     {% elif member.category == member.category.SUPPORTER %}
         https://forms.todopago.com.ar/formulario/commands?command=formulario&fr=1&m=7bc16ade2a98bf5953aca03084d433b6
-
-    {% elif member.category == member.category.STUDENT %}
-        https://forms.todopago.com.ar/formulario/commands?command=formulario&fr=1&m=b8a3f2eca8bbfe68faa22bf6eac42952
 
     {% else %}
         {{ on_purpose_missing_var }} {% endif %}
