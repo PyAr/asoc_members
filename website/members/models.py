@@ -87,6 +87,13 @@ class Member(TimeStampedModel):
         return f"{legal_id} - [{self.category}{shutdown}] {self.entity}"
 
 
+def picture_upload_path(instance, filename):
+    """Customize the picture's upload path to MEDIA_ROOT/pictures/lastname_document.ext."""
+    ext = filename.split('.')[-1]
+    lastname = instance.last_name.lower().replace(' ', '')
+    return f"pictures/{lastname}_{instance.document_number}.{ext}"
+
+
 class Person(TimeStampedModel):
     """Human being, member of PyAr ONG."""
 
@@ -108,7 +115,7 @@ class Person(TimeStampedModel):
     # picture in "False" means that the person doesn't want a photo (can not use Null as it's
     # swallowed by ImageField to disassociate from a filename)
     picture = models.ImageField(
-        _('avatar'), upload_to='pictures', null=True, blank=True,
+        _('avatar'), upload_to=picture_upload_path, null=True, blank=True,
         help_text=_('Foto o imagen cuadrada para el carnet'))
     nationality = models.CharField(_('nacionalidad'), max_length=DEFAULT_MAX_LEN, blank=True)
     marital_status = models.CharField(_('estado civil'), max_length=DEFAULT_MAX_LEN, blank=True)
