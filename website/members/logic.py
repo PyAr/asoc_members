@@ -23,17 +23,17 @@ def _get_year_month_range(year, month, quantity):
         yield year, month
 
 
-def create_payment(member, timestamp, amount, payment_strategy):
+def create_payment(member, timestamp, amount, payment_strategy, first_unpaid=None):
     """Create a payment from the given strategy to the specific member."""
     # get the latest unpaid monthly fee
-    try:
-        last_quota = Quota.objects.filter(member=member).latest()
-    except Quota.DoesNotExist:
-        first_unpaid_year = member.first_payment_year
-        first_unpaid_month = member.first_payment_month
-    else:
-        first_unpaid_year, first_unpaid_month = _increment_year_month(
-            last_quota.year, last_quota.month)
+    if first_unpaid is None:
+        try:
+            last_quota = Quota.objects.filter(member=member).latest()
+        except Quota.DoesNotExist:
+            first_unpaid = (member.first_payment_year, member.first_payment_month)
+        else:
+            first_unpaid = _increment_year_month(last_quota.year, last_quota.month)
+    first_unpaid_year, first_unpaid_month = first_unpaid
 
     # calculate how many fees covers the amount, supporting not being exact but for a very
     # small difference
@@ -60,6 +60,7 @@ def create_recurring_payments(recurring_records):
         for records in grouped.values():
             records.sort(key=itemgetter('timestamp'))
 
+        count_without_new_payments = 0
         for payer, retrieved_payments in grouped.items():
             # get strategy for the payer
             try:
@@ -99,11 +100,16 @@ def create_recurring_payments(recurring_records):
                 logger.error("Found more than one member for Patron: %s", strategy.patron)
                 continue
 
-            logger.info(
-                "Creating recurring payments from payer=%s to member=%s: %s",
-                payer, member, remaining_payments)
+            if remaining_payments:
+                logger.info(
+                    "Creating recurring payments from payer=%s to member=%s: %s",
+                    payer, member, remaining_payments)
+            else:
+                count_without_new_payments += 1
             for payment_info in remaining_payments:
                 create_payment(member, payment_info['timestamp'], payment_info['amount'], strategy)
+
+        logger.info("Processes %d payers without new payments", count_without_new_payments)
 
 
 def get_debt_state(member, limit_year, limit_month):

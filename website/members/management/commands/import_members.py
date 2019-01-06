@@ -10,12 +10,11 @@ class Command(BaseCommand):
     help = "Import members from csv generated with data from Google Spreadsheet"
 
     def add_arguments(self, parser):
+        parser.add_argument('--dry-run', type=bool, nargs='?', default=False)
         parser.add_argument('filename', type=str)
 
     def handle(self, *args, **options):
-        if options['filename'] is None:
-            raise CommandError(
-                "You must specify the path of file (text cut & paste from online spreadsheet).")
+        dry_run = options['dry_run']
 
         # make sure file path resolves
         if not os.path.isfile(options['filename']):
@@ -33,8 +32,11 @@ class Command(BaseCommand):
             "Fecha Nacimiento",
             "Estado Civil",
             "Profesión",
-            "CP",
             "Dirección",
+            "Ciudad",
+            "CP",
+            "Provincia",
+            "Pais",
             "Forma de pago",
         ]
 
@@ -42,13 +44,14 @@ class Command(BaseCommand):
             for line in fh:
                 row = {}
                 for col, datum in zip(cols, line.split('\t')):
-                    row[col] = datum.strip()
+                    if col is not None:
+                        row[col] = datum.strip()
                 row['Fecha Nacimiento'] = datetime.datetime.strptime(
                     row['Fecha Nacimiento'], "%m/%d/%Y")  # English!!
-                member = self.create(row)
+                member = self.create(row, dry_run)
                 self.stdout.write("Member imported: {}".format(member))
 
-    def create(self, row):
+    def create(self, row, dry_run):
         if row["Tipo"] != "Humano":
             raise ValueError("Not human! " + str(row))
 
@@ -64,16 +67,15 @@ class Command(BaseCommand):
             email=email,
             comments='Automatically loaded with modified import-from-text script',
         )
-        patron.save()
+        if not dry_run:
+            patron.save()
 
         member = Member(
-            # legal_id=None,
-            # registration_date=get_date(row['Fecha alta'].strip()),
             category=category,
             patron=patron)
-        member.save()
+        if not dry_run:
+            member.save()
 
-        street_address, city, province, country = [x.strip() for x in row['Dirección'].split(",")]
         person = Person(
             first_name=first_name,
             last_name=last_name,
@@ -84,14 +86,15 @@ class Command(BaseCommand):
             marital_status=row['Estado Civil'],
             occupation=row['Profesión'],
             birth_date=row['Fecha Nacimiento'],
-            street_address=street_address,
-            city=city,
+            street_address=row['Dirección'],
+            city=row['Ciudad'],
             zip_code=row['CP'],
-            province=province,
-            country=country,
+            province=row['Provincia'],
+            country=row['Pais'],
             membership=member,
             comments='Automatically loaded with modified import-from-text script',
         )
-        person.save()
+        if not dry_run:
+            person.save()
 
         return member

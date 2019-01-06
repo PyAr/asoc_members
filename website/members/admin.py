@@ -90,6 +90,7 @@ class QuotaAdmin(admin.ModelAdmin):
     list_display = ('payment', 'year', 'month', 'member')
     search_fields = ('^member__person__first_name', '^member__person__last_name', )
     list_display_links = ('payment', )
+    ordering = ('-year', '-month')
 
 
 admin.site.register(Category, CategoryAdmin)

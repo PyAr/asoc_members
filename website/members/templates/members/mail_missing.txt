@@ -5,10 +5,7 @@ Te mando este mail porque falta algo todavía para que termines el trámite de a
 {% if missing_signed_letter %}
 Tenés que mandar una carta en papel, firmada, expresando tu intención de querer asociarte (es un paso necesario desde el punto de vista legal).
 
-La carta es corta, pero tenés que poner tus datos, podés bajarte el .odt y editarla o el .pdf e imprimirla y llenarla a mano...
-
-    ODT: https://drive.google.com/open?id=1pWlMe347uXeyFxFz5V5JRFH16-xd8Xgh
-    PDF: https://drive.google.com/open?id=1UQg_33OeOqka-RSblJe6Qqqb_weX9AAk
+Nosotros te la generamos automáticamente (va adjunta), revisá los datos, imprimila y a mano poné lugar y fecha, firmá, aclará y poné tu DNI.
 
 Para acelerar el trámite, sacale una foto y mandánosla, pero también la vas a tener que mandar por correo postal o llevarla en mano a la sede de la Asociación Civil [0] (o traerla a algún evento de PyAr y dársela a cualquiera de la Comisión Directiva).  {% endif %}
 
@@ -23,10 +20,10 @@ Tenés que pagar la cuota social. En tu caso, para Socia/o tipo {{ member.catego
 Débito mensual, usando una tarjeta de crédito:
 
     {% if member.category == member.category.ACTIVE %}
-        http://mpago.la/c0H8
+        http://mpago.la/1WDPgB
 
     {% elif member.category == member.category.SUPPORTER %}
-        http://mpago.la/4rHr
+        http://mpago.la/3c4foF
 
     {% else %}
         {{ on_purpose_missing_var }} {% endif %}
