@@ -186,12 +186,12 @@ class ReportMissing(View):
 
     def _generate_letter(self, member):
         """Generate the letter to be signed."""
-        print("========================== PRODUCING LETTER", member)
         letter_svg_template = os.path.join(
             os.path.dirname(members.__file__), 'templates', 'members', 'carta.svg')
         path_prefix = "/tmp/letter"
         person = member.person
         person_info = {
+            'tiposocie': member.category.name,
             'nombre': person.first_name,
             'apellido': person.last_name,
             'dni': person.document_number,
@@ -206,12 +206,10 @@ class ReportMissing(View):
             'provincia': person.province,
             'pais': person.country,
         }
-        print("============== info", person_info)
 
         # this could be optimized to generate all PDFs at once, but we're fine so far
         (letter_filepath,) = certg.process(
             letter_svg_template, path_prefix, "dni", [person_info], images=None)
-        print("========== fpath", letter_filepath)
         return letter_filepath
 
     def post(self, request):
