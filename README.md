@@ -1,4 +1,4 @@
-# Aplicación web para la gestión de membresías de la Asociación Civil
+# Aplicación web para la gestión de membresías de la Asociación Civil [![Build Status](https://travis-ci.org/PyAr/asoc.svg?branch=master)](https://travis-ci.org/PyAr/asoc)
 
 ## Desarrollo
 
