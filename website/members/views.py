@@ -140,12 +140,11 @@ class ReportDebts(View):
             year = int(request.GET['limit_year'])
             month = int(request.GET['limit_month'])
         except (KeyError, ValueError):
-            # get by default two months before now, as users would be ok until paying that month
-            # inclusive, as the last month is the first month not really paid (current month is
-            # not yet finished)
+            # get by default one month before now, as it's the first month not really
+            # paid (current month is not yet finished)
             currently = now()
             year = currently.year
-            month = currently.month - 2
+            month = currently.month - 1
             if month <= 0:
                 year -= 1
                 month += 12
@@ -284,7 +283,7 @@ class ReportMissing(View):
             member.category == cat_collab and not member.has_collaborator_acceptance)
 
         # info from Person
-        missing_nickname = member.person.nickname is None
+        missing_nickname = member.person.nickname == ""
         # picture is complicated, bool() is used to check if the Image field has an associated
         # filename, and False itself is used as the "dont want a picture!" flag
         missing_picture = not member.person.picture and member.person.picture is not False

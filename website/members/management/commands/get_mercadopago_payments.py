@@ -17,12 +17,17 @@ logger = logging.getLogger('management_commands')
 class Command(BaseCommand):
     help = 'Import payments from JSON file'
 
+    def add_arguments(self, parser):
+        parser.add_argument('payment_id', type=int, nargs='?')
+
     def handle(self, *args, **options):
+        payment_id = options.get('payment_id')
+
         raw_info = self.get_raw_mercadopago_info()
         if raw_info is None:
             return
 
-        records = self.process_mercadopago(raw_info)
+        records = self.process_mercadopago(raw_info, payment_id)
         logic.create_recurring_payments(records)
 
     def get_raw_mercadopago_info(self):
@@ -41,11 +46,13 @@ class Command(BaseCommand):
         logger.info('Getting response from mercadopago, paging %s', response['response']['paging'])
         return response
 
-    def process_mercadopago(self, mercadopago_response):
+    def process_mercadopago(self, mercadopago_response, payment_id):
         """Process Mercadopago info, building a per-payer sorted structure."""
         payments = []
         for item in mercadopago_response['response']['results']:
             info = item['collection']
+            if payment_id is not None and info['id'] != payment_id:
+                continue
 
             # needed information to record the payment
             timestamp = parse_datetime(info['date_approved'])
