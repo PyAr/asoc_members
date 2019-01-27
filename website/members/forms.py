@@ -1,12 +1,9 @@
-from datetime import datetime
-
 from django import forms
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, HTML, Field as CrispyField, Row, MultiField, Button
-from crispy_forms.bootstrap import PrependedText, AppendedText
+from crispy_forms.layout import Layout, Div, Row
 
 
 from members.models import Person, Organization, Category
@@ -75,7 +72,8 @@ class SignupPersonForm(forms.ModelForm):
         # We need remove category before save person.
         category = self.cleaned_data.pop('category', '')
         person = super(SignupPersonForm, self).save(commit=False)
-        person.comments = "Se cargó a través del sitio web. Categoria seleccionada: %s." % category.name
+        person.comments = (
+            "Se cargó a través del sitio web. Categoria seleccionada: %s." % category.name)
         if commit:
             person.save()
         return person
@@ -94,7 +92,8 @@ class SignupPersonForm(forms.ModelForm):
 
         street = self.cleaned_data.get("street_address", "")
         if street and (street == street.upper() or street == street.lower()):
-            self.add_error('street_address', _('No escriba todo en minúsculas o todo en mayúsculas.'))
+            self.add_error(
+                'street_address', _('No escriba todo en minúsculas o todo en mayúsculas.'))
 
         return self.cleaned_data
 

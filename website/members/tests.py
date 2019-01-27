@@ -150,6 +150,23 @@ class CreatePaymentTestCase(TestCase):
         amount = DEFAULT_FEE * 1.1
         self.assertRaises(ValueError, logic.create_payment, member, now(), amount, ps)
 
+    def test_from_specific_yearmonth(self):
+        # needed objects
+        member = create_member(first_payment_year=2017, first_payment_month=3)
+        ps = create_payment_strategy()
+
+        # create the payment
+        amount = DEFAULT_FEE * 3
+        logic.create_payment(member, now(), amount, ps, first_unpaid=(2017, 5))
+
+        # check
+        payed_fees = Quota.objects.all()
+        self.assertEqual([(x.year, x.month) for x in payed_fees], [
+            (2017, 5),
+            (2017, 6),
+            (2017, 7),
+        ])
+
 
 class CreateRecurringPaymentTestCase(TestCase):
     """Tests for the recurring payments creation."""

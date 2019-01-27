@@ -7,3 +7,4 @@ gunicorn==19.8.0
 mercadopago==0.3.4
 psycopg2_binary==2.7.4
 python-dateutil==2.7.2
+certg==4.2

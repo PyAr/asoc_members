@@ -1,9 +1,11 @@
 import logging
 import re
+import os
 import time
 import uuid
 from urllib import parse
 
+import certg
 from django.contrib import messages
 from django.core.mail import EmailMessage
 from django.http import HttpResponse
@@ -15,6 +17,7 @@ from django.utils.translation import ugettext as _
 from django.views import View
 from django.views.generic import TemplateView, CreateView
 
+import members
 from members import logic
 from members.forms import SignupPersonForm, SignupOrganizationForm
 from members.models import Person, Organization, Category, Member
@@ -111,11 +114,11 @@ class ReportDebts(View):
                     "Error when building the report missing mail result, info: %s", debt_info)
                 return HttpResponse("Error al armar la página")
             recipient = f"{member.entity.full_name} <{member.entity.email}>"
-            msg = EmailMessage(
+            mail = EmailMessage(
                 self.MAIL_SUBJECT, text, self.MAIL_FROM, [recipient],
                 cc=[self.MAIL_MANAGER], reply_to=[self.MAIL_MANAGER])
             try:
-                msg.send()
+                mail.send()
             except Exception as err:
                 sent_error += 1
                 logger.error(
@@ -137,12 +140,11 @@ class ReportDebts(View):
             year = int(request.GET['limit_year'])
             month = int(request.GET['limit_month'])
         except (KeyError, ValueError):
-            # get by default two months before now, as users would be ok until paying that month
-            # inclusive, as the last month is the first month not really paid (current month is
-            # not yet finished)
+            # get by default one month before now, as it's the first month not really
+            # paid (current month is not yet finished)
             currently = now()
             year = currently.year
-            month = currently.month - 2
+            month = currently.month - 1
             if month <= 0:
                 year -= 1
                 month += 12
@@ -181,6 +183,34 @@ class ReportMissing(View):
     MAIL_FROM = 'Lalita <lalita@ac.python.org.ar>'
     MAIL_MANAGER = 'presidencia@ac.python.org.ar>'
 
+    def _generate_letter(self, member):
+        """Generate the letter to be signed."""
+        letter_svg_template = os.path.join(
+            os.path.dirname(members.__file__), 'templates', 'members', 'carta.svg')
+        path_prefix = "/tmp/letter"
+        person = member.person
+        person_info = {
+            'tiposocie': member.category.name,
+            'nombre': person.first_name,
+            'apellido': person.last_name,
+            'dni': person.document_number,
+            'email': person.email,
+            'nacionalidad': person.nationality,
+            'estadocivil': person.marital_status,
+            'profesion': person.occupation,
+            'fechanacimiento': person.birth_date.strftime("%Y-%m-%d"),
+            'domicilio': person.street_address,
+            'ciudad': person.city,
+            'codpostal': person.zip_code,
+            'provincia': person.province,
+            'pais': person.country,
+        }
+
+        # this could be optimized to generate all PDFs at once, but we're fine so far
+        (letter_filepath,) = certg.process(
+            letter_svg_template, path_prefix, "dni", [person_info], images=None)
+        return letter_filepath
+
     def post(self, request):
         raw_sendmail = parse.parse_qs(request.body)[b'sendmail']
         to_send_mail_ids = map(int, raw_sendmail)
@@ -190,6 +220,8 @@ class ReportMissing(View):
         errors_code = str(uuid.uuid4())
         for member_id in to_send_mail_ids:
             member = Member.objects.get(id=member_id)
+
+            # create the mail text from the template
             missing_info = self._analyze_member(member)
             missing_info['annual_fee'] = member.category.fee * 12
             missing_info['member'] = member
@@ -201,20 +233,36 @@ class ReportMissing(View):
                 logger.error(
                     "Error when building the report missing mail result, info: %s", missing_info)
                 return HttpResponse("Error al armar la página")
+
+            # if missing the signed letter, produce it and attach it
+            if missing_info['missing_signed_letter']:
+                letter_filepath = self._generate_letter(member)
+
+            # build the mail
             recipient = f"{member.entity.full_name} <{member.entity.email}>"
-            msg = EmailMessage(
+            mail = EmailMessage(
                 self.MAIL_SUBJECT, text, self.MAIL_FROM, [recipient],
                 cc=[self.MAIL_MANAGER], reply_to=[self.MAIL_MANAGER])
+            if missing_info['missing_signed_letter']:
+                mail.attach_file(letter_filepath)
+
+            # actually send it
             try:
-                msg.send()
+                mail.send()
             except Exception as err:
                 sent_error += 1
                 logger.error(
                     "Problems sending email [%s] to member %s: %r", errors_code, member, err)
             else:
                 sent_ok += 1
-        deltat = time.time() - tini
+            finally:
+                if missing_info['missing_signed_letter']:
+                    try:
+                        os.unlink(letter_filepath)
+                    except Exception as exc:
+                        logger.warning("Couldn't remove letter file %r: %r", letter_filepath, exc)
 
+        deltat = time.time() - tini
         context = {
             'sent_ok': sent_ok,
             'sent_error': sent_error,
@@ -235,7 +283,7 @@ class ReportMissing(View):
             member.category == cat_collab and not member.has_collaborator_acceptance)
 
         # info from Person
-        missing_nickname = member.person.nickname is None
+        missing_nickname = member.person.nickname == ""
         # picture is complicated, bool() is used to check if the Image field has an associated
         # filename, and False itself is used as the "dont want a picture!" flag
         missing_picture = not member.person.picture and member.person.picture is not False
