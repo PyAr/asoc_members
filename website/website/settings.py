@@ -128,11 +128,11 @@ class Base(Configuration):
     MEDIA_ROOT = BASE_DIR
 
 
+# try to import the local settings; if the file is not there just create a stub class
+# for the inheritance later
 try:
     from local_settings import LocalSettings
-except ImportError as err:
-    print("Error importing local settings", repr(err))
-
+except ModuleNotFoundError as err:
     class LocalSettings:
         pass
 
