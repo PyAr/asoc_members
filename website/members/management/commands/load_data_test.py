@@ -1,3 +1,6 @@
+"""
+Populates database with sample data.
+"""
 from django.core.management.base import BaseCommand
 from django.core import management
 from django.core.management.commands import loaddata
@@ -6,13 +9,13 @@ from members.models import Person, Organization
 
 
 class Command(BaseCommand):
-    help = "Closes the specified poll for voting"
+    help = "Create sample data for testing."
 
     def add_arguments(self, parser):
         parser.add_argument("count", type=int)
 
     def handle(self, *args, **options):
-        management.call_command(loaddata.Command(), "category", verbosity=0)
+        management.call_command(loaddata.Command(), "categories", verbosity=0)
         person_count = Person.objects.count()
         organization_count = Organization.objects.count()
 

@@ -9,16 +9,6 @@ from faker import Faker
 fake = Faker("es_MX")
 
 
-class CategoryFactory(DjangoModelFactory):
-    name = factory.LazyAttribute(lambda x: choice(Category.CATEGORY_CHOICES)[0])
-    description = factory.fuzzy.FuzzyText(length=50)
-    fee = factory.fuzzy.FuzzyDecimal(0, 50000, 2)
-
-    class Meta:
-        model = Category
-        django_get_or_create = ("name",)
-
-
 class PatronFactory(DjangoModelFactory):
     name = fake.name
     email = fake.email
@@ -34,9 +24,10 @@ class MemberFactory(DjangoModelFactory):
     has_student_certificate = fake.pybool
     has_subscription_letter = fake.pybool
     has_collaborator_acceptance = fake.pybool
-    # category = factory.Iterator(Category.objects.all())
+    category = factory.Iterator(Category.objects.all())
     patron = factory.SubFactory(PatronFactory)
-    category = factory.SubFactory(CategoryFactory)
+    first_payment_month = fake.month
+    first_payment_year = factory.fuzzy.FuzzyInteger(2010, 2025)
 
     class Meta:
         model = Member
@@ -65,9 +56,18 @@ class PersonFactory(DjangoModelFactory):
     first_name = fake.first_name
     last_name = fake.last_name
     membership = factory.SubFactory(MemberFactory)
-    document_number = factory.fuzzy.FuzzyInteger(90000000, 99999999)
+    document_number = factory.fuzzy.FuzzyInteger(9_000_000, 99_999_999)
     email = fake.email
     street_address = fake.street_address
+    nationality = fake.country
+    marital_status = factory.Iterator(['casadx', 'solterx', 'viudx'])
+    occupation = fake.job
+    street_address = fake.street_address
+    zip_code = factory.fuzzy.FuzzyInteger(1000, 9999)
+    city = fake.city
+    province = fake.state
+    country = fake.country
+    comments = fake.text
 
     class Meta:
         model = Person
