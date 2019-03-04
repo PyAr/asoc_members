@@ -6,14 +6,21 @@ name = "pypi"
 [packages]
 django = "==2.0.4"
 django-extensions = "==2.0.7"
+django-configurations="*"
+django-crispy-forms="*"
 pillow = "*"
 python-dotenv = "*"
 mercadopago = "*"
-"psycopg2-binary" = "*"
-google-api-python-client = "*"
+psycopg2-binary = "*"
+gunicorn = "*"
+python-dateutil = "*"
+certg = "*"
 
 [dev-packages]
 ipython = "*"
+ipdb = "*"
+logassert = "*"
 
 [requires]
 python_version = "3.6"
+

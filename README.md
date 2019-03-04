@@ -1,11 +1,12 @@
 # Aplicación web para la gestión de membresías de la Asociación Civil
 
-## Desarrollo (con Docker)
+## Desarrollo
 
+### DOCKER
 ```bash
-make build-dev
-make start-dev
-make install-dev
+$ make build-dev
+$ make start-dev
+$ make install-dev
 ```
 
 If you need to create a Django's superuser:
@@ -19,16 +20,21 @@ Password (again):
 Superuser created successfully.
 ```
 
+### PIPENV
+```bash
+$ pipenv install
+```
+
 
 ## Producción (con Docker)
 
 ```bash
 # Actualizar el .env (copiado a partir del .env.dist)
-export $(grep -v '^#' .env)
-make build-prod
-make up-prod
-make migrate
-make collectstatic
+$ export $(grep -v '^#' .env)
+$ make build-prod
+$ make up-prod
+$ make migrate
+$ make collectstatic
 ```
 
 If you need to create a Django's superuser:
