@@ -12,5 +12,7 @@ before_install:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
 
+install: pip install -r ./config/requirements.txt --user
+
 script: make test
 
