@@ -103,6 +103,38 @@ class SignupPagesTests(TestCase):
         person = Person.objects.get(nickname='pepepin')
         self.assertEqual(person.first_name, 'Pepe')
         self.assertEqual(person.email, 'pepe@pomp.in')
+        self.assertEqual(person.birth_date, datetime.date(1999, 12, 11))
+        self.assertEqual(person.membership.category.pk, cat.pk)
+        self.assertEqual(person.membership.patron.email, person.email)
+
+    def test_signup_submit_success_without_optionals(self):
+        # crear categoria
+        cat = Category.objects.create(name='Activo', description='', fee=50)
+
+        data = {
+            'category': cat.pk,
+            'first_name': 'Pepe',
+            'last_name': "Pompin",
+            'document_number': '124354656',
+            'email': 'pepe@pomp.in',
+            'nationality': 'Argentino',
+            'marital_status': 'Soltero',
+            'occupation': 'Python dev',
+            'birth_date': '11/12/1999',
+            'street_address': 'Calle False 123',
+            'zip_code': '12345',
+            'city': 'Córdoba',
+            'province': 'Córdoba',
+            'country': 'Argentina',
+        }
+        response = self.client.get(reverse('signup_person'))
+        response = self.client.post(reverse('signup_person'), data=data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('signup_thankyou'))
+        person = Person.objects.get(document_number='124354656')
+        self.assertEqual(person.first_name, 'Pepe')
+        self.assertEqual(person.email, 'pepe@pomp.in')
+        self.assertEqual(person.birth_date, datetime.date(1999, 12, 11))
 
     def test_signup_submit_fail(self):
         # crear categoria

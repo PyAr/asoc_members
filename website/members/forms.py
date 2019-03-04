@@ -7,7 +7,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, Row
 
 
-from members.models import Person, Organization, Category, Member
+from members.models import Person, Organization, Category, Member, Patron
 
 
 class SignupPersonForm(forms.ModelForm):
@@ -15,7 +15,7 @@ class SignupPersonForm(forms.ModelForm):
         label=_('Categoría'), queryset=Category.objects.order_by('-fee'),
         required=True, widget=forms.RadioSelect())
 
-    birth_date = forms.DateField(
+    birth_date = forms.DateField(label=_('Fecha de nacimiento'),
         input_formats=settings.DATE_INPUT_FORMATS, help_text=_('Formato: DD/MM/AAAA'))
 
     class Meta:
@@ -30,7 +30,8 @@ class SignupPersonForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(SignupPersonForm, self).__init__(*args, **kwargs)
         # make all fields required
-        for field in self.fields:
+        fields = [field for field in self.fields if not field in ['picture', 'nickname']]
+        for field in fields:
             self.fields[field].required = True
         self.fields['category'].empty_label = None
         self.helper = FormHelper(self)
@@ -75,8 +76,13 @@ class SignupPersonForm(forms.ModelForm):
         person = super(SignupPersonForm, self).save(commit=False)
         person.comments = (
             "Se cargó a través del sitio web. Categoria seleccionada: %s." % category.name)
+        patron = Patron(
+            name=f"{person.first_name} {person.last_name}",
+            email=person.email, comments="Se cargó a través del sitio web")
         member = Member(registration_date=now(), category=category)
         if commit:
+            patron.save()
+            member.patron = patron
             member.save()
             person.membership = member
             person.save()

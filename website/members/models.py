@@ -92,7 +92,7 @@ class Member(TimeStampedModel):
 def picture_upload_path(instance, filename):
     """Customize the picture's upload path to MEDIA_ROOT/pictures/lastname_document.ext."""
     ext = filename.split('.')[-1]
-    lastname = slugify(instance.last_name.lower().replace(' ', ''))
+    lastname = instance.last_name.lower().replace(' ', '')
     return f"pictures/{lastname}_{instance.document_number}.{ext}"
 
 
