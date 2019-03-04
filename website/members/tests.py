@@ -1,11 +1,17 @@
+import os
 import datetime
+import tempfile
 
 import logassert
-from django.test import TestCase
+from django.conf import settings
+from django.test import TestCase, override_settings
 from django.utils.timezone import now, make_aware
+from django.urls import reverse
 
 from members import logic, views
-from members.models import Member, Patron, Category, PaymentStrategy, Quota
+from members.models import (
+    Member, Patron, Category, PaymentStrategy, Quota, Person,
+    Organization)
 
 
 DEFAULT_FEE = 100
@@ -41,6 +47,119 @@ def create_payment_strategy(platform=None, payer_id=None):
     payer_id = "" if payer_id is None else payer_id
     return PaymentStrategy.objects.create(
         platform=platform, id_in_platform=payer_id, patron=patron)
+
+
+def get_temporary_image():
+    image_path = os.path.join(settings.BASE_DIR, '..', 'test_media', 'test_image.png')
+    return open(image_path, 'rb')
+
+
+@override_settings(MEDIA_ROOT=tempfile.gettempdir())
+class SignupPagesTests(TestCase):
+
+    def test_get_signup_page(self):
+        response = self.client.get(reverse('signup'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse('signup_person'))
+        self.assertContains(response, reverse('signup_organization'))
+        self.assertTemplateUsed(response, 'members/signup_initial.html')
+
+    def test_get_signup_person_page(self):
+        response = self.client.get(reverse('signup_person'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'members/signup_form.html')
+
+    def test_get_signup_org_page(self):
+        response = self.client.get(reverse('signup_organization'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'members/signup_org_form.html')
+
+    def test_signup_submit_success(self):
+        # crear categoria
+        cat = Category.objects.create(name='Activo', description='', fee=50)
+
+        data = {
+            'category': cat.pk,
+            'first_name': 'Pepe',
+            'last_name': "Pompin",
+            'document_number': '124354656',
+            'email': 'pepe@pomp.in',
+            'nationality': 'Argentino',
+            'marital_status': 'Soltero',
+            'occupation': 'Python dev',
+            'birth_date': '11/12/1999',
+            'street_address': 'Calle False 123',
+            'zip_code': '12345',
+            'city': 'Córdoba',
+            'province': 'Córdoba',
+            'country': 'Argentina',
+            'nickname': 'pepepin',
+            'picture': get_temporary_image()
+        }
+        response = self.client.get(reverse('signup_person'))
+        response = self.client.post(reverse('signup_person'), data=data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('signup_thankyou'))
+        person = Person.objects.get(nickname='pepepin')
+        self.assertEqual(person.first_name, 'Pepe')
+        self.assertEqual(person.email, 'pepe@pomp.in')
+
+    def test_signup_submit_fail(self):
+        # crear categoria
+        cat = Category.objects.create(name='Activo', description='', fee=50)
+
+        data = {
+            'category': cat.pk,
+            'first_name': 'Pepe',
+            'last_name': "",
+            'document_number': '124354656',
+            'email': 'pepe@pomp.in',
+            'nationality': 'Argentino',
+            'marital_status': 'Soltero',
+            'occupation': 'Python dev',
+            'birth_date': '11/12/1999',
+            'street_address': 'Calle False 123',
+            'zip_code': '12345',
+            'city': 'Córdoba',
+            'province': 'Córdoba',
+            'country': 'Argentina',
+            'nickname': 'pepepin',
+            'picture': get_temporary_image()
+        }
+        response = self.client.get(reverse('signup_person'))
+        response = self.client.post(reverse('signup_person'), data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue("last_name" in response.context["form"].errors)
+
+    def test_signup_org_submit_success(self):
+        random_text = 'oihihepiuhsidufhaohfiubiufwieufh'
+        data = {
+            'name': 'Orga',
+            'contact_info': random_text,
+            'document_number': "3056456530",
+            'address': 'Calle False 123',
+            'social_media': '@orga',
+        }
+        response = self.client.get(reverse('signup_organization'))
+        response = self.client.post(reverse('signup_organization'), data=data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('signup_thankyou'))
+        orga = Organization.objects.get(name='Orga')
+        self.assertEqual(orga.contact_info, random_text)
+
+    def test_signup_org_submit_fail(self):
+        random_text = 'oihihepiuhsidufhaohfiubiufwieufh'
+        data = {
+            'name': '',
+            'contact_info': random_text,
+            'document_number': "3056456530",
+            'address': 'Calle False 123',
+            'social_media': '@orga',
+        }
+        response = self.client.get(reverse('signup_organization'))
+        response = self.client.post(reverse('signup_organization'), data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue("name" in response.context["form"].errors)
 
 
 class CreatePaymentTestCase(TestCase):

@@ -1,6 +1,7 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.utils.text import slugify
 
 from django_extensions.db.models import TimeStampedModel
 
@@ -91,7 +92,7 @@ class Member(TimeStampedModel):
 def picture_upload_path(instance, filename):
     """Customize the picture's upload path to MEDIA_ROOT/pictures/lastname_document.ext."""
     ext = filename.split('.')[-1]
-    lastname = instance.last_name.lower().replace(' ', '')
+    lastname = slugify(instance.last_name.lower().replace(' ', ''))
     return f"pictures/{lastname}_{instance.document_number}.{ext}"
 
 

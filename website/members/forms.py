@@ -1,12 +1,13 @@
 from django import forms
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
+from django.utils.timezone import now
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, Row
 
 
-from members.models import Person, Organization, Category
+from members.models import Person, Organization, Category, Member
 
 
 class SignupPersonForm(forms.ModelForm):
@@ -74,7 +75,10 @@ class SignupPersonForm(forms.ModelForm):
         person = super(SignupPersonForm, self).save(commit=False)
         person.comments = (
             "Se cargó a través del sitio web. Categoria seleccionada: %s." % category.name)
+        member = Member(registration_date=now(), category=category)
         if commit:
+            member.save()
+            person.membership = member
             person.save()
         return person
 
