@@ -8,18 +8,18 @@ from django.core.management.base import BaseCommand, CommandError
 from members.models import Person, Patron, Category, Member
 
 MONTHS = {
-    'ene.': 1,
-    'feb.': 2,
-    'mar.': 3,
-    'abr.': 4,
-    'may.': 5,
-    'jun.': 6,
-    'jul.': 7,
-    'ago.': 8,
-    'sep.': 9,
-    'oct.': 10,
-    'nov.': 11,
-    'dic.': 12,
+    "ene.": 1,
+    "feb.": 2,
+    "mar.": 3,
+    "abr.": 4,
+    "may.": 5,
+    "jun.": 6,
+    "jul.": 7,
+    "ago.": 8,
+    "sep.": 9,
+    "oct.": 10,
+    "nov.": 11,
+    "dic.": 12,
 }
 
 
@@ -61,14 +61,14 @@ class Command(BaseCommand):
     help = "Import people from csv generated with data from Google Spreadsheet"
 
     def add_arguments(self, parser):
-        parser.add_argument('filename', type=str)
+        parser.add_argument("filename", type=str)
 
     def handle(self, *args, **options):
-        if options['filename'] is None:
+        if options["filename"] is None:
             raise CommandError("You must specify the path of file.")
 
         # make sure file path resolves
-        if not os.path.isfile(options['filename']):
+        if not os.path.isfile(options["filename"]):
             raise CommandError("File does not exists.")
 
         with open(options["filename"]) as csvfile:
@@ -78,13 +78,13 @@ class Command(BaseCommand):
                 self.stdout.write("Member imported: {}".format(member))
 
     def create(self, row):
-        first_name = row['Nombre'].strip()
-        last_name = row['Apellido'].strip()
-        email = row['EMail'].strip()
+        first_name = row["Nombre"].strip()
+        last_name = row["Apellido"].strip()
+        email = row["EMail"].strip()
         patron = Patron(
             name="{} {}".format(first_name, last_name),
             email=email,
-            comments='Automatically loaded with PyCamp 2018 script',
+            comments="Automatically loaded with PyCamp 2018 script",
         )
         patron.save()
 
@@ -92,29 +92,31 @@ class Command(BaseCommand):
         member = Member(
             category=category,
             patron=patron,
-            has_student_certificate=row['C.Estud'].strip() == "✓",
-            has_subscription_letter=row['Firmó'].strip() == "✓"
+            has_student_certificate=row["C.Estud"].strip() == "✓",
+            has_subscription_letter=row["Firmó"].strip() == "✓",
         )
         member.save()
 
-        street_address, city, zip_code, province, country = split_address(row['Domicilio'].strip())
+        street_address, city, zip_code, province, country = split_address(
+            row["Domicilio"].strip()
+        )
         person = Person(
             first_name=first_name,
             last_name=last_name,
             email=email,
-            document_number=row['DNI'].strip(),
-            nickname=row['Nick'].strip(),
-            nationality=row['Nacionalidad'].strip(),
-            marital_status=row['Estado Civil'].strip(),
-            occupation=row['Profesión'].strip(),
-            birth_date=get_date(row['Fecha Nacimiento'].strip()),
+            document_number=row["DNI"].strip(),
+            nickname=row["Nick"].strip(),
+            nationality=row["Nacionalidad"].strip(),
+            marital_status=row["Estado Civil"].strip(),
+            occupation=row["Profesión"].strip(),
+            birth_date=get_date(row["Fecha Nacimiento"].strip()),
             street_address=street_address,
             city=city,
             zip_code=zip_code,
             province=province,
             country=country,
             membership=member,
-            comments='Automatically loaded with PyCamp 2018 script',
+            comments="Automatically loaded with PyCamp 2018 script",
         )
         person.save()
 
