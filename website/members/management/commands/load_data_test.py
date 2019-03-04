@@ -4,7 +4,8 @@ Populates database with sample data.
 from django.core.management.base import BaseCommand
 from django.core import management
 from django.core.management.commands import loaddata
-from members.factories import PersonFactory, OrganizationFactory
+from members.factories import (PersonFactory, OrganizationFactory, PaymentFactory,
+                               PaymentStrategyFactory)
 from members.models import Person, Organization
 
 
@@ -22,6 +23,8 @@ class Command(BaseCommand):
         for i in range(options["count"]):
             PersonFactory()
             OrganizationFactory()
+            PaymentStrategyFactory()
+            PaymentFactory()
 
         person_count = Person.objects.count() - person_count
         organization_count = Organization.objects.count() - organization_count

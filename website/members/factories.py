@@ -1,9 +1,12 @@
+from random import choice
+
 import factory
 import factory.fuzzy
 from factory.django import DjangoModelFactory
-from members.models import Category, Patron, Member, Organization, Person
-from random import choice
 from faker import Faker
+
+from members.models import (Category, Patron, Member, Organization, Person, PaymentStrategy,
+                            Payment)
 
 
 fake = Faker("es_MX")
@@ -81,3 +84,41 @@ class PersonFactory(DjangoModelFactory):
     @factory.lazy_attribute
     def nickname(self):
         return fake.profile()["username"]
+
+
+class PaymentStrategyFactory(DjangoModelFactory):
+    platform = factory.LazyAttribute(lambda x: choice(PaymentStrategy.PLATFORM_CHOICES)[0])
+    id_in_platform = fake.text
+    comments = fake.text
+    patron = factory.Iterator(Patron.objects.all())
+
+    class Meta:
+        model = PaymentStrategy
+        django_get_or_create = ("patron",)
+
+
+class PaymentFactory(DjangoModelFactory):
+    strategy = factory.Iterator(PaymentStrategy.objects.all())
+    comments = fake.text
+    invoice_id = factory.fuzzy.FuzzyInteger(100, 99999)
+
+    @factory.lazy_attribute
+    def timestamp(self):
+        datetime_start = fake.past_datetime(start_date="-1y", tzinfo=None)
+        return fake.date_time_ad(start_datetime=datetime_start)
+
+    @factory.lazy_attribute
+    def amount(self):
+        return self.strategy.patron.beneficiary.first().category.fee
+
+    class Meta:
+        model = Payment
+        django_get_or_create = ("invoice_id",)
+
+
+class QuotaFactory(DjangoModelFactory):
+    payment = factory.Iterator(Payment.objects.all())
+
+    @factory.lazy_attribute
+    def member(self):
+        return self.payment.strategy.patron.beneficiary.first()
