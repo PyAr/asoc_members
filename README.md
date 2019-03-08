@@ -1,4 +1,4 @@
-# Aplicación web para la gestión de membresías de la Asociación Civil https://travis-ci.org/PyAr/asoc_members.svg?branch=develop
+# Aplicación web para la gestión de membresías de la Asociación Civil [![Build Status](https://travis-ci.org/PyAr/asoc_members.svg?branch=develop)](https://travis-ci.org/PyAr/asoc_members)
 
 ## Desarrollo (con Docker)
 
