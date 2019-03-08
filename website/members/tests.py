@@ -484,8 +484,8 @@ class CreateRecurringPaymentTestCase(TestCase):
         create_member(patron=ps.patron)
 
         # create two payments in different timestamps
-        tstamp1 = make_aware(datetime.datetime(year=2017, month=2, day=5))
-        tstamp2 = make_aware(datetime.datetime(year=2017, month=2, day=6))
+        tstamp1 = make_aware(datetime.datetime(year=2017, month=2, day=1))
+        tstamp2 = make_aware(datetime.datetime(year=2017, month=3, day=1))
         records = [
             {'timestamp': tstamp1, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
             {'timestamp': tstamp2, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
@@ -494,18 +494,21 @@ class CreateRecurringPaymentTestCase(TestCase):
         assert len(Quota.objects.all()) == 2
 
         # now create other two, NOT overlapping
-        tstamp3 = make_aware(datetime.datetime(year=2017, month=2, day=7))
-        tstamp4 = make_aware(datetime.datetime(year=2017, month=2, day=8))
+        tstamp3 = make_aware(datetime.datetime(year=2017, month=6, day=1))
+        tstamp4 = make_aware(datetime.datetime(year=2017, month=7, day=1))
+        tstamp5 = make_aware(datetime.datetime(year=2017, month=8, day=1))
         records = [
             {'timestamp': tstamp3, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
             {'timestamp': tstamp4, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
+            {'timestamp': tstamp5, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
+
         ]
         logic.create_recurring_payments(records)
 
         # check we have no more payments created and proper error log (including the last
         # recorded and two new retrieved)
-        self.assertEqual(len(Quota.objects.all()), 2)
-        self.assertLoggedError("Payment not found", str(tstamp2), "2017, 2, 7", "2017, 2, 8")
+        self.assertEqual(len(Quota.objects.all()), 5)
+        self.assertLoggedWarning("Found exceeding payment limit", str(tstamp2), f'remaining: {len(records)}')
 
 
 class GetDebtStateTestCase(TestCase):
