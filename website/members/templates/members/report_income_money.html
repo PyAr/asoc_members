@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        {% block heading %}
+        <h1 class="text-center">Reportes</h1>
+        <h2 class="text-center">Ingresos, dinero</h2>
+        {% endblock %}
+        <div class="inner-content">
+            {% block inner-content %}
+                <div>
+                <table class="table">
+                <tr> 
+                    <th>Año mes</th>
+                    <th>Monto</th>
+                </tr>
+                {% for info in info_per_month %}
+                    <tr> 
+                        <td>{{ info.year }}-{{ info.month|stringformat:"02d" }}</td>
+                        <td>{{ info.amount }}</td>
+                    </tr>
+                {% endfor %}
+                </table>
+            {% endblock %}
+        </div>
+    </div>
+
+{% endblock %}

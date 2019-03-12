@@ -15,7 +15,7 @@ def _increment_year_month(year, month):
     return year, month
 
 
-def _get_year_month_range(year, month, quantity):
+def get_year_month_range(year, month, quantity):
     """Return several year/month pairs from a given start."""
     yield year, month
     for _ in range(quantity - 1):
@@ -47,7 +47,7 @@ def create_payment(member, timestamp, amount, payment_strategy, first_unpaid=Non
     payment = Payment.objects.create(timestamp=timestamp, amount=amount, strategy=payment_strategy)
 
     # create the monthly fee(s)
-    yearmonths = _get_year_month_range(first_unpaid_year, first_unpaid_month, paying_quant_int)
+    yearmonths = get_year_month_range(first_unpaid_year, first_unpaid_month, paying_quant_int)
     for year, month in yearmonths:
         Quota.objects.create(payment=payment, month=month, year=year, member=member)
 
