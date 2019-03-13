@@ -9,6 +9,7 @@ from members.models import Person, PaymentStrategy, Organization
 PLATFORMS = {
     'todopago': PaymentStrategy.TODO_PAGO,
     'transfer': PaymentStrategy.TRANSFER,
+    'credit': PaymentStrategy.CREDIT,
 }
 
 
@@ -21,6 +22,7 @@ class Command(BaseCommand):
         parser.add_argument('date', type=str)
         parser.add_argument('platform', type=str)
         parser.add_argument('amount', type=str)
+        parser.add_argument('comments', type=str, nargs='?')
 
     def handle(self, *args, **options):
         if options['dni-cuit'] is None:
@@ -37,29 +39,31 @@ class Command(BaseCommand):
             person = Person.objects.get(document_number=options['dni-cuit'])
             member = person.membership
         except Person.DoesNotExist:
-            print("============= not a person! organization?")
+            print("Not a person! organization?")
             try:
                 organiz = Organization.objects.get(document_number=options['dni-cuit'])
                 member = organiz.membership
             except Organization.DoesNotExist:
-                print("============= not an organization either!")
-                print("============= FAILED")
+                print("Not an organization either!")
+                print("FAILED")
                 return
 
-        print("======= Member:", member)
+        print("Member:", member)
 
         timestamp = datetime.datetime.strptime(options['date'], "%Y-%m-%d")
-        print("======= Timestamp:", timestamp)
+        print("Timestamp:", timestamp)
 
         amount = decimal.Decimal(options['amount'])
-        print("======= Amount:", amount)
+        print("Amount:", amount)
 
         platform = PLATFORMS[options['platform']]
-        print("======= Platform:", platform)
+        print("Platform:", platform)
 
         strategy, _ = PaymentStrategy.objects.get_or_create(
             platform=platform, id_in_platform='', patron=member.patron)
-        print("======= Strategy:", strategy)
+        print("Strategy:", strategy)
 
-        logic.create_payment(member, timestamp, amount, strategy, first_unpaid=first_unpaid)
-        print("======= Done")
+        comments = options.get('comments', '')
+        logic.create_payment(
+            member, timestamp, amount, strategy, first_unpaid=first_unpaid, comments=comments)
+        print("Done")

@@ -23,7 +23,7 @@ def get_year_month_range(year, month, quantity):
         yield year, month
 
 
-def create_payment(member, timestamp, amount, payment_strategy, first_unpaid=None):
+def create_payment(member, timestamp, amount, payment_strategy, first_unpaid=None, comments=''):
     """Create a payment from the given strategy to the specific member."""
     # get the latest unpaid monthly fee
     if first_unpaid is None:
@@ -44,7 +44,8 @@ def create_payment(member, timestamp, amount, payment_strategy, first_unpaid=Non
             "Paying amount too inexact! amount={} fee={}".format(amount, member.category.fee))
 
     # create the payment itself
-    payment = Payment.objects.create(timestamp=timestamp, amount=amount, strategy=payment_strategy)
+    payment = Payment.objects.create(
+        timestamp=timestamp, amount=amount, strategy=payment_strategy, comments=comments)
 
     # create the monthly fee(s)
     yearmonths = get_year_month_range(first_unpaid_year, first_unpaid_month, paying_quant_int)
