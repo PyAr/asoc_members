@@ -225,10 +225,12 @@ class PaymentStrategy(TimeStampedModel):
     MERCADO_PAGO = 'mercado pago'
     TODO_PAGO = 'todo pago'
     TRANSFER = 'transfer'
+    CREDIT = 'credit'
     PLATFORM_CHOICES = (
         (MERCADO_PAGO, 'Mercado Pago'),
         (TODO_PAGO, 'Todo Pago'),
         (TRANSFER, 'Transferencia Bancaria'),
+        (CREDIT, 'Crédito Bonificado'),
     )
 
     platform = models.CharField(
