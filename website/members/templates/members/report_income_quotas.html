@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        {% block heading %}
+        <h1 class="text-center">Reportes</h1>
+        <h2 class="text-center">Ingresos, cuotas</h2>
+        {% endblock %}
+        <div class="inner-content">
+            {% block inner-content %}
+                <div>
+                <table class="table">
+                <tr> 
+                    <th>Año mes</th>
+                    {% for categ in categories %}
+                        <th colspan="2">{{ categ }} total/pagos</th>
+                    {% endfor %}
+                    <th>$$$ teórico total</th>
+                    <th>$$$ pago real</th>
+                    <th>$ %</th>
+                </tr>
+                {% for info in info_per_month %}
+                    <tr> 
+                        <td>{{ info.year }}-{{ info.month|stringformat:"02d" }}</td>
+                        {% for member in info.members_info %}
+                            <td>{{ member.total }}</td>
+                            <td>{{ member.paid }}</td>
+                        {% endfor %}
+                        <td>{{ info.total }}</td>
+                        <td>{{ info.real }}</td>
+                        <td>{% widthratio info.real info.total 100 %}</td>
+                    </tr>
+                {% endfor %}
+                </table>
+            {% endblock %}
+        </div>
+    </div>
+
+{% endblock %}
