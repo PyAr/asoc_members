@@ -63,7 +63,7 @@ class Command(BaseCommand):
             platform=platform, id_in_platform='', patron=member.patron)
         print("Strategy:", strategy)
 
-        comments = options.get('comments', '')
+        comments = options['comments'] or ''
         logic.create_payment(
             member, timestamp, amount, strategy, first_unpaid=first_unpaid, comments=comments)
         print("Done")
