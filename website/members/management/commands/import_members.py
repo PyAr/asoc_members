@@ -10,7 +10,7 @@ class Command(BaseCommand):
     help = "Import members from csv generated with data from Google Spreadsheet"
 
     def add_arguments(self, parser):
-        parser.add_argument('--dry-run', type=bool, nargs='?', default=False)
+        parser.add_argument('--dry-run', action='store_true', default=False)
         parser.add_argument('filename', type=str)
 
     def handle(self, *args, **options):
@@ -32,12 +32,18 @@ class Command(BaseCommand):
             "Fecha Nacimiento",
             "Estado Civil",
             "Profesión",
-            "Dirección",
-            "Ciudad",
             "CP",
-            "Provincia",
-            "Pais",
+            "Dirección",
             "Forma de pago",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            "Pais",
+            "Provincia",
+            "Ciudad",
         ]
 
         with open(options["filename"]) as fh:
@@ -49,7 +55,8 @@ class Command(BaseCommand):
                 row['Fecha Nacimiento'] = datetime.datetime.strptime(
                     row['Fecha Nacimiento'], "%m/%d/%Y")  # English!!
                 member = self.create(row, dry_run)
-                self.stdout.write("Member imported: {}".format(member))
+                if not dry_run:
+                    self.stdout.write("Member imported: {}".format(member))
 
     def create(self, row, dry_run):
         if row["Tipo"] != "Humano":
