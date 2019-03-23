@@ -1,0 +1,33 @@
+import os
+
+import infoauth
+
+
+class LocalSettings:
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_PORT = 587
+    EMAIL_HOST_USER = 'user' 
+    EMAIL_HOST_PASSWORD = 'secret'
+    EMAIL_USE_TLS = True
+
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': 'DEBUG',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            },
+            '': {
+                'handlers': ['console'],
+                'propagate': True,
+                'level': 'INFO',
+            },
+        },
+    }

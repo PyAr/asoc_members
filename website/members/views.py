@@ -1,3 +1,4 @@
+import datetime
 import logging
 import re
 import os
@@ -8,6 +9,7 @@ from urllib import parse
 import certg
 from django.contrib import messages
 from django.core.mail import EmailMessage
+from django.db.models import Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -20,7 +22,7 @@ from django.views.generic import TemplateView, CreateView
 import members
 from members import logic
 from members.forms import SignupPersonForm, SignupOrganizationForm
-from members.models import Person, Organization, Category, Member
+from members.models import Person, Organization, Category, Member, Quota, Payment
 
 logger = logging.getLogger(__name__)
 
@@ -476,6 +478,68 @@ class ReportComplete(View):
         return render(request, 'members/report_complete.html', context)
 
 
+class ReportIncomeQuotas(View):
+    """Handle the report showing income per quotas."""
+
+    def get(self, request):
+        # months for last two years
+        today = datetime.date.today()
+        yearmonths = reversed(list(logic.get_year_month_range(today.year - 2, today.month, 24)))
+
+        # categories with non-zero fees
+        categs = Category.objects.filter(fee__gt=0).all()
+        categs_names = [c.name for c in categs]
+
+        info_per_month = []
+        for year, month in yearmonths:
+            info = dict(year=year, month=month, members_info=[], total=0, real=0)
+            info_per_month.append(info)
+
+            for categ in categs:
+                # "active" as in members that already started to pay and didn't shutdown (no
+                # matter when they got the legal_id, really)
+                active_members = Member.objects.filter(
+                    first_payment_month__isnull=False,
+                    shutdown_date__isnull=True,
+                    category=categ,
+                ).filter(
+                    Q(first_payment_year__lt=year) |
+                    Q(first_payment_year=year, first_payment_month__lte=month)
+                ).all()
+
+                # get how many quotas exist for those members for the given year/month
+                quotas = Quota.objects.filter(
+                    year=year, month=month, member__in=active_members).all()
+
+                member_info = dict(total=len(active_members), paid=len(quotas))
+                info['members_info'].append(member_info)
+
+                info['total'] += len(active_members) * categ.fee
+                info['real'] += len(quotas) * categ.fee
+
+        context = dict(info_per_month=info_per_month, categories=categs_names)
+        return render(request, 'members/report_income_quotas.html', context)
+
+
+class ReportIncomeMoney(View):
+    """Handle the report showing income per quotas."""
+
+    def get(self, request):
+        # months for last two years
+        today = datetime.date.today()
+        yearmonths = reversed(list(logic.get_year_month_range(today.year - 2, today.month, 24)))
+
+        info_per_month = []
+        for year, month in yearmonths:
+            payments = Payment.objects.filter(
+                timestamp__year=year, timestamp__month=month).aggregate(Sum('amount'))
+            amount = payments['amount__sum'] or '-'
+            info_per_month.append(dict(year=year, month=month, amount=amount))
+
+        context = dict(info_per_month=info_per_month)
+        return render(request, 'members/report_income_money.html', context)
+
+
 signup_initial = SignupInitialView.as_view()
 signup_form_person = SignupPersonFormView.as_view()
 signup_form_organization = SignupOrganizationsFormView.as_view()
@@ -484,3 +548,5 @@ reports_main = ReportsInitialView.as_view()
 report_debts = ReportDebts.as_view()
 report_missing = ReportMissing.as_view()
 report_complete = ReportComplete.as_view()
+report_income_quotas = ReportIncomeQuotas.as_view()
+report_income_money = ReportIncomeMoney.as_view()

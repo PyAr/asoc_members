@@ -1,7 +1,6 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-
 from django_extensions.db.models import TimeStampedModel
 
 DEFAULT_MAX_LEN = 317  # Almost random
@@ -226,10 +225,12 @@ class PaymentStrategy(TimeStampedModel):
     MERCADO_PAGO = 'mercado pago'
     TODO_PAGO = 'todo pago'
     TRANSFER = 'transfer'
+    CREDIT = 'credit'
     PLATFORM_CHOICES = (
         (MERCADO_PAGO, 'Mercado Pago'),
         (TODO_PAGO, 'Todo Pago'),
         (TRANSFER, 'Transferencia Bancaria'),
+        (CREDIT, 'Crédito Bonificado'),
     )
 
     platform = models.CharField(

@@ -107,3 +107,4 @@ mercadopago*.json
 payments*.json
 scripts/*.csv
 scripts/credentials.json
+.idea
