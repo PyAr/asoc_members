@@ -421,38 +421,25 @@ class ReportComplete(View):
         # simple flags with "Not Applicable" situation
         missing_student_certif = (
             member.category == cat_student and member.has_student_certificate)
-        print("certificado estudiante")
-        print(missing_student_certif)
+
         missing_collab_accept = (
             member.category == cat_collab and member.has_collaborator_acceptance)
-        print("certificado colaborador")
-        print(missing_collab_accept)
 
         # info from Person
         missing_nickname = member.person.nickname != ""
-        print("no tiene nickname?")
-        print(missing_nickname)
         # picture is complicated, bool() is used to check if the Image field has an associated
         # filename, and False itself is used as the "dont want a picture!" flag
         picture = member.person.picture is not None
-        print("tiene foto?")
-        print(picture)
-        # info from Member itself
-        missing_payment = member.first_payment_month is None and member.category.fee == 0
-        print("metodo de pago")
-        print(missing_payment)
-        print(member.first_payment_month)
-        print(member.category.fee)
 
+        # info from Member itself
+        missing_payment = member.first_payment_month is not None and member.category.fee != 0
         missing_signed_letter = member.has_subscription_letter
-        print("Falta firmar")
-        print(member.has_subscription_letter)
+        missing = missing_signed_letter and missing_nickname and picture
+
         return {
-            'missing_signed_letter': missing_signed_letter,
+            'missing': missing,
             'missing_student_certif': missing_student_certif,
             'missing_payment': missing_payment,
-            'missing_nickname': missing_nickname,
-            'missing_picture': picture,
             'missing_collab_accept': missing_collab_accept,
         }
 
@@ -460,20 +447,30 @@ class ReportComplete(View):
         not_yet_members = Member.objects.filter(legal_id=None).order_by('created').all()
 
         completes = []
+        k = 0
         for member in not_yet_members:
             info = self._analyze_member(member)
 
             # convert info to proper strings to show
-            print("validacion")
-            print(" ")
-            for k, v in info.items():
-                print(info[k])
-                info[k] = "" if v else "COMPLETO"
+            #print(k)
+            if info['missing'] and info['missing_student_certif']:
+                info[k] = "COMPLETO"
+            else:
+                if info['missing'] and info['missing_payment']:
+                    info[k] = "COMPLETO"
+                else:
+                    if info['missing'] and info['missing_collab_accept']:
+                        info[k] = "COMPLETO"
+                    else:
+                        info[k] = "INCOMPLETO"
+
+
 
             # add member and store
             info['member'] = member
-            print(info)
-            completes.append(info)
+            #print(info['member'])
+            if info[k] == "COMPLETO":
+                completes.append(info)
 
         context = dict(completes=completes)
         return render(request, 'members/report_complete.html', context)
