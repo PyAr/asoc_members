@@ -86,7 +86,7 @@ class SignupThankyouView(TemplateView):
     template_name = 'members/signup_thankyou.html'
 
 
-class ReportsInitialView(TemplateView):
+class ReportsInitialView(OnlyAdminsViewMixin, TemplateView):
     template_name = 'members/reports_main.html'
 
 
