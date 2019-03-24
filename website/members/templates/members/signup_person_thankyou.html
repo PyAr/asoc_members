@@ -1,0 +1,119 @@
+{% extends "members/signup_initial.html" %}
+{% load crispy_forms_tags %}
+{% block inner-content %}
+<div class="categories">
+    <h4 class="alert alert-success"> Su solicitud fue enviada con éxito</h4>
+    <h3>Próximos pasos</h3>
+    {% if missing_signed_letter %}
+        <p>
+        Tenés que mandar una carta en papel, firmada, expresando tu intención de querer asociarte (es un paso
+        necesario desde el punto de vista legal).
+
+        Nosotros te la generamos automáticamente (<a target="_blank" href="{{ object.application_letter.url }}">descargar</a>),
+        revisá los datos, imprimila y a mano poné lugar y fecha, firmá, aclará y poné tu DNI.
+        </p>
+        <p>
+        Para acelerar el trámite, sacale una foto y mandánosla, pero también la vas a tener que mandar por correo postal
+        o llevarla en mano a la sede de la Asociación Civil <strong>**</strong> (o traerla a algún evento de PyAr y
+        dársela a cualquiera de la Comisión Directiva).
+        </p>
+    {% endif %}
+
+    {% if missing_student_certif %}
+        <p>
+        Como sos socia/o "Estudiante", necesitamos un Certificado de Alumna/o Regular.
+
+        Cuando lo consigas, para acelerar el trámite, sacale una foto y mandánosla, pero también la
+        vas a tener que mandar por correo postal o llevarla en mano a la sede de la Asociación Civil <strong>**</strong> (o
+        traerla a algún evento de PyAr y dársela a cualquiera de la Comisión Directiva).
+        </p>
+    {% endif %}
+
+    {% if missing_payment %}
+        <p>
+        Tenés que pagar la cuota social. En tu caso, para Socia/o tipo {{ object.category }},
+        son ${{ object.category.fee }} por mes, y lo podés abonar de distintas maneras:</p>
+        <p>
+        Débito mensual, usando una tarjeta de crédito:
+        {% if object.category == object.category.ACTIVE %}
+            <a href="http://mpago.la/1WDPgB">http://mpago.la/1WDPgB</a>
+        {% elif object.category == object.category.SUPPORTER %}
+            <a href="http://mpago.la/3c4foF">http://mpago.la/3c4foF</a>
+        {% else %}
+            {{ on_purpose_missing_var }}
+        {% endif %}
+        </p>
+    {% endif %}
+
+    <p>
+    También podés pagar el año entero (un total de ${{ annual_fee }}) directamente por transferencia o depósito a...
+    <br>
+    <blockquote>
+        Asociación Civil Python Argentina<br>
+        Banco Credicoop<br>
+        Cuenta Corriente en pesos<br>
+        Nro. 191-153-009748/3<br>
+        CBU 19101530-55015300974832<br>
+        Alias python
+    </blockquote>
+
+    ... o con tarjetas de crédito, débito, pagofácil, rapipago, etc:
+
+    {% if object.category == object.category.ACTIVE %}
+        <a href="https://forms.todopago.com.ar/formulario/commands?command=formulario&fr=1&m=4dee293be8f02f0a40d94e9d580c306b">Pagar con TodoPago</a>
+
+    {% elif object.category == object.category.SUPPORTER %}
+        <a href="https://forms.todopago.com.ar/formulario/commands?command=formulario&fr=1&m=7bc16ade2a98bf5953aca03084d433b6">Pagar con Todo</a>
+
+    {% else %}
+        {{ on_purpose_missing_var }}
+    {% endif %}
+    </p>
+    {% if missing_nickname %}
+    <p>
+        Pasanos un nick o sobrenombre, para el carnet de asociada/o, totalmente opcional (pero si no
+        querés avisanos así dejamos de pedirte).
+    </p>
+    {% endif %}
+
+    {% if missing_picture %}
+    <p>
+        Pasanos una foto cuadrada o cualquier imagen cuadrada, para el carnet de asociada/o, totalmente opcional
+         (pero si no querés avisanos así dejamos de pedirte).
+    </p>
+    {% endif %}
+
+    {% if missing_collab_accept %}
+    <p>
+        Como sos socia/o "Colaborador/a", tenés que anotarte para colaborar.<br>
+
+        La dinámica es la siguiente: tenemos un grupo de Telegram donde distintos responsables de la
+        Asociación Civil podemos pedir cosas y vos u otro/a socio/a lo pueden agarrar para hacer. Ejemplo de
+        un pedido posible: "hay que arreglar un bug en el sistema de gestión de la Asoc Civil (hecho en Django)
+        que no muestra tal cosa en tal lugar".<br>
+
+        Obvio, cada uno agarrará lo que pueda resolver, pero la idea es que colaboren  Participar en ese canal y
+        realmente colaborar con lo que la Asociación Civil necesite es condición necesaria para que al año se
+        renueve la posibilidad de ser socio/a Colaborador/a.<br>
+
+        Entonces, pasame por favor tu handle de Telegram así te invito al grupo.
+    </p>
+    {% endif %}
+
+
+    {% if missing_signed_letter or missing_student_certif %}
+    <p>
+    <strong>**</strong> La dirección de la sede:
+        <blockquote>
+        Asociación Civil Python Argentina<br>
+        Chile 1155, piso 1<br>
+        CABA (C1098AAW)<br>
+        Buenos Aires, Argentina<br>
+        </blockquote>
+    </p>
+    {% endif %}
+    <p>
+        <a class="btn btn-primary" href="https://ac.python.org.ar">Ir a la página de la asociación</a>
+    </p>
+</div>
+{% endblock %}

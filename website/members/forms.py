@@ -1,4 +1,5 @@
 from django import forms
+from django.db.transaction import atomic
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from django.utils.timezone import now
@@ -70,19 +71,24 @@ class SignupPersonForm(forms.ModelForm):
             ),
         )
 
+    @atomic
     def save(self, commit=True):
         # We need remove category before save person.
         category = self.cleaned_data.pop('category', '')
         person = super(SignupPersonForm, self).save(commit=False)
         person.comments = (
             "Se cargó a través del sitio web. Categoria seleccionada: %s." % category.name)
-        patron = Patron(
-            name=f"{person.first_name} {person.last_name}",
-            email=person.email, comments="Se cargó a través del sitio web")
+        patron, created = Patron.objects.get_or_create(
+            email=person.email,
+            defaults={
+                'name': f"{person.first_name} {person.last_name}",
+                'comments': "Se cargó a través del sitio web"
+            })
         member = Member(registration_date=now(), category=category)
+        member.patron = patron
         if commit:
-            patron.save()
-            member.patron = patron
+            file, filename = member._generate_letter(person)
+            member.application_letter.save(filename, file, save=True)
             member.save()
             person.membership = member
             person.save()

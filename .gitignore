@@ -110,3 +110,4 @@ scripts/*.csv
 scripts/credentials.json
 .idea
 .vscode
+/media/

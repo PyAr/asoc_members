@@ -8,7 +8,7 @@ from django.test import TestCase, override_settings
 from django.utils.timezone import now, make_aware
 from django.urls import reverse
 
-from members import logic, views
+from members import logic, utils
 from members.models import (
     Member, Patron, Category, PaymentStrategy, Quota, Person,
     Organization)
@@ -99,13 +99,14 @@ class SignupPagesTests(TestCase):
         response = self.client.get(reverse('signup_person'))
         response = self.client.post(reverse('signup_person'), data=data)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('signup_thankyou'))
         person = Person.objects.get(nickname='pepepin')
+        self.assertEqual(response.url, reverse('signup_person_thankyou', args=[person.membership_id]))
         self.assertEqual(person.first_name, 'Pepe')
         self.assertEqual(person.email, 'pepe@pomp.in')
         self.assertEqual(person.birth_date, datetime.date(1999, 12, 11))
         self.assertEqual(person.membership.category.pk, cat.pk)
         self.assertEqual(person.membership.patron.email, person.email)
+        self.assertIsNotNone(person.membership.application_letter)
 
     def test_signup_submit_success_without_optionals(self):
         # crear categoria
@@ -130,8 +131,8 @@ class SignupPagesTests(TestCase):
         response = self.client.get(reverse('signup_person'))
         response = self.client.post(reverse('signup_person'), data=data)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('signup_thankyou'))
         person = Person.objects.get(document_number='124354656')
+        self.assertEqual(response.url, reverse('signup_person_thankyou', args=[person.membership_id]))
         self.assertEqual(person.first_name, 'Pepe')
         self.assertEqual(person.email, 'pepe@pomp.in')
         self.assertEqual(person.birth_date, datetime.date(1999, 12, 11))
@@ -175,7 +176,7 @@ class SignupPagesTests(TestCase):
         response = self.client.get(reverse('signup_organization'))
         response = self.client.post(reverse('signup_organization'), data=data)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('signup_thankyou'))
+        self.assertEqual(response.url, reverse('signup_organization_thankyou'))
         orga = Organization.objects.get(name='Orga')
         self.assertEqual(orga.contact_info, random_text)
 
@@ -577,21 +578,21 @@ class BuildDebtStringTestCase(TestCase):
     """Tests for the string debt building utility."""
 
     def test_empty(self):
-        result = views._build_debt_string([])
+        result = utils.build_debt_string([])
         self.assertEqual(result, "-")
 
     def test_1(self):
-        result = views._build_debt_string([(2018, 8)])
+        result = utils.build_debt_string([(2018, 8)])
         self.assertEqual(result, "1 (2018-08)")
 
     def test_2(self):
-        result = views._build_debt_string([(2018, 8), (2018, 9)])
+        result = utils.build_debt_string([(2018, 8), (2018, 9)])
         self.assertEqual(result, "2 (2018-08, 2018-09)")
 
     def test_3(self):
-        result = views._build_debt_string([(2018, 8), (2018, 9), (2018, 10)])
+        result = utils.build_debt_string([(2018, 8), (2018, 9), (2018, 10)])
         self.assertEqual(result, "3 (2018-08, 2018-09, 2018-10)")
 
     def test_exceeding(self):
-        result = views._build_debt_string([(2018, 8), (2018, 9), (2018, 10), (2018, 11)])
+        result = utils.build_debt_string([(2018, 8), (2018, 9), (2018, 10), (2018, 11)])
         self.assertEqual(result, "4 (2018-08, 2018-09, 2018-10, ...)")

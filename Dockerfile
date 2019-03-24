@@ -6,6 +6,7 @@ RUN mkdir /code
 RUN mkdir /config
 
 # Install dependencies
+RUN printf "deb http://archive.debian.org/debian/ jessie main\ndeb-src http://archive.debian.org/debian/ jessie main\ndeb http://security.debian.org jessie/updates main\ndeb-src http://security.debian.org jessie/updates main" > /etc/apt/sources.list
 RUN apt-get update && apt-get install -y inkscape && apt-get clean
 COPY /config/requirements.txt /config/
 RUN pip install --no-cache-dir -r /config/requirements.txt

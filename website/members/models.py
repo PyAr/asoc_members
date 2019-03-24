@@ -1,7 +1,13 @@
+import os
+
+import certg
+
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.files import File
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+
 
 DEFAULT_MAX_LEN = 317  # Almost random
 LONG_MAX_LEN = 2048  # Random but bigger
@@ -60,6 +66,8 @@ class Member(TimeStampedModel):
         null=True, blank=True)
     first_payment_year = models.PositiveSmallIntegerField(
         _('primer pago año'), validators=[MinValueValidator(2015)], null=True, blank=True)
+    application_letter = models.FileField(
+        _('carta de afiliación'), upload_to='application_letter', null=True, blank=True)
 
     # Flags
     has_student_certificate = models.BooleanField(
@@ -85,6 +93,69 @@ class Member(TimeStampedModel):
         legal_id = "∅" if self.legal_id is None else f'{self.legal_id:05d}'
         shutdown = "" if self.shutdown_date is None else ", DADO DE BAJA"
         return f"{legal_id} - [{self.category}{shutdown}] {self.entity}"
+
+    def _generate_letter(self, person):
+        """Generate the letter to be signed."""
+        letter_svg_template = os.path.join(
+            os.path.abspath('.'), 'members', 'templates', 'members', 'carta.svg')
+        path_prefix = "/tmp/letter"
+        person_info = {
+            'tiposocie': self.category.name,
+            'nombre': person.first_name,
+            'apellido': person.last_name,
+            'dni': person.document_number,
+            'email': person.email,
+            'nacionalidad': person.nationality,
+            'estadocivil': person.marital_status,
+            'profesion': person.occupation,
+            'fechanacimiento': person.birth_date.strftime("%Y-%m-%d"),
+            'domicilio': person.street_address,
+            'ciudad': person.city,
+            'codpostal': person.zip_code,
+            'provincia': person.province,
+            'pais': person.country,
+        }
+
+        # this could be optimized to generate all PDFs at once, but we're fine so far
+        (letter_filepath, ) = certg.process(
+            letter_svg_template, path_prefix, "dni", [person_info], images=None)
+        f_opened = open(letter_filepath, 'rb')
+        file = File(f_opened)
+        return file, letter_filepath.split('/')[-1]
+
+    def _analyze(self):
+        """Analyze and indicate in which categories the member is missing somethhing."""
+        cat_student = Category.objects.get(name=Category.STUDENT)
+        cat_collab = Category.objects.get(name=Category.COLLABORATOR)
+
+        # simple flags with "Not Applicable" situation
+        missing_student_certif = (
+            self.category == cat_student and not self.has_student_certificate)
+        missing_collab_accept = (
+            self.category == cat_collab and not self.has_collaborator_acceptance)
+
+        # info from Person
+        missing_nickname = self.person.nickname == ""
+        # picture is complicated, bool() is used to check if the Image field has an associated
+        # filename, and False itself is used as the "dont want a picture!" flag
+        missing_picture = not self.person.picture and self.person.picture is not False
+
+        # info from Member itself
+        missing_payment = self.first_payment_month is None and self.category.fee > 0
+        missing_signed_letter = not self.has_subscription_letter
+
+        missing_info = {
+            'missing_signed_letter': missing_signed_letter,
+            'missing_student_certif': missing_student_certif,
+            'missing_payment': missing_payment,
+            'missing_nickname': missing_nickname,
+            'missing_picture': missing_picture,
+            'missing_collab_accept': missing_collab_accept,
+        }
+        missing_info['annual_fee'] = self.category.fee * 12
+        missing_info['member'] = self
+        missing_info['on_purpose_missing_var'] = "ERROR"
+        return missing_info
 
 
 def picture_upload_path(instance, filename):

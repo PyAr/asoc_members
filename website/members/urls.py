@@ -7,9 +7,12 @@ from members import views
 urlpatterns = [
     path('solicitud-alta/', views.signup_initial, name='signup'),
     path('solicitud-alta/persona/', views.signup_form_person, name='signup_person'),
+    path('solicitud-alta/persona/<pk>/gracias',
+         views.signup_thankyou, name='signup_person_thankyou'),
     path('solicitud-alta/organizacion',
          views.signup_form_organization, name='signup_organization'),
-    path('solicitud-alta/gracias', views.signup_thankyou, name='signup_thankyou'),
+    path('solicitud-alta/organizacion/gracias',
+         views.signup_organization_thankyou, name='signup_organization_thankyou'),
 
     path('reportes/', views.reports_main, name='reports_main'),
     path('reportes/deudas', views.report_debts, name='report_debts'),
