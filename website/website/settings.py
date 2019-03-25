@@ -127,6 +127,8 @@ class Base(Configuration):
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR
 
+    LOGIN_URL = '/admin/login/'
+
 
 # try to import the local settings; if the file is not there just create a stub class
 # for the inheritance later

@@ -8,6 +8,7 @@ from urllib import parse
 
 import certg
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import EmailMessage
 from django.db.models import Q, Sum
 from django.http import HttpResponse
@@ -47,6 +48,13 @@ def _build_debt_string(debt):
     return result
 
 
+class OnlyAdminsViewMixin(LoginRequiredMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
 class SignupInitialView(TemplateView):
     template_name = 'members/signup_initial.html'
 
@@ -78,11 +86,11 @@ class SignupThankyouView(TemplateView):
     template_name = 'members/signup_thankyou.html'
 
 
-class ReportsInitialView(TemplateView):
+class ReportsInitialView(OnlyAdminsViewMixin, TemplateView):
     template_name = 'members/reports_main.html'
 
 
-class ReportDebts(View):
+class ReportDebts(OnlyAdminsViewMixin, View):
     """Handle the report about debts."""
 
     MAIL_SUBJECT = "Cuotas adeudadas a la Asociación Civil Python Argentina"
@@ -178,7 +186,7 @@ class ReportDebts(View):
         return render(request, 'members/report_debts.html', context)
 
 
-class ReportMissing(View):
+class ReportMissing(OnlyAdminsViewMixin, View):
     """Handle the report about what different people miss to get approved as a member."""
 
     MAIL_SUBJECT = "Continuación del trámite de inscripción a la Asociación Civil Python Argentina"
@@ -322,7 +330,7 @@ class ReportMissing(View):
         return render(request, 'members/report_missing.html', context)
 
 
-class ReportIncomeQuotas(View):
+class ReportIncomeQuotas(OnlyAdminsViewMixin, View):
     """Handle the report showing income per quotas."""
 
     def get(self, request):
@@ -365,7 +373,7 @@ class ReportIncomeQuotas(View):
         return render(request, 'members/report_income_quotas.html', context)
 
 
-class ReportIncomeMoney(View):
+class ReportIncomeMoney(OnlyAdminsViewMixin, View):
     """Handle the report showing income per quotas."""
 
     def get(self, request):
@@ -384,10 +392,12 @@ class ReportIncomeMoney(View):
         return render(request, 'members/report_income_money.html', context)
 
 
+# public
 signup_initial = SignupInitialView.as_view()
 signup_form_person = SignupPersonFormView.as_view()
 signup_form_organization = SignupOrganizationsFormView.as_view()
 signup_thankyou = SignupThankyouView.as_view()
+# only admins
 reports_main = ReportsInitialView.as_view()
 report_debts = ReportDebts.as_view()
 report_missing = ReportMissing.as_view()
