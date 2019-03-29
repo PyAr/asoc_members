@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        {% block heading %}
+        <h1 class="text-center">Reportes</h1>
+        <h2 class="text-center">Socios con deudas</h2>
+        {% endblock %}
+        <div class="inner-content">
+            {% block inner-content %}
+                <div>
+                    <form action="{% url 'report_debts' %}" t>
+                        Socies que pagaron solamente hasta (inclusive): 
+                        <input type="text" name="limit_year" value="{{ limit_year }}" style="text-align: right; width: 4em;"/>
+                        <input type="text" name="limit_month" value="{{ limit_month }}" style="text-align: right; width: 4em;"/>
+                        <button id="filter" type="submit">Filtrar</button>
+                    </form>
+                </div>
+                <br/>
+                <div>
+                    <form method="post" action"{% url 'report_missing' %}">
+                        {% csrf_token %}
+                        ¿Mandar mails a los seleccionados?
+                        <button id="selected" type="submit">Mandar</button>
+                </div>
+                <br/>
+                <div>
+                <table class="table">
+                <tr> 
+                    <th>Nro de socie</th>
+                    <th>Tipo</th>
+                    <th>Entidad</th>
+                    <th>Mail</th>
+                    <th>Cuotas adeudadas</th>
+                    <th>¿Mandar mail?</th>
+                </tr>
+                {% for item in debts %}
+                    <tr> 
+                        <td>{{ item.member.legal_id }}</td>
+                        <td>{{ item.member.category }}</td>
+                        <td>{{ item.member.entity }}</td>
+                        <td>{{ item.member.entity.email }}</td>
+                        <td>{{ item.debt }}</td>
+                        <td>
+                            <input type="checkbox" name="sendmail" value="{{ item.member.id }}" />
+                        </td>
+                    </tr>
+                {% endfor %}
+                </table>
+                </form>
+                </div>
+            {% endblock %}
+        </div>
+    </div>
+
+{% endblock %}

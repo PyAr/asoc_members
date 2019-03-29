@@ -101,3 +101,10 @@ ENV/
 .mypy_cache/
 
 db.sqlite3
+static/
+website/pictures/
+mercadopago*.json
+payments*.json
+scripts/*.csv
+scripts/credentials.json
+.idea

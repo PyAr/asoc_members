@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        {% block heading %}
+        <h1 class="text-center">Quiero asociarme a Python Argentina</h1>
+        <p>Este Formulario es para asociarse a la Asociación Civil Python Argentina.  ¡Te va a llevar menos de 2 minutos!<br><br>
+            Cualquier duda o consulta podés escribir a <a href="mailto:presidencia@ac.python.org.ar">presidencia@ac.python.org.ar</a>.
+            <hr />
+        {% endblock %}
+        <div class="inner-content">
+            {% block inner-content %}
+                <div>
+                <h3>¿Sos una persona Física o una empresa?</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <a class="btn btn-primary btn-block text-uppercase" href="{% url 'signup_person' %}">
+                            Soy una persona Física
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a class="btn btn-primary btn-block text-uppercase" href="{% url 'signup_organization' %}">
+                            Soy una empresa
+                        </a>
+                    </div>
+                </div>
+                </div>
+            {% endblock %}
+        </div>
+    </div>
+
+{% endblock %}

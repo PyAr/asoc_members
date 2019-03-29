@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        {% block heading %}
+        <h1 class="text-center">Reportes</h1>
+        {% endblock %}
+        <div class="inner-content">
+            {% block inner-content %}
+                <div>
+                <ul>
+                <li> <a href="{% url 'report_debts' %}">Socios con deudas</a></li>
+                <li> <a href="{% url 'report_missing' %}">Personas con pendientes para ser socios</a></li>
+                <li> <a href="{% url 'report_income_quotas' %}">Ingresos, cuotas</a></li>
+                <li> <a href="{% url 'report_income_money' %}">Ingresos, dinero</a></li>
+                </ul>
+                </div>
+            {% endblock %}
+        </div>
+    </div>
+
+{% endblock %}

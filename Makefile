@@ -9,26 +9,55 @@ help:
 	@echo "shell_plus -- run django shell_plus inside docker"
 	@echo "bootstrap --build containers, run django migrations, load fixtures and create the a superuser"
 
-RUN=docker-compose run --rm web
-MANAGE=${RUN} python3 website/manage.py
+RUN=docker-compose exec web
+COMPOSE_PROD=docker-compose -f docker-compose.prod.yml
+RUN_PROD=${COMPOSE_PROD} exec web
+MANAGE=${RUN} ./manage.py
 
-build:
+build-dev:
 	docker-compose build
 
-start:
-	docker-compose up
+build-prod:
+	${COMPOSE_PROD} build
+	${COMPOSE_PROD} pull
 
-stop:
+start-dev:
+	docker-compose up -d
+	${MANAGE} migrate
+	${MANAGE} runserver 0.0.0.0:8000
+
+install-dev:
+	${RUN} pip install -r /code/config/requirements-dev.txt
+
+createsuperuser:
+	${MANAGE} createsuperuser
+
+up-dev:
+	docker-compose up -d	
+
+up-prod:
+	${COMPOSE_PROD} up -d
+
+stop-dev:
 	docker-compose stop
 
-ps:
+stop-prod:
+	${COMPOSE_PROD} stop
+
+ps-dev:
 	docker-compose ps
 
-clean: stop
-	docker-compose rm --force -v
+ps-prod:
+	${COMPOSE_PROD} ps
+
+clean-dev:
+	docker-compose down
+
+clean-prod:
+	${COMPOSE_PROD} down
 
 test:
-	${MANAGE} test  -v2 --noinput
+	${MANAGE} test -v2 --noinput $(ARGS)
 
 dockershell:
 	${RUN} /bin/bash
@@ -38,6 +67,9 @@ migrations:
 
 migrate:
 	${MANAGE} migrate
+
+collectstatic:
+	${MANAGE} collectstatic
 
 shell_plus:
 	${MANAGE} shell_plus

@@ -1,0 +1,57 @@
+[
+    {
+        "fields": {
+            "created": "2019-03-03T21:35:29.210Z",
+            "description": "Participaci\u00f3n Completa (Voz y Voto). Realiza un aporte econ\u00f3mico y es elegible para cargos directivos.",
+            "fee": "300.00",
+            "modified": "2019-03-03T21:35:29.210Z",
+            "name": "Activo"
+        },
+        "model": "members.category",
+        "pk": 1
+    },
+    {
+        "fields": {
+            "created": "2019-03-03T21:35:29.212Z",
+            "description": "Participaci\u00f3n parcial (Voz). Realiza un aporte econ\u00f3mico diferenciado. Entusiastas y Profesionales.",
+            "fee": "150.00",
+            "modified": "2019-03-03T21:35:29.212Z",
+            "name": "Adherente"
+        },
+        "model": "members.category",
+        "pk": 2
+    },
+    {
+        "fields": {
+            "created": "2019-03-03T21:35:29.213Z",
+            "description": "Aporte econ\u00f3mico simb\u00f3lico. Alumnos Regulares",
+            "fee": "0.00",
+            "modified": "2019-03-03T21:35:29.213Z",
+            "name": "Estudiante"
+        },
+        "model": "members.category",
+        "pk": 3
+    },
+    {
+        "fields": {
+            "created": "2019-03-03T21:35:29.214Z",
+            "description": "Participaci\u00f3n (Voz). Proyectos Software Libre / Voluntarios Eventos PyAr",
+            "fee": "0.00",
+            "modified": "2019-03-03T21:35:29.214Z",
+            "name": "Colaborador"
+        },
+        "model": "members.category",
+        "pk": 4
+    },
+    {
+        "fields": {
+            "created": "2019-03-03T21:35:29.215Z",
+            "description": "Si sos menor de 18 a\u00f1os perteneces a esta categor\u00eda y vas a ser becado.",
+            "fee": "0.00",
+            "modified": "2019-03-03T21:35:29.215Z",
+            "name": "Cadete"
+        },
+        "model": "members.category",
+        "pk": 5
+    }
+]
