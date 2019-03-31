@@ -166,11 +166,12 @@ class Prod(Base):
     }
 
     EMAIL_HOST = os.environ.get('EMAIL_HOST')
-    EMAIL_PORT = os.environ.get('EMAIL_PORT')
+    EMAIL_PORT = os.environ.get('EMAIL_PORT', '587')
     EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
-    MAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', True)
+    EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '10'))
+    EMAIL_FROM = os.environ.get('EMAIL_FROM', 'do_not_reply@python.org.ar')
 
     # Azure blob-storage
     AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY")
