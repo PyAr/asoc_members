@@ -41,6 +41,7 @@ class Base(Configuration):
         'django_extensions',
         'members.apps.MembersConfig',
         'crispy_forms',
+        'events.apps.EventsConfig',
     ]
 
     MIDDLEWARE = [
