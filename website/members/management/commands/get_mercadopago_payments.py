@@ -18,16 +18,21 @@ class Command(BaseCommand):
     help = 'Import payments from JSON file'
 
     def add_arguments(self, parser):
-        parser.add_argument('payment_id', type=int, nargs='?')
+        parser.add_argument('--payment_id', type=int, nargs='?')
+        parser.add_argument('--payer_id', type=str, nargs='?')
 
     def handle(self, *args, **options):
         payment_id = options.get('payment_id')
+        payer_id = options.get('payer_id')
+        if payment_id is not None or payer_id is not None:
+            # if filtering, we want verbose
+            logging.getLogger('').setLevel(logging.DEBUG)
 
         raw_info = self.get_raw_mercadopago_info()
         if raw_info is None:
             return
 
-        records = self.process_mercadopago(raw_info, payment_id)
+        records = self.process_mercadopago(raw_info, payment_id, payer_id)
         logic.create_recurring_payments(records)
 
     def get_raw_mercadopago_info(self):
@@ -46,13 +51,11 @@ class Command(BaseCommand):
         logger.info('Getting response from mercadopago, paging %s', response['response']['paging'])
         return response
 
-    def process_mercadopago(self, mercadopago_response, payment_id):
+    def process_mercadopago(self, mercadopago_response, filter_payment_id, filter_payer_id):
         """Process Mercadopago info, building a per-payer sorted structure."""
         payments = []
         for item in mercadopago_response['response']['results']:
             info = item['collection']
-            if payment_id is not None and info['id'] != payment_id:
-                continue
 
             # needed information to record the payment
             timestamp = parse_datetime(info['date_approved'])
@@ -60,6 +63,12 @@ class Command(BaseCommand):
             payer_id = info['payer']['id']
             assert payer_id is not None
             payer_id = str(payer_id)
+
+            # apply filters, if given
+            if filter_payment_id is not None and info['id'] != filter_payment_id:
+                continue
+            if filter_payer_id is not None and payer_id != filter_payer_id:
+                continue
 
             # some info to identify the payer in case it's not in our DB
             id_helper = {
