@@ -328,34 +328,6 @@ class ReportComplete(View):
     MAIL_FROM = 'Lalita <lalita@ac.python.org.ar>'
     MAIL_MANAGER = 'presidencia@ac.python.org.ar>'
 
-    def _generate_letter(self, member):
-        """Generate the letter to be signed."""
-        letter_svg_template = os.path.join(
-            os.path.dirname(members.__file__), 'templates', 'members', 'carta.svg')
-        path_prefix = "/tmp/letter"
-        person = member.person
-        person_info = {
-            'tiposocie': member.category.name,
-            'nombre': person.first_name,
-            'apellido': person.last_name,
-            'dni': person.document_number,
-            'email': person.email,
-            'nacionalidad': person.nationality,
-            'estadocivil': person.marital_status,
-            'profesion': person.occupation,
-            'fechanacimiento': person.birth_date.strftime("%Y-%m-%d"),
-            'domicilio': person.street_address,
-            'ciudad': person.city,
-            'codpostal': person.zip_code,
-            'provincia': person.province,
-            'pais': person.country,
-        }
-
-        # this could be optimized to generate all PDFs at once, but we're fine so far
-        (letter_filepath,) = certg.process(
-            letter_svg_template, path_prefix, "dni", [person_info], images=None)
-        return letter_filepath
-
     def post(self, request):
         raw_sendmail = parse.parse_qs(request.body)[b'sendmail']
         to_send_mail_ids = map(int, raw_sendmail)

@@ -22,6 +22,7 @@
                 {% for item in completes %}
                     <tr> 
                         <td>{{ item.member.entity.full_name }}</td>
+                        <td>{{ item.member.entity.document_number }}</td>
                         <td>{{ item.member.entity.email }}</td>
                         <td>
                             <input type="checkbox" name="sendmail" value="{{ item.member.id }}" />
