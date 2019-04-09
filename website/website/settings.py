@@ -129,6 +129,7 @@ class Base(Configuration):
     MEDIA_ROOT = BASE_DIR
 
     LOGIN_URL = '/admin/login/'
+    
 
 
 # try to import the local settings; if the file is not there just create a stub class
@@ -142,6 +143,11 @@ except ModuleNotFoundError as err:
 
 class Dev(LocalSettings, Base):
     """Development configuration."""
+    #TODO: use env variables 
+    EMAIL_BACKEND ='django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'mail'
+    EMAIL_PORT = 1025
+    #EMAIL_HOST_USER='laralara@gmail.com'
 
 
 class Prod(Base):
