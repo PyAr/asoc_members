@@ -18,7 +18,6 @@ eggs/
 lib/
 lib64/
 parts/
-.idea/workspace.xml
 sdist/
 var/
 wheels/
