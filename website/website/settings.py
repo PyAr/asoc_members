@@ -143,10 +143,10 @@ except ModuleNotFoundError as err:
 
 class Dev(LocalSettings, Base):
     """Development configuration."""
-    #TODO: use env variables 
-    EMAIL_BACKEND ='django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'mail'
-    EMAIL_PORT = 1025
+    
+    EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND','django.core.mail.backends.smtp.EmailBackend')
+    EMAIL_HOST = os.environ.get('EMAIL_HOST','mail')
+    EMAIL_PORT = os.environ.get('EMAIL_PORT',1025)
     #EMAIL_HOST_USER='laralara@gmail.com'
 
 

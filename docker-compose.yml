@@ -7,6 +7,10 @@ services:
       - "8000:8000"
     volumes:
       - .:/code
+    environment:
+      - EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+      - EMAIL_HOST=mail
+      - EMAIL_PORT=1025
   mail:
     image: mailhog/mailhog
     ports:
