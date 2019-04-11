@@ -26,10 +26,11 @@ class SetPasswordForm(AuthSetPasswordForm):
         help_text=_('Ingrese la mimsa contraseña que antes para verificar')
         )
 
-    #def __init__(self, *args, **kwargs):
-    #    super(SetPasswordForm, self).__init__(*args, **kwargs)
-        #self.helper = FormHelper(self)
-        #self.helper.form_class = 'form-horizontal'
+    def __init__(self, *args, **kwargs):
+        super(SetPasswordForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
     
 
 class OrganizerUserSignupForm(UserCreationForm):
