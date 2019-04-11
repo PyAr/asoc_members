@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="container">
   <h2>Crear nuevo organizador</h2>
   <form method="post">
     {% csrf_token %}
@@ -20,4 +21,5 @@
       {% endfor %}
     <input type="submit" class="btn btn-success" value="Registrar" />
   </form>
+</div>
 {% endblock %}

@@ -1,9 +1,36 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, SetPasswordForm as AuthSetPasswordForm
 from django.contrib.auth.models import User
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, Row
+
+from .constants import PASSWORD_VALIDATOR_HELP_TEXTS
+
+class SetPasswordForm(AuthSetPasswordForm):
+    error_messages = {
+        'password_mismatch': _("Las contraseñas no coinciden."),
+    }
+    new_password1 = forms.CharField(
+        label=_("Nueva contraseña"),
+        widget=forms.PasswordInput,
+        help_text=render_to_string('registration/password_validations.html',{
+            'helpers': PASSWORD_VALIDATOR_HELP_TEXTS
+        }),
+    )
+    new_password2 = forms.CharField(
+        label=_("Confirmación de nueva contraseña"),
+        widget=forms.PasswordInput,
+        help_text=_('Ingrese la mimsa contraseña que antes para verificar')
+        )
+
+    #def __init__(self, *args, **kwargs):
+    #    super(SetPasswordForm, self).__init__(*args, **kwargs)
+        #self.helper = FormHelper(self)
+        #self.helper.form_class = 'form-horizontal'
+    
 
 class OrganizerUserSignupForm(UserCreationForm):
     email = forms.EmailField(label=_('Correo Electrónico'), max_length=200, help_text='Required')
