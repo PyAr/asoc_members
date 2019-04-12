@@ -1,9 +1,14 @@
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
+from django.contrib.auth.views import ( 
+    PasswordResetView, 
+    PasswordResetConfirmView, 
+    PasswordResetCompleteView,
+    PasswordResetDoneView,
+    LoginView
+    )
 
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
@@ -18,7 +23,12 @@ from django.utils.translation import gettext_lazy as _
 
 import events
 from events.helpers.tokens import account_activation_token
-from events.forms import OrganizerUserSignupForm, SetPasswordForm
+from events.forms import (
+    OrganizerUserSignupForm, 
+    SetPasswordForm, 
+    AuthenticationForm, 
+    PasswordResetForm
+    )
 
 # Class-based password reset views
 # - PasswordResetView sends the mail
@@ -48,6 +58,20 @@ class PasswordResetConfirmView(PasswordResetConfirmView):
     template_name = 'registration/custom_password_reset_confirm.html'
     title = _('Ingrese nueva contraseña')
     token_generator = default_token_generator
+
+
+class PasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = 'registration/custom_password_reset_complete.html'
+    title = _('Reseteo de contraseña completado')
+
+
+class PasswordResetDoneView(PasswordResetDoneView):
+    template_name = 'registration/custom_password_reset_done.html'
+    title = _('Cambio de contraseña enviado')
+
+class LoginView(LoginView):
+    form_class = AuthenticationForm
+    template_name = 'registration/events_login.html'
 
 
 #TODO: redirecto to custom login, for events app

@@ -6,11 +6,13 @@ from . import views
 
 urlpatterns = [
      #path('cuentas/login/', auth_views.login, name='login'),
-     path('cuentas/login/', auth_views.LoginView.as_view(), name='login'),
-     path('cuentas/cambio_clave/', views.PasswordResetView.as_view(), name='password_reset'),
+     path('cuentas/login/', views.LoginView.as_view(), name='login'),
+     path('cuentas/cambio-clave/', views.PasswordResetView.as_view(), name='password_reset'),
+     path('cuentas/cambio-clave/finalizado', views.PasswordResetDoneView.as_view(), name='password_reset_done'),
      path('cuentas/<uidb64>/<token>/', views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+     path('cuentas/cambio-clave-completo/', views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
      #path('cuentas/', include('django.contrib.auth.urls')),
-     path('registrar_organizador/', views.organizer_signup, name='signup'),
+     path('registrar-organizador/', views.organizer_signup, name='signup'),
      path('activate/<uidb64>/<token>/',
         views.activate, name='activate'),
      

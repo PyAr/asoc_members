@@ -1,5 +1,11 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, SetPasswordForm as AuthSetPasswordForm
+from django.contrib.auth.forms import (
+    AuthenticationForm as AuthAuthenticationForm,
+    PasswordResetForm as AuthPasswordResetForm,
+    SetPasswordForm as AuthSetPasswordForm,
+    UserCreationForm, 
+    UsernameField,
+    )
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
@@ -8,6 +14,32 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, Row
 
 from .constants import PASSWORD_VALIDATOR_HELP_TEXTS
+
+class AuthenticationForm(AuthAuthenticationForm):
+    """
+    Base class for authenticating users.
+    """
+    username = UsernameField(label=_("Usuario"), widget=forms.TextInput(attrs={'autofocus': True}))
+    password = forms.CharField(
+        label=_("Password"),
+        strip=False,
+        widget=forms.PasswordInput,
+    )
+
+    error_messages = {
+        'invalid_login': _(
+            "Por favor ingrese un correcto nombre de usuario y password. Note que ambos "
+            "campos pueden ser sensibles a mayúsculas."
+        ),
+        'inactive': _("Esta cuenta no se encuentra activa."),
+    }
+    
+    def __init__(self, *args, **kwargs):
+        super(AuthenticationForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
 
 class SetPasswordForm(AuthSetPasswordForm):
     error_messages = {
@@ -28,10 +60,19 @@ class SetPasswordForm(AuthSetPasswordForm):
 
     def __init__(self, *args, **kwargs):
         super(SetPasswordForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
+        self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
     
+
+class PasswordResetForm(AuthPasswordResetForm):
+    email = forms.EmailField(label=_("Correo electrónico"), max_length=254)
+
+    def __init__(self, *args, **kwargs):
+        super(PasswordResetForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
 
 class OrganizerUserSignupForm(UserCreationForm):
     email = forms.EmailField(label=_('Correo Electrónico'), max_length=200, help_text='Required')
