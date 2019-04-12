@@ -1,5 +1,5 @@
 from django.contrib.auth import login, authenticate
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import ( 
@@ -7,7 +7,8 @@ from django.contrib.auth.views import (
     PasswordResetConfirmView, 
     PasswordResetCompleteView,
     PasswordResetDoneView,
-    LoginView
+    LoginView,
+    LogoutView
     )
 
 from django.contrib.sites.shortcuts import get_current_site
@@ -69,13 +70,19 @@ class PasswordResetDoneView(PasswordResetDoneView):
     template_name = 'registration/custom_password_reset_done.html'
     title = _('Cambio de contraseña enviado')
 
+
 class LoginView(LoginView):
     form_class = AuthenticationForm
     template_name = 'registration/events_login.html'
 
 
-#TODO: redirecto to custom login, for events app
-@user_passes_test(lambda u: u.is_superuser)
+class LogoutView(LogoutView):
+    template_name = 'registration/custom_logged_out.html'
+
+
+#TODO: change validation to verify if the user has add_organizer permision and not superuser
+# permission_required('organizer.can_add')
+@user_passes_test(lambda u: u.is_superuser, login_url='/eventos/cuentas/login/')
 def organizer_signup(request):
     if request.method == 'POST':
         #Create user with random password and send custom reset password form

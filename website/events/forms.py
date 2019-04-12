@@ -86,7 +86,15 @@ class OrganizerUserSignupForm(UserCreationForm):
         # password or both password' validation will be triggered.
         self.fields['password1'].widget.attrs['autocomplete'] = 'off'
         self.fields['password2'].widget.attrs['autocomplete'] = 'off'
-        #TODO: use crispy_forms
+        
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+        #TODO: ver layout para solo tener los campos requeridos 
+        self.helper.layout = Layout(
+            'username',
+            'email',
+        )
     
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")

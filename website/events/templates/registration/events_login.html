@@ -8,8 +8,10 @@
 
 {% if next %}
     {% if user.is_authenticated %}
-    <p>Su cuenta no tiene acceso a este recurso. Para proceder 
+    <div class="alert alert-danger" role="alert">
+        <p>Su cuenta no tiene acceso a este recurso. Para proceder 
         conectese con una cuenta con los permisos suficientes.</p>
+    </div>
     {% else %}
     <p>Por favor loguese para acceder a este recurso.</p>
     {% endif %}
