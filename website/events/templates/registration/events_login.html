@@ -32,7 +32,7 @@
         <input type="hidden" name="next" value="{{ next }}">
     {% else %}
         <!--TODO: enviar al home de eventos-->
-        <input type="hidden" name="next" value="{{ next }}">
+        <input type="hidden" name="next" value="{% url 'events_home' %}">
     {% endif %}
     </form>
 </div>

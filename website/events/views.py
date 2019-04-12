@@ -80,6 +80,10 @@ class LogoutView(LogoutView):
     template_name = 'registration/custom_logged_out.html'
 
 
+@login_required(login_url='/eventos/cuentas/login/')
+def events_home(request):
+    return render(request, 'events_home.html')
+
 #TODO: change validation to verify if the user has add_organizer permision and not superuser
 # permission_required('organizer.can_add')
 @user_passes_test(lambda u: u.is_superuser, login_url='/eventos/cuentas/login/')
@@ -107,6 +111,7 @@ def organizer_signup(request):
     return render(request, 'organizer_signup.html', {'form': form})
 
 
+#TODO: delete just was to provee something
 def activate(request, uidb64, token):
     try:
         uid = force_text(urlsafe_base64_decode(uidb64))

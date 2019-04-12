@@ -15,5 +15,7 @@ urlpatterns = [
      path('registrar-organizador/', views.organizer_signup, name='signup'),
      path('activate/<uidb64>/<token>/',
         views.activate, name='activate'),
+
+     path('', views.events_home, name='events_home'),
      
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
