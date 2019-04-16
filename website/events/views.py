@@ -99,12 +99,12 @@ def organizer_signup(request):
             reset_form = PasswordResetForm({'email': user.email})
             assert reset_form.is_valid()
             reset_form.save(
-                subject_template_name='registration/custom_password_reset_subject.txt',
-                email_template_name='registration/custom_password_reset_email.html',
+                subject_template_name='registration/organizer_just_created_subject.txt',
+                email_template_name='registration/organizer_set_password_email.html',
                 request=request,
                 use_https=request.is_secure(),
             )
-
+            #TODO: create a organizer model, and redirect the user to the add organizers page
             return HttpResponse(_('Se le envio un mail al usuario organizador para que pueda ingresar sus credenciales de autenticación'))
     else:
         form = OrganizerUserSignupForm()
