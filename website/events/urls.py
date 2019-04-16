@@ -12,7 +12,7 @@ urlpatterns = [
      path('cuentas/cambio-clave/finalizado', views.PasswordResetDoneView.as_view(), name='password_reset_done'),
      path('cuentas/<uidb64>/<token>/', views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
      path('cuentas/cambio-clave-completo/', views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
-     path('registrar-organizador/', views.organizer_signup, name='signup'),
+     path('registrar-organizador/', views.organizer_signup, name='organizer_signup'),
      path('activate/<uidb64>/<token>/',
         views.activate, name='activate'),
 
