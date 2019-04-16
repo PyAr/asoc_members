@@ -147,7 +147,6 @@ class Dev(LocalSettings, Base):
     EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND','django.core.mail.backends.smtp.EmailBackend')
     EMAIL_HOST = os.environ.get('EMAIL_HOST','mail')
     EMAIL_PORT = os.environ.get('EMAIL_PORT',1025)
-    #EMAIL_HOST_USER='laralara@gmail.com'
 
 
 class Prod(Base):
