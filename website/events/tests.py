@@ -1,22 +1,23 @@
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
-from django.core import mail
 User = get_user_model()
+
+def create_user_set():
+    """Create a organizer and superuser users."""
+    organizer = User.objects.create_user(username="organizer", email="test@test.com", password="organizer")
+    super_user = User.objects.create_superuser(
+        username="administrator", 
+        email="admin@test.com", 
+        password="administrator"
+        )
+
 
 class EmailTest(TestCase):
     def setUp(self):
-        self.organizer_user = User.objects.create_user(username="organizer", email="test@test.com", password="organizer")
-        self.super_user = User.objects.create_superuser(
-            username="administrator", 
-            email="admin@test.com", 
-            password="administrator"
-            )
-
-    def tearDown(self):
-        self.organizer_user.delete()
-        self.super_user.delete()
+        create_user_set()
 
     def test_send_email_after_register_organizer(self):
         # Login client with super user
@@ -37,12 +38,7 @@ class EmailTest(TestCase):
 
 class SingnupOrginizerTest(TestCase):
     def setUp(self):
-        self.organizer_user = User.objects.create_user(username="organizer", email="test@test.com", password="organizer")
-        self.super_user = User.objects.create_superuser(
-            username="administrator", 
-            email="admin@test.com", 
-            password="administrator"
-            )
+        create_user_set()
     
     def test_organizer_signup_redirects_without_perms(self):
         response = self.client.get(reverse('organizer_signup'))
@@ -58,6 +54,7 @@ class SingnupOrginizerTest(TestCase):
 
     
     def test_user_with_add_organizer_perm_no_redirects(self):
+        #TODO: use correct perm, and not superuser
         # Login client with super user
         self.client.login(username='administrator', password='administrator')
 
