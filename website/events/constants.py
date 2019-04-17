@@ -1,5 +1,6 @@
 from django.utils.translation import gettext_lazy as _
 
+"""Helping constant for validate passwords."""
 ATTRIBUTE_SIMILARITY_HELP = _("La contraseña no puede ser similar a su otra información personal.")
 COMMON_PASSWORD_HELP = _("La contraseña no puede ser comunmente usada.")
 NUMERIC_PASSWORD_HELP = _("La constraseña no puede contener solo números.")
