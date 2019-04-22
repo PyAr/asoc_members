@@ -2,6 +2,7 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import ( 
     PasswordResetView, 
     PasswordResetConfirmView, 
@@ -21,15 +22,17 @@ from django.utils.crypto import get_random_string
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.translation import gettext_lazy as _
+from django.views import generic, View
 
 import events
-from events.helpers.tokens import account_activation_token
 from events.forms import (
     OrganizerUserSignupForm, 
     SetPasswordForm, 
     AuthenticationForm, 
     PasswordResetForm
     )
+from events.helpers.tokens import account_activation_token
+from events.models import Event, Organizer
 
 # Class-based password reset views
 # - PasswordResetView sends the mail
@@ -126,3 +129,29 @@ def activate(request, uidb64, token):
         return HttpResponse('Thank you for your email confirmation. Now you can login your account.')
     else:
         return HttpResponse('Activation link is invalid!')
+
+
+class EventsListView(generic.ListView, LoginRequiredMixin):
+    model = Event
+    context_object_name = 'event_list'
+    template_name = 'event_list.html'
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            queryset = Event.objects.all()
+        else:
+            organizers = Organizer.objects.filter(user=user)
+            queryset = Event.objects.filter(organizers__in=organizers)
+        
+        return queryset
+
+
+class EventView(View, LoginRequiredMixin):
+    
+    def get(self, request):
+        return HttpResponse(_('TODO: aca va el detail del evento'))
+
+
+events_list = EventsListView.as_view()
+event_detail = EventView.as_view()
