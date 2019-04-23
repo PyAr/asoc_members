@@ -135,6 +135,7 @@ class EventsListView(generic.ListView, LoginRequiredMixin):
     model = Event
     context_object_name = 'event_list'
     template_name = 'event_list.html'
+    paginate_by = 10
 
     def get_queryset(self):
         user = self.request.user

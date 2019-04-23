@@ -94,7 +94,10 @@ class Event(TimeStampedModel):
     class Meta:
         permissions = (
             ('can_associate_organizer',_('puede asociar organizador')),
-        )        
+            ('can_view_organizers',_('puede ver organizadores')),
+        )
+        ordering = ['start_date'] 
+
 
 
 class EventOrganizer(TimeStampedModel):

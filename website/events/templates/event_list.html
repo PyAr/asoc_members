@@ -2,10 +2,8 @@
 {% block content %}
 <div class="container">
     <h1>Eventos</h1>
-
     {% if event_list %}
     <ul>
-
       {% for event in event_list %}
       <li>
         <a href="{% url 'event_detail' pk=event.pk %}">{{ event.name }}</a> ({{event.category}})
@@ -17,4 +15,22 @@
       <p>No hay eventos asociados a su usuario.</p>
     {% endif %}
 </div>       
+{% endblock %}
+
+{% block pagination %}
+  {% if is_paginated %}
+      <div class="pagination">
+          <span class="page-links">
+              {% if page_obj.has_previous %}
+                  <a href="{{ request.path }}?page={{ page_obj.previous_page_number }}">previous</a>
+              {% endif %}
+              <span class="page-current">
+                  Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+              </span>
+              {% if page_obj.has_next %}
+                  <a href="{{ request.path }}?page={{ page_obj.next_page_number }}">next</a>
+              {% endif %}
+          </span>
+      </div>
+  {% endif %}
 {% endblock %}
