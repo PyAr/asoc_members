@@ -1,5 +1,5 @@
 from django.contrib.auth import login, authenticate
-from django.contrib.auth.decorators import user_passes_test, login_required
+from django.contrib.auth.decorators import user_passes_test, login_required, permission_required
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -25,11 +25,12 @@ from django.utils.translation import gettext_lazy as _
 from django.views import generic, View
 
 import events
+from events.constants import CAN_VIEW_ORGANIZERS_CODENAME, CAN_ASSOCIATE_ORGANIZER_CODENAME
 from events.forms import (
-    OrganizerUserSignupForm, 
-    SetPasswordForm, 
-    AuthenticationForm, 
-    PasswordResetForm
+    AuthenticationForm,
+    OrganizerUserSignupForm,
+    PasswordResetForm,
+    SetPasswordForm
     )
 from events.helpers.tokens import account_activation_token
 from events.models import Event, Organizer
@@ -47,7 +48,7 @@ class PasswordResetView(PasswordResetView):
     form_class = PasswordResetForm
     from_email = None
     html_email_template_name = None
-    subject_template_name = 'registration/custom_password_reset_subject.txt'
+    subject_template_name = 'mails/custom_password_reset_subject.txt'
     success_url = reverse_lazy('password_reset_done')
     template_name = 'registration/custom_password_reset_form.html'
     title = _('Reseteo de contraseña')
@@ -88,8 +89,8 @@ def events_home(request):
     return render(request, 'events_home.html')
 
 #TODO: change validation to verify if the user has add_organizer permision and not superuser
-# permission_required('organizer.can_add')
-@user_passes_test(lambda u: u.is_superuser, login_url='/eventos/cuentas/login/')
+@permission_required('events.add_organizer', login_url='/eventos/cuentas/login/')
+#@user_passes_test(lambda u: u.is_superuser, login_url='/eventos/cuentas/login/')
 def organizer_signup(request):
     if request.method == 'POST':
         #Create user with random password and send custom reset password form
@@ -98,16 +99,17 @@ def organizer_signup(request):
             user = form.save(commit=False)
             user.set_password(get_random_string())
             user.save()
-            
+            #TODO: call a helper function to create de organizer with the correct group
+            Organizer.objects.create(user=user)
             reset_form = PasswordResetForm({'email': user.email})
             assert reset_form.is_valid()
             reset_form.save(
-                subject_template_name='registration/organizer_just_created_subject.txt',
-                email_template_name='registration/organizer_set_password_email.html',
+                subject_template_name='mails/organizer_just_created_subject.txt',
+                email_template_name='mails/organizer_set_password_email.html',
                 request=request,
                 use_https=request.is_secure(),
             )
-            #TODO: create a organizer model, and redirect the user to the add organizers page
+            #TODO: Redirect the user to the add organizers page, or add message of organizer created
             return HttpResponse(_('Se le envio un mail al usuario organizador para que pueda ingresar sus credenciales de autenticación'))
     else:
         form = OrganizerUserSignupForm()
@@ -150,7 +152,7 @@ class EventsListView(generic.ListView, LoginRequiredMixin):
 
 class EventView(View, LoginRequiredMixin):
     
-    def get(self, request):
+    def get(self, request, pk):
         return HttpResponse(_('TODO: aca va el detail del evento'))
 
 

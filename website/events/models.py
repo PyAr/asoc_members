@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 
 from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
-from .constants import CUIT_REGEX
+from .constants import CUIT_REGEX, CAN_VIEW_ORGANIZERS_CODENAME
 
 User = get_user_model()
 
@@ -47,6 +47,9 @@ class Organizer(TimeStampedModel):
     @property
     def email(self):
         return self.user.email
+    
+    def __str__(self):
+        return f"{ self.user.username } - {self.email}"
 
 
 class Event(TimeStampedModel):
@@ -73,7 +76,7 @@ class Event(TimeStampedModel):
     start_date = models.DateField(_('fecha de incio'), blank=True, null=True)
     place = models.CharField(_('lugar'), max_length=DEFAULT_MAX_LEN, blank=True)
     category = models.CharField(
-        _('tipo'), max_length=3, choices=TYPE_CHOICES)
+        _('tipo'), max_length=3, choices=TYPE_CHOICES, blank=True)
 
     organizers =  models.ManyToManyField(
         'Organizer',
@@ -93,8 +96,7 @@ class Event(TimeStampedModel):
 
     class Meta:
         permissions = (
-            ('can_associate_organizer',_('puede asociar organizador')),
-            ('can_view_organizers',_('puede ver organizadores')),
+            (CAN_VIEW_ORGANIZERS_CODENAME,_('puede ver organizadores')),
         )
         ordering = ['start_date'] 
 
