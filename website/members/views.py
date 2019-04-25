@@ -411,10 +411,8 @@ class ReportComplete(View):
         missing = missing_signed_letter and missing_nickname and picture
 
         return {
-            'missing': missing,
-            'missing_student_certif': missing_student_certif,
-            'missing_payment': missing_payment,
-            'missing_collab_accept': missing_collab_accept,
+            'complete': (missing and missing_student_certif) or (missing and missing_payment) or
+                        (missing and missing_collab_accept),
         }
 
     def get(self, request):
@@ -425,28 +423,19 @@ class ReportComplete(View):
         for member in not_yet_members:
             info = self._analyze_member(member)
 
-            # convert info to proper strings to show
-            #print(k)
-            if info['missing'] and info['missing_student_certif']:
-                info[k] = "COMPLETO"
-            else:
-                if info['missing'] and info['missing_payment']:
-                    info[k] = "COMPLETO"
-                else:
-                    if info['missing'] and info['missing_collab_accept']:
-                        info[k] = "COMPLETO"
-                    else:
-                        info[k] = "INCOMPLETO"
+            person = member.person
+            person_info = {
+                'nombre': person.first_name,
+                'apellido': person.last_name,
+                'dni': person.document_number,
+                'email': person.email,
+            }
 
-
-
-            # add member and store
-            info['member'] = member
-            #print(info['member'])
-            if info[k] == "COMPLETO":
-                completes.append(info)
+            if info:
+                completes.append(person_info)
 
         context = dict(completes=completes)
+        print(completes)
         return render(request, 'members/report_complete.html', context)
 
 
