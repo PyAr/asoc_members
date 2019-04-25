@@ -24,7 +24,6 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.translation import gettext_lazy as _
 from django.views import generic, View
 
-import events
 from events.constants import CAN_VIEW_ORGANIZERS_CODENAME, CAN_ASSOCIATE_ORGANIZER_CODENAME
 from events.forms import (
     AuthenticationForm,

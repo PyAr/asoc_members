@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.sites.shortcuts import get_current_site
-import events
+
 from events.helpers.notifications import email_notifier
 from events.models import Event, Organizer, EventOrganizer
 
@@ -28,7 +28,9 @@ class EventAdmin(admin.ModelAdmin):
                     notify_organizers.append(instance.organizer)
             
         super(EventAdmin, self).save_formset(request, form, formset, change)
+        
         if len(notify_organizers):
+            #import pdb;pdb.set_trace()
             current_site = get_current_site(request)
             context={
                 'domain': current_site.domain,
