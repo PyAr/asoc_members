@@ -21,6 +21,15 @@ class Base(Configuration):
     """Base configuration for django app."""
     # Quick-start development settings - unsuitable for production
     # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
+    
+    # Configuring email from enviorenment and setting mailhog as default 
+    EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND','django.core.mail.backends.smtp.EmailBackend')
+    EMAIL_HOST = os.environ.get('EMAIL_HOST','mail')
+    EMAIL_PORT = os.environ.get('EMAIL_PORT',1025)
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
+    MAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
 
     # SECURITY WARNING: keep the secret key used in production secret!
     SECRET_KEY = 'svz&bkp-k(zydvn+v9$kqmds=ncl8w8(i-sp^1u280vez=g-zj'
@@ -129,7 +138,6 @@ class Base(Configuration):
     MEDIA_ROOT = BASE_DIR
 
     LOGIN_URL = '/admin/login/'
-    
 
 
 # try to import the local settings; if the file is not there just create a stub class
@@ -144,10 +152,6 @@ except ModuleNotFoundError as err:
 class Dev(LocalSettings, Base):
     """Development configuration."""
     
-    EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND','django.core.mail.backends.smtp.EmailBackend')
-    EMAIL_HOST = os.environ.get('EMAIL_HOST','mail')
-    EMAIL_PORT = os.environ.get('EMAIL_PORT',1025)
-
 
 class Prod(Base):
     """Production configuration."""
@@ -170,10 +174,3 @@ class Prod(Base):
             'PORT': os.environ.get('POSTGRES_PORT', 5432),
         }
     }
-
-    EMAIL_HOST = os.environ.get('EMAIL_HOST')
-    EMAIL_PORT = os.environ.get('EMAIL_PORT')
-    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
-    MAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
