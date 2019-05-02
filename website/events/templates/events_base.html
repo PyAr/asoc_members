@@ -2,4 +2,20 @@
 {% load static %}
 {% block extra_statics %}
     <link rel="stylesheet" href="{% static 'css/events.css' %}">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+{% endblock %}
+{% block extra_navbar_menu %}
+    {% if user.is_authenticated %}
+    <ul class="nav navbar-nav navbar-right">
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-4" data-toggle="dropdown"
+            aria-haspopup="true" aria-expanded="false" href="#">
+            <i class="fas fa-user"></i> {{ user.username }} </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink-4">
+                <li><a href="#">Datos cuenta</a></li>
+                <li><a href="{% url 'logout' %}">Log out</a></li>
+            </ul>
+        </li>
+    </ul>
+    {% endif %}
 {% endblock %}

@@ -1,0 +1,66 @@
+{% extends "events_base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row event-detail">
+        <div class="col-md-6">
+            <h3>Detalle del evento </h3>
+            <table class="table table-striped">
+                <tbody>
+                    <tr>
+                        <th scope="row">Nombre</th>
+                        <td>{{ event.name }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Tipo</th>
+                        <td>{{ event.category }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Comision</th>
+                        <td>{{ event.commission }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Fecha</th>
+                        <td>{{ event.start_date }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Lugar</th>
+                        <td>{{ event.place }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-6">
+            {% if perms.events.view_organizers %}
+                <h3>Organizadores <span class="badge badge-light">{{organizers.count}}</span></h3>
+                {% if organizers %}
+                    <ul>
+                        {% for organizer in organizers %}
+                            <li>{{organizer.user.username}} ({{organizer.first_name}}-{{organizer.last_name}})</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="alert alert-info" role="alert">
+                        No hay organizadores asociados al evento!
+                    </div>
+                     
+                {% endif %}
+                {% if perms.events.add_eventorganizer %}
+                    <a class="btn btn-primary btn-block text-uppercase" href="{% url 'admin:events_event_change' event.pk %}">Agregar Organizadores</a>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row sponsors-categories">
+            <div class="col-md-12">
+                <h3>Categorias de Sponsors</h3>
+            </div>
+            {% for sponsor_category in sponsors_categories %}
+                <div class="card" style="width: 18rem;">
+                        <h5 class="card-title">{{ sponsor_category.name }}</h5>
+                        <p class="sponsor-amount">${{ sponsor_category.amount }}</p>
+                </div>
+            {% endfor %}
+    </div>   
+</div>       
+{% endblock %}

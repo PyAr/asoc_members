@@ -1,8 +1,9 @@
+from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import user_passes_test, login_required, permission_required
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.views import ( 
     PasswordResetView, 
     PasswordResetConfirmView, 
@@ -24,7 +25,12 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.translation import gettext_lazy as _
 from django.views import generic, View
 
-from events.constants import CAN_VIEW_ORGANIZERS_CODENAME, CAN_ASSOCIATE_ORGANIZER_CODENAME
+from events.constants import (
+    CAN_VIEW_ORGANIZERS_CODENAME,
+    CAN_ASSOCIATE_ORGANIZER_CODENAME,
+    LOGIN_URL,
+    MUST_BE_EVENT_ORGANIZAER_MESSAGE
+    )
 from events.forms import (
     AuthenticationForm,
     OrganizerUserSignupForm,
@@ -89,7 +95,6 @@ def events_home(request):
 
 #TODO: change validation to verify if the user has add_organizer permision and not superuser
 @permission_required('events.add_organizer', login_url='/eventos/cuentas/login/')
-#@user_passes_test(lambda u: u.is_superuser, login_url='/eventos/cuentas/login/')
 def organizer_signup(request):
     if request.method == 'POST':
         #Create user with random password and send custom reset password form
@@ -115,28 +120,12 @@ def organizer_signup(request):
     return render(request, 'organizer_signup.html', {'form': form})
 
 
-#TODO: delete just was to provee something
-def activate(request, uidb64, token):
-    try:
-        uid = force_text(urlsafe_base64_decode(uidb64))
-        user = User.objects.get(pk=uid)
-    except(TypeError, ValueError, OverflowError, User.DoesNotExist):
-        user = None
-    if user is not None and account_activation_token.check_token(user, token):
-        user.is_active = True
-        user.save()
-        login(request, user)
-        # return redirect('home')
-        return HttpResponse('Thank you for your email confirmation. Now you can login your account.')
-    else:
-        return HttpResponse('Activation link is invalid!')
-
-
-class EventsListView(generic.ListView, LoginRequiredMixin):
+class EventsListView(LoginRequiredMixin, generic.ListView):
+    login_url = LOGIN_URL
     model = Event
     context_object_name = 'event_list'
     template_name = 'event_list.html'
-    paginate_by = 10
+    paginate_by = 5
 
     def get_queryset(self):
         user = self.request.user
@@ -149,11 +138,48 @@ class EventsListView(generic.ListView, LoginRequiredMixin):
         return queryset
 
 
-class EventView(View, LoginRequiredMixin):
-    
-    def get(self, request, pk):
-        return HttpResponse(_('TODO: aca va el detail del evento'))
+class EventDetailView(PermissionRequiredMixin, generic.DetailView):
+    login_url = LOGIN_URL
+    model = Event
+    template_name = 'event_detail.html'
+    permission_required = 'events.change_event'
 
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(EventDetailView, self).get_context_data(**kwargs)
+        event = self.get_object()
+        # Check that the user can see organizers and obtain them
+        user = self.request.user
+        if user.has_perm('events.' + CAN_VIEW_ORGANIZERS_CODENAME):
+            organizers = event.organizers.all()
+            context['organizers'] = organizers
+        return context
+    
+    def has_permission(self):
+        ret = super(EventDetailView, self).has_permission()
+        if ret and not self.request.user.is_superuser:
+            #tiene que se organizador del evento
+            event = self.get_object()
+            try:
+                organizer = Organizer.objects.get(user=self.request.user)
+            except Organizer.DoesNotExist:
+                organizer = None
+            
+            if organizer and (organizer in event.organizers.all()):
+                return ret
+            else:
+                self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+                messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+                return False
+            
+        return ret
+
+    def handle_no_permission(self):
+        if self.get_permission_denied_message()== MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            return redirect('event_list')
+        else:
+            return super(EventDetailView, self).handle_no_permission() 
+            
 
 events_list = EventsListView.as_view()
-event_detail = EventView.as_view()
+event_detail = EventDetailView.as_view()

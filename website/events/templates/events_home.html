@@ -1,7 +1,59 @@
 {% extends "events_base.html" %}
+{% load static %}
 {% block content %}
 <div class="container">
-    <p>Aca va el dashboard, condicional a los permisos del usuario</p>
-    {{ perms }}
+    <div class="dashboard_options">
+        <div class="row">
+            <!--Events-->
+            <div class="col-sm-6 col-md-3">
+                <div class="thumbnail">
+                    <img src="{% static 'images/empty.svg' %}" alt="Imagen que represente eventos">
+                    <div class="caption">
+                        <h3>Eventos</h3>
+                        <!--<p class="card-text">Lista de eventos asociados a su usuario, para poder administrar, según sus permisos.</p>-->
+                        <div class="dashborard-element-actions">
+                            <a href="{% url 'event_list' %}" class="btn btn-primary" role="button">Abrir</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--Organizers-->
+            {% if perms.events.add_organizer %}
+            <div class="col-sm-6 col-md-3">
+                <div class="thumbnail">
+                    <img src="{% static 'images/empty.svg' %}" alt="Imagen que represente personas">
+                    <div class="caption">
+                        <h3>Organizadores</h3>
+                        <!--<p class="card-text">Lista de eventos asociados a su usuario, para poder administrar, según sus permisos.</p>-->
+                        <div class="dashborard-element-actions">
+                            <a href="#" class="btn btn-primary" role="button">Abrir</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!--Sponsors-->
+            <div class="col-sm-6 col-md-3">
+                <div class="thumbnail">
+                    <img src="{% static 'images/empty.svg' %}" alt="Imagen que represente sponsors">
+                    <div class="caption">
+                        <h3>Sponsors</h3>
+                        <!--<p class="card-text">Lista de eventos asociados a su usuario, para poder administrar, según sus permisos.</p>-->
+                        <div class="dashborard-element-actions">
+                            <a href="#" class="btn btn-primary" role="button">Abrir</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="user-pending">
+        <h3>Tareas</h3>
+        <p>Temas pendientes del usuario, ver como se va a manejar esto para saber que las cosas progresan</p>
+    </div>
+    
+
 </div>
 {% endblock %}

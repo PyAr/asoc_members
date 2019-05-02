@@ -1,5 +1,7 @@
 from django.utils.translation import gettext_lazy as _
 
+LOGIN_URL = '/eventos/cuentas/login/'
+
 """Helping constant for validate passwords."""
 ATTRIBUTE_SIMILARITY_HELP = _("La contraseña no puede ser similar a su otra información personal.")
 COMMON_PASSWORD_HELP = _("La contraseña no puede ser comunmente usada.")
@@ -18,3 +20,6 @@ CUIT_REGEX =r'^(20|23|24|27|30|33|34)-[0-9]{8}-[0-9]$'
 """Permissions codenames to create groups, asign, and test."""
 CAN_ASSOCIATE_ORGANIZER_CODENAME = 'add_eventorganizer'
 CAN_VIEW_ORGANIZERS_CODENAME = 'view_organizers'
+
+"""Messages constants, to use on views and test."""
+MUST_BE_EVENT_ORGANIZAER_MESSAGE = _('Para poder acceder a detalles del evento debe ser organizador del mismo')
