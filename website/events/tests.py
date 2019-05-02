@@ -1,54 +1,92 @@
-from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
+
 from django.core import mail
-from django.forms import modelform_factory, modelformset_factory
-from django.test import TestCase, RequestFactory
+from django.template.loader import render_to_string
+from django.test import TestCase
 from django.urls import reverse
 
 from events.admin import EventAdmin
+
+from events.helpers.notifications import email_notifier
+from events.helpers.tests import associate_users_permissions, organizer_permissions, super_organizer_permissions
 from events.models import Event, Organizer, EventOrganizer
+from unittest.mock import patch, MagicMock
 
 User = get_user_model()
+
+
 class MockSuperUser:
     def has_perm(self, perm):
         return True
 
+def associate_organizer_perms(organizers_users):
+    permissions = organizer_permissions()
+    associate_users_permissions(organizers_users, permissions)
+    
+def associate_super_organizer_perms(super_organizers_users):
+    permissions = super_organizer_permissions()
+    associate_users_permissions(super_organizers_users, permissions)
+
 def create_user_set():
     """Create a organizer and superuser users."""
-    User.objects.create_user(username="organizer01", email="test01@test.com", password="organizer01")
-    User.objects.create_user(username="organizer02", email="test02@test.com", password="organizer02")
+    organizers = []
+    super_organizers=[]
+
+    organizers.append(User.objects.create_user(username="organizer01", email="test01@test.com", password="organizer01"))
+    organizers.append(User.objects.create_user(username="organizer02", email="test02@test.com", password="organizer02"))
+    
+    super_organizers.append(User.objects.create_user(username="superOrganizer01", email="super01@test.com", password="superOrganizer01"))
+    # Created to test perms without use superuser.
+
     User.objects.create_superuser(
         username="administrator", 
         email="admin@test.com", 
         password="administrator"
         )
 
+    associate_organizer_perms(organizers)
+    associate_super_organizer_perms(super_organizers)
+
 def create_event_set():
     """Create Events to test."""
     Event.objects.create(name='MyTest01', commission=20)
     Event.objects.create(name='MyTest02', commission=10)
 
-def instantiate_formset(formset_class, data, instance=None, initial=None):
-    prefix = formset_class().prefix
-    formset_data = {}
-    for i, form_data in enumerate(data):
-        for name, value in form_data.items():
-            if isinstance(value, list):
-                for j, inner in enumerate(value):
-                    formset_data['{}-{}-{}_{}'.format(prefix, i, name, j)] = inner
-            else:
-                formset_data['{}-{}-{}'.format(prefix, i, name)] = value
-    formset_data['{}-TOTAL_FORMS'.format(prefix)] = len(data)
-    formset_data['{}-INITIAL_FORMS'.format(prefix)] = 0
+def admin_event_associate_organizers_post_data(event, organizers):
+    """Create data to send to events admin url to associate organizers to event."""
+    data = {
+        'name':[event.name], 
+        'commission': [str(event.commission)], 
+        'category': [''], 
+        'start_date': [''], 
+        'place': [''], 
 
-    if instance:
-        return formset_class(formset_data, instance=instance, initial=initial)
-    else:
-        return formset_class(formset_data, initial=initial)
+        'event_organizers-TOTAL_FORMS': [str(len(organizers))], 
+        'event_organizers-INITIAL_FORMS': ['0'], 
+        'event_organizers-MIN_NUM_FORMS': ['0'], 
+        'event_organizers-MAX_NUM_FORMS': ['1000'],
+         
+        'event_organizers-__prefix__-id': [''], 
+        'event_organizers-__prefix__-event': ['1'], 
+        'event_organizers-__prefix__-organizer': [''], 
+        '_save': ['Save']
+        }
+
+    association_num = 0
+    for organizer in organizers:
+        prefix = f"event_organizers-{association_num}-"
+        data[prefix + 'id']= ['']
+        data[prefix + 'event']= [str(event.pk)] 
+        data[prefix + 'organizer']= [str(organizer.pk)]
+        association_num = association_num + 1
+
+    return data
+
 
 class EmailTest(TestCase):
     def setUp(self):
         create_user_set()
+        create_event_set()
 
     def test_send_email_after_register_organizer(self):
         # Login client with super user
@@ -65,6 +103,24 @@ class EmailTest(TestCase):
         #TODO: use template here
         self.assertEqual(mail.outbox[0].subject, 'PyAr eventos alta organizador')
 
+
+    def test_send_organizer_associated_to_event_sends_mails_with_subject(self):
+        event = Event.objects.filter(name='MyTest01').first()
+        Organizer.objects.bulk_create([
+            Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
+            Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
+        ])
+
+        email_notifier.send_organizer_associated_to_event(event,Organizer.objects.all(),{'domain': 'testserver', 'protocol': 'http'})
+        self.assertEqual(len(mail.outbox),2)
+
+        send_to = []
+        for email in mail.outbox:
+            send_to.extend(email.to)
+            self.assertEqual(email.subject, render_to_string('mails/organizer_associated_to_event_subject.txt'))
+        
+        self.assertIn('test01@test.com',send_to)
+        self.assertIn('test02@test.com',send_to) 
 
 
 class SingnupOrginizerTest(TestCase):
@@ -86,8 +142,8 @@ class SingnupOrginizerTest(TestCase):
     
     def test_user_with_add_organizer_perm_no_redirects(self):
         #TODO: use correct perm, and not superuser
-        # Login client with super user
-        self.client.login(username='administrator', password='administrator')
+        # Login client with super_organizer
+        self.client.login(username='superOrganizer01', password='superOrganizer01')
 
         response = self.client.get(reverse('organizer_signup'))
         self.assertEqual(response.status_code, 200)
@@ -99,47 +155,22 @@ class EventAdminTest(TestCase):
         create_user_set()
         create_event_set()
 
-        site = AdminSite()
-        self.admin = EventAdmin(Event, site)
         Organizer.objects.bulk_create([
             Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
             Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
         ])
 
-    """def test_on_organizer_associate_to_event_call_mail_function(self):
-        url = reverse('admin:events_event_change', kwargs={'object_id': 2})
-        
-        request_factory = RequestFactory()
-        request = request_factory.get(url)
-        request.user = MockSuperUser()
-
+    @patch('events.helpers.notifications.EmailNotification.send_organizer_associated_to_event')
+    def test_on_organizer_associate_to_event_call_mail_function(self, send_email_function):
         event = Event.objects.filter(name='MyTest01').first()
-        event_form = modelform_factory(Event, fields=['name', 'commission', 'id'])
-        event_form_instance = event_form({'name':event.name, 'commission':event.commission}, instance=event)
+
+        url = reverse('admin:events_event_change', kwargs={'object_id': event.pk})
+        self.client.login(username='administrator', password='administrator')
         
-        event_form_instance.is_valid()
+        organizers = [] 
+        for organizer in Organizer.objects.all():
+            organizers.append(organizer)
 
-        organizer = Organizer.objects.filter(first_name="Organizer01").first()
-        event_organizer = EventOrganizer(event=event, organizer=organizer)
-        event_organizer_form = modelform_factory(EventOrganizer, fields=['event', 'organizer'])
-        event_organizer_form_instance = event_organizer_form({'event':event, 'organizer':organizer}, instance=event_organizer)
-        event_organizer_form_instance.is_valid()
-
-        event_organizer_formset = modelformset_factory(EventOrganizer, fields=['event', 'organizer'])
-        #event_organizer_formset_instance = instantiate_formset(event_organizer_formset,[{
-        #    'event':event,
-        #    'organizer': organizer
-        #}])
-        #event_organizer_formset_instance.is_valid()
-        event_organizer_formset_instance = event_organizer_formset([event_organizer_form_instance])
-        #event_organizer_formset_instance.forms = 
-        event_organizer_formset_instance.is_valid()
-        
-
-        self.admin.save_formset(
-            request, 
-            event_form_instance, 
-            event_organizer_formset_instance, 
-            True
-            )
-        self.assertEqual(1,1)"""
+        data = admin_event_associate_organizers_post_data(event, organizers)
+        response = self.client.post(url, data=data)
+        send_email_function.assert_called_once_with(event, organizers, {'domain': 'testserver', 'protocol': 'http'})

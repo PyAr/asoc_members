@@ -3,7 +3,7 @@ from django.template.loader import render_to_string
 
 class EmailNotification():
     MAIL_FROM ='Lalita <lalita@ac.python.org.ar>'
-    MAIL_MANAGER = 'presidencia@ac.python.org.ar>'        
+    MAIL_MANAGER = 'presidencia@ac.python.org.ar'        
     EMAIL_TEMPLATES = {
         'organizer_associated_to_event':'mails/organizer_associated_to_event_email.html'
     }

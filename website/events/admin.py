@@ -30,7 +30,6 @@ class EventAdmin(admin.ModelAdmin):
         super(EventAdmin, self).save_formset(request, form, formset, change)
         
         if len(notify_organizers):
-            #import pdb;pdb.set_trace()
             current_site = get_current_site(request)
             context={
                 'domain': current_site.domain,
