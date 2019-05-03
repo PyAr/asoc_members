@@ -1,6 +1,14 @@
 {% extends "events_base.html" %}
 {% block content %}
 <div class="container">
+    
+    <div class="route-navigator" >
+            <ol class="breadcrumb">
+                <li><a href="{% url 'events_home' %}">Inicio</a></li>
+                <li class="active"><a href="{% url 'event_list' %}">Eventos</a></li>
+            </ol>
+    </div>
+
     <h1>Eventos</h1>
     {% if event_list %}
     <ul>
