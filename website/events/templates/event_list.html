@@ -1,72 +1,48 @@
-{% extends "events_base.html" %}
-{% block content %}
-<div class="container">
-    
-    <div class="route-navigator" >
-            <ol class="breadcrumb">
-                <li><a href="{% url 'events_home' %}">Inicio</a></li>
-                <li class="active"><a href="{% url 'event_list' %}">Eventos</a></li>
-            </ol>
-    </div>
+{% extends "events_base_paginated_list.html" %}
 
+{% block route-navigator %}
+<div class="route-navigator" >
+        <ol class="breadcrumb">
+            <li><a href="{% url 'events_home' %}">Inicio</a></li>
+            <li class="active"><a href="{% url 'event_list' %}">Eventos</a></li>
+        </ol>
+</div>
+{% endblock %}
+    
+{% block list_content %}
     <h1>Eventos</h1>
+    
     {% if event_list %}
-    <ul>
-      {% for event in event_list %}
-      <li>
-        <a href="{% url 'event_detail' pk=event.pk %}">{{ event.name }}</a> ({{event.category}})
-      </li>
-      {% endfor %}
+    <table class="table table-striped row-clickeable-table">
+        <thead>
+            <tr>
+                <th scope="row">Nombre</th>
+                <th scope="row">Tipo</th>
+                <th scope="row">Comision</th>
+                <th scope="row">Fecha</th>
+                <th scope="row">Lugar</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for event in event_list %}
+        
+            <tr onclick="window.location='{% url 'event_detail' pk=event.pk %}';" class="clikeable">
+                
+                <td >{{ event.name }}</td>
+                <td>{{ event.get_category_display }}</td>
+                <td>{{ event.commission }}</td>
+                <td>{% if event.start_date %}{{ event.start_date }}{% endif %}</td>
+                <td>{{ event.place }}</td>
+            </tr>
+        
+        {% endfor %}
+        </tbody>
+    </table>
+    
+    
 
     </ul>
     {% else %}
-      <p>No hay eventos asociados a su usuario.</p>
+    <p>No hay eventos asociados a su usuario.</p>
     {% endif %}
-    
-    {% block pagination %}
-        {% if is_paginated %}
-            <nav aria-label="Page navigation">
-                <ul class="pagination">
-                {% if page_obj.has_previous %}
-                <li>
-                    <a href="{{ request.path }}?page={{ page_obj.previous_page_number }}" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-                {% else %}
-                <li class="disabled"> 
-                    <a href="#" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-                {% endif %}
-
-                <li class="active"><a href="#">1</a></li>
-                <li><a href="#">2</a></li>
-                <li><a href="#">3</a></li>
-                <li><a href="#">4</a></li>
-                <li><a href="#">5</a></li>
-                {% if page_obj.has_next %}
-                <li>
-                    <a href="{{ request.path }}?page={{ page_obj.next_page_number }}" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-                {% else %}
-                <li class="disabled">
-                    <a href="#" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-                {% endif %}
-                </ul>
-            </nav>
-            <span class="page-current">
-                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-            </span>
-        {% endif %}
-    {% endblock %}
-
-</div>       
 {% endblock %}
-
