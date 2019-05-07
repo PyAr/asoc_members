@@ -23,8 +23,40 @@
 .dashborard-element-actions {
     text-align: right;
 }
+.dashboard_options .caption {
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+.dashboard_options .thumbnail {
+    border: 0px;
+}
 
 .route-navigator {
     margin-bottom: 10px;
-    
+}
+
+.row-clickeable-table .clikeable {
+    cursor: pointer;
+}
+.card-btn {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.sponsors-categories .card-header {
+    padding: .75rem 1.25rem;
+    margin-bottom: 0;
+    background-color: rgba(0,0,0,.03);
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+.sponsors-categories .card-body {
+    margin-top: 20px;
+}
+
+.sponsors-categories .card-header h3 {
+    margin-bottom: 0;
+    margin-top: 0;
+    font-weight: normal;
 }

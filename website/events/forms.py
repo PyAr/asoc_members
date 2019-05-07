@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import (
     AuthenticationForm as AuthAuthenticationForm,
     PasswordResetForm as AuthPasswordResetForm,
@@ -6,14 +7,15 @@ from django.contrib.auth.forms import (
     UserCreationForm, 
     UsernameField,
     )
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Div, Row
+
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, Row
-
-from .constants import PASSWORD_VALIDATOR_HELP_TEXTS
+from events.constants import PASSWORD_VALIDATOR_HELP_TEXTS
+from events.models import Event, Organizer, SponsorCategory
 
 class AuthenticationForm(AuthAuthenticationForm):
     """
@@ -106,3 +108,43 @@ class OrganizerUserSignupForm(UserCreationForm):
     class Meta:
         model = User
         fields = ('username', 'email')
+
+
+class EventUpdateForm(forms.ModelForm):
+    start_date = forms.DateField(label=_('Fecha de inicio'),
+        input_formats=settings.DATE_INPUT_FORMATS, help_text=_('Formato: DD/MM/AAAA'), 
+        widget=forms.widgets.DateInput(format=settings.DATE_INPUT_FORMATS[0]), required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(EventUpdateForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+    
+    def clean_name(self):
+        # when field is cleaned, we always return the existing model field.
+        return self.instance.name
+    
+    def clean_commission(self):
+        # when field is cleaned, we always return the existing model field.
+        return self.instance.commission
+
+    class Meta:
+        model = Event
+        fields = ['name', 'commission', 'category', 'start_date', 'place']
+        widgets = {
+            'name': forms.TextInput(attrs={'readonly': True}),
+            'commission': forms.TextInput(attrs={'readonly': True}),
+        }
+
+
+class SponsorCategoryForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(SponsorCategoryForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+    class Meta:
+        model = SponsorCategory
+        fields = ['name', 'amount']

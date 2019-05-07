@@ -1,11 +1,12 @@
 {% extends "events_base.html" %}
+{% load static %}
 {% block content %}
 <div class="container">
-    
+
     <div class="route-navigator" >
             <ol class="breadcrumb">
                 <li><a href="{% url 'events_home' %}">Inicio</a></li>
-                <li class="active"><a href="{% url 'event_list' %}">Eventos</a></li>
+                <li><a href="{% url 'event_list' %}">Eventos</a></li>
                 <li class="active"><a href="{% url 'event_detail' pk=event.pk %}">{{event.name}}</a></li>
             </ol>
     </div>
@@ -21,7 +22,7 @@
                     </tr>
                     <tr>
                         <th scope="row">Tipo</th>
-                        <td>{{ event.category }}</td>
+                        <td>{{ event.get_category_display }}</td>
                     </tr>
                     <tr>
                         <th scope="row">Comision</th>
@@ -37,6 +38,7 @@
                     </tr>
                 </tbody>
             </table>
+            <a class="btn btn-primary btn-block text-uppercase" href="{% url 'event_change' event.pk %}">Editar</a>
         </div>
         <div class="col-md-6">
             {% if perms.events.view_organizers %}
@@ -64,12 +66,50 @@
             <div class="col-md-12">
                 <h3>Categorias de Sponsors</h3>
             </div>
-            {% for sponsor_category in sponsors_categories %}
-                <div class="card" style="width: 18rem;">
-                        <h5 class="card-title">{{ sponsor_category.name }}</h5>
-                        <p class="sponsor-amount">${{ sponsor_category.amount }}</p>
+            <div class="row">
+            {% for sponsor_category in event.sponsors_categories.all %}
+                <div class="col-sm-3 col-md-3">
+                    <div class="thumbnail">
+                        <div class="card-header">
+                            <h3 class="text-center text-camelcase">{{ sponsor_category.name }}</h3>
+                        </div>
+                        <div class="card-body">
+                            <h1 class="text-center">${{ sponsor_category.amount }}</h1>
+                            {% if forloop.counter|divisibleby:2 %}
+                            <p>No se han registrado sponsors asociados a esta categoria</p>
+                            {% else %}
+                            <p>Se han registrado un total de {{ sponsor_category.sponsors.count }} sponsors, para esta categoría</p>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
+                {% if forloop.counter|divisibleby:4 %}
+                    </div><div class="row">
+                {% endif %}
+                
             {% endfor %}
+                {% if perms.events.add_sponsorcategory %}
+                <div class="col-sm-3 col-md-3">
+                    <div class="thumbnail">
+                        <div class="card-header">
+                            <h3 class="text-center text-camelcase">Agregar</h3>
+                        </div>
+                        <div class="card-body">
+                                
+                            <a class="btn btn-primary btn-block text-uppercase" onclick="return open_modal('{% url 'event_create_sponsor_category' event.pk %}')">
+                                Agregar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
     </div>   
+</div>
+<div id="popup" class="modal fade" role="dialog">
 </div>       
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/modal_form.js' %}"></script>
 {% endblock %}
