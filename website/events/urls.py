@@ -17,5 +17,7 @@ urlpatterns = [
      path('', views.events_home, name='events_home'),
      path('eventos/', views.events_list, name='event_list'),
      path('eventos/<pk>/', views.event_detail, name='event_detail'),
+     path('eventos/<pk>/editar/', views.event_change, name='event_change'),
+     path('eventos/<pk>/agregar-categoria-sponsor/', views.event_create_sponsor_category, name='event_create_sponsor_category'),
      
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

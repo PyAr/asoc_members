@@ -16,7 +16,7 @@ from django.contrib.auth.views import (
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, redirect, render  
 
 from django.urls import reverse_lazy
 from django.utils.crypto import get_random_string
@@ -33,12 +33,14 @@ from events.constants import (
     )
 from events.forms import (
     AuthenticationForm,
+    EventUpdateForm,
     OrganizerUserSignupForm,
     PasswordResetForm,
-    SetPasswordForm
+    SetPasswordForm,
+    SponsorCategoryForm
     )
 from events.helpers.tokens import account_activation_token
-from events.models import Event, Organizer
+from events.models import Event, Organizer, SponsorCategory
 
 # Class-based password reset views
 # - PasswordResetView sends the mail
@@ -181,5 +183,40 @@ class EventDetailView(PermissionRequiredMixin, generic.DetailView):
             return super(EventDetailView, self).handle_no_permission() 
             
 
+class EventChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
+    login_url = LOGIN_URL
+    model = Event
+    form_class = EventUpdateForm
+    template_name = 'event_change.html'
+    permission_required = 'events.change_event'
+
+
+class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView):
+    login_url = LOGIN_URL
+    model = SponsorCategory
+    form_class = SponsorCategoryForm
+    template_name = 'event_create_sponsor_category_modal.html'
+    permission_required = 'events.add_sponsorcategory'
+    
+    def form_valid(self, form):
+        form.instance.event = self._get_event()
+        return super(SponsorCategoryCreateView, self).form_valid(form)
+
+    def get_success_url(self):
+        return self._get_event().get_absolute_url()
+
+    def _get_event(self):
+        return get_object_or_404(Event, pk=self.kwargs['pk'])
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(SponsorCategoryCreateView, self).get_context_data(**kwargs)
+        context['event'] = self._get_event()
+        return context
+        
+
+
 events_list = EventsListView.as_view()
 event_detail = EventDetailView.as_view()
+event_change = EventChangeView.as_view()
+event_create_sponsor_category = SponsorCategoryCreateView.as_view()
