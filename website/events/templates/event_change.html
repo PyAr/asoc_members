@@ -12,12 +12,12 @@
             </ol>
     </div>
     <form method="POST">
-            {% csrf_token %}
-            {% crispy form %}
-            <a class="btn btn-default" href="{% url 'event_detail' event.pk %}">Volver</a>
-            <input type="submit" class="btn btn-success" value="Actualizar!">
-            
-          </form>
+        {% csrf_token %}
+        {% crispy form %}
+        <a class="btn btn-default" href="{% url 'event_detail' event.pk %}">Volver</a>
+        <input type="submit" class="btn btn-success" value="Actualizar!">
+        
+    </form>
     </div>
        
 </div>       
