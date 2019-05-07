@@ -12,14 +12,14 @@
     <div class="dashboard_options">
         <div class="row">
             <!--Events-->
-            <div class="col-sm-6 col-md-3">
+            <div class="col-sm-6 col-md-2">
                 <div class="thumbnail">
-                    <img src="{% static 'images/empty.svg' %}" alt="Imagen que represente eventos">
+                    <img src="{% static 'images/eventos.png' %}" alt="Imagen que represente eventos">
                     <div class="caption">
-                        <h3>Eventos</h3>
+                        <!--h5 class="text-center">Eventos</h5-->
                         <!--<p class="card-text">Lista de eventos asociados a su usuario, para poder administrar, según sus permisos.</p>-->
                         <div class="dashborard-element-actions">
-                            <a href="{% url 'event_list' %}" class="btn btn-primary" role="button">Abrir</a>
+                            <a href="{% url 'event_list' %}" class="btn btn-primary card-btn" role="button">Eventos</a>
                         </div>
                     </div>
                 </div>
@@ -27,14 +27,14 @@
 
             <!--Organizers-->
             {% if perms.events.add_organizer %}
-            <div class="col-sm-6 col-md-3">
+            <div class="col-sm-6 col-md-2">
                 <div class="thumbnail">
-                    <img src="{% static 'images/empty.svg' %}" alt="Imagen que represente personas">
+                    <img src="{% static 'images/organizadores.png' %}" alt="Imagen que represente personas">
                     <div class="caption">
-                        <h3>Organizadores</h3>
+                        <!--h5 class="text-center">Organizadores</h5-->
                         <!--<p class="card-text">Lista de eventos asociados a su usuario, para poder administrar, según sus permisos.</p>-->
                         <div class="dashborard-element-actions">
-                            <a href="#" class="btn btn-primary" role="button">Abrir</a>
+                            <a href="#" class="btn btn-primary card-btn" role="button">Organizadores</a>
                         </div>
                     </div>
                 </div>
@@ -42,18 +42,34 @@
             {% endif %}
 
             <!--Sponsors-->
-            <div class="col-sm-6 col-md-3">
+            <div class="col-sm-6 col-md-2">
                 <div class="thumbnail">
-                    <img src="{% static 'images/empty.svg' %}" alt="Imagen que represente sponsors">
+                    <img src="{% static 'images/sponsors.png' %}" alt="Imagen que represente sponsors">
                     <div class="caption">
-                        <h3>Sponsors</h3>
+                        <!--h5 class="text-center">Sponsors</h5-->
                         <!--<p class="card-text">Lista de eventos asociados a su usuario, para poder administrar, según sus permisos.</p>-->
                         <div class="dashborard-element-actions">
-                            <a href="#" class="btn btn-primary" role="button">Abrir</a>
+                            <a href="#" class="btn btn-primary card-btn"< role="button">Sponsors</a>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!--Reports-->
+            {% if perms.events.view_reports %}
+            <div class="col-sm-6 col-md-2">
+                <div class="thumbnail">
+                    <img src="{% static 'images/reportes.png' %}" alt="Imagen que represente personas">
+                    <div class="caption">
+                        <!--h5 class="text-center">Organizadores</h5-->
+                        <!--<p class="card-text">Lista de eventos asociados a su usuario, para poder administrar, según sus permisos.</p>-->
+                        <div class="dashborard-element-actions">
+                            <a href="#" class="btn btn-primary card-btn" role="button">Reportes</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
     <div class="user-pending">
