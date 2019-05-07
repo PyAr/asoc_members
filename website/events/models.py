@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 
@@ -84,15 +85,9 @@ class Event(TimeStampedModel):
         verbose_name=_('organizadores'),
         related_name='events'
     )
-
-    def associate_organizer(self, organizer, notify=False):
-        """Add new organizer.
-        Using it instead direct add, is better to run other task like send mails.
-        """
-        EventOrganizer.objects.create(event=self, organizer=organizer)
-        if notify:
-            mail_account = organizer.user.email
-            #TODO: send mail to organizer??. Model is to low, better on view
+    
+    def get_absolute_url(self):
+        return reverse('event_detail', args=[str(self.id)])
 
     class Meta:
         permissions = (

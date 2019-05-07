@@ -2,13 +2,17 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 
 from events.constants import CAN_VIEW_ORGANIZERS_CODENAME
-from events.models import Event, Organizer, EventOrganizer
+from events.models import Event, Organizer, EventOrganizer, SponsorCategory
 
 def organizer_permissions():
     permissions = []
     event_content_type = ContentType.objects.get_for_model(Event)
     #event update permmission
     permissions.append(Permission.objects.get(content_type=event_content_type, codename='change_event'))
+    
+    event_content_type = ContentType.objects.get_for_model(SponsorCategory)
+    #sponsorcategory create permmission
+    permissions.append(Permission.objects.get(content_type=event_content_type, codename='add_sponsorcategory'))
 
     return permissions
 
