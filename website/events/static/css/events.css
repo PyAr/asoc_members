@@ -55,8 +55,25 @@
     margin-top: 20px;
 }
 
+.sponsors-categories .card-body h2 {
+    font-size: 25px;
+}
+
+.sponsors-categories .card-body .single-action {
+    display: block;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.sponsors-categories .card-body .single-action img {
+    cursor: pointer;
+}
+
+
 .sponsors-categories .card-header h3 {
     margin-bottom: 0;
     margin-top: 0;
     font-weight: normal;
+    font-size: 20px;
 }
