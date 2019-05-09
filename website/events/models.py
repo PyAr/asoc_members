@@ -12,6 +12,12 @@ User = get_user_model()
 
 class BankAccountData(TimeStampedModel):
     """Account data for monetary transerences."""
+    CC = 'CC'
+    CA = 'CA'
+    ACCOUNT_TYPE_CHOICES = (
+        (CC, 'Cuenta corriente'),
+        (CA, 'Caja de ahorros')
+    )
     #TODO: regex validator for cuit
     document_number = models.CharField(_('CUIT'), max_length=13, 
         help_text=_('CUIT del propietario de la cuenta'), 
@@ -24,7 +30,14 @@ class BankAccountData(TimeStampedModel):
         help_text=_('nombre de la entiedad bancaria')
     )
     account_number =  models.CharField(_('número de cuenta'), max_length=13, help_text=_('Número de cuenta'))
-    cbu = models.CharField(_('CBU'), max_length=DEFAULT_MAX_LEN)
+    account_type = models.CharField(_('tipo cuenta'), max_length=3, choices=ACCOUNT_TYPE_CHOICES)
+
+    organization_name = models.CharField(
+        _('razón social'), 
+        max_length=DEFAULT_MAX_LEN, 
+        help_text=_('razón social o nombre del propietario de la cuenta')
+    ) 
+    cbu = models.CharField(_('CBU'), max_length=DEFAULT_MAX_LEN, help_text=_('CBU de la cuenta'))
 
 
 class Organizer(TimeStampedModel):
@@ -93,7 +106,7 @@ class Event(TimeStampedModel):
         permissions = (
             (CAN_VIEW_ORGANIZERS_CODENAME,_('puede ver organizadores')),
         )
-        ordering = ['start_date'] 
+        ordering = ['-start_date'] 
 
 
 
@@ -116,3 +129,6 @@ class SponsorCategory(TimeStampedModel):
         on_delete=models.CASCADE, 
         related_name='sponsors_categories'
     )
+
+    class Meta:
+        unique_together = ('event','name')
