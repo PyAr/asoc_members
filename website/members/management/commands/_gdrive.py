@@ -8,12 +8,6 @@ from django.conf import settings
 
 SCOPE = 'https://www.googleapis.com/auth/drive'
 APPLICATION_NAME = 'AutoFacturador'
-# FIXME: move these to the confiG
-# CREDENTIALS_FILE = "/tmp/autofacturador_credentials.json"
-
-# FIXME: move this to the config
-# "Factura Socies" https://drive.google.com/drive/u/1/folders/1V2z4ww1B1yNdkO0yxkah45FX7sZvt961
-# BASE_GDRIVE_FOLDER = "1V2z4ww1B1yNdkO0yxkah45FX7sZvt961"
 
 
 def get_credentials():
