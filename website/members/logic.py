@@ -6,7 +6,7 @@ from members.models import Quota, Payment, PaymentStrategy, Member
 logger = logging.getLogger(__name__)
 
 
-def _increment_year_month(year, month):
+def increment_year_month(year, month):
     """Add one month to the received year/month."""
     month += 1
     if month == 13:
@@ -19,7 +19,7 @@ def get_year_month_range(year, month, quantity):
     """Return several year/month pairs from a given start."""
     yield year, month
     for _ in range(quantity - 1):
-        year, month = _increment_year_month(year, month)
+        year, month = increment_year_month(year, month)
         yield year, month
 
 
@@ -32,7 +32,7 @@ def create_payment(member, timestamp, amount, payment_strategy, first_unpaid=Non
         except Quota.DoesNotExist:
             first_unpaid = (member.first_payment_year, member.first_payment_month)
         else:
-            first_unpaid = _increment_year_month(last_quota.year, last_quota.month)
+            first_unpaid = increment_year_month(last_quota.year, last_quota.month)
     first_unpaid_year, first_unpaid_month = first_unpaid
 
     # calculate how many fees covers the amount, supporting not being exact but for a very
@@ -100,8 +100,9 @@ def create_recurring_payments(recurring_records):
                             last_payment_recorded, len(remaining_payments))
                         break
                 else:
-                    # no payment match found!
-                    logger.error(
+                    # no payment match found! all informed are old (it's just Mercadopago
+                    # failing) otherwise it would have been logged with warning above
+                    logger.debug(
                         "Payment not found to match %s: %s",
                         last_payment_recorded, retrieved_payments)
                     continue
@@ -149,7 +150,7 @@ def get_debt_state(member, limit_year, limit_month):
     should_have_paid = set()
     while True:
         should_have_paid.add((year_to_check, month_to_check))
-        year_to_check, month_to_check = _increment_year_month(year_to_check, month_to_check)
+        year_to_check, month_to_check = increment_year_month(year_to_check, month_to_check)
         if year_to_check == limit_year:
             if month_to_check > limit_month:
                 break

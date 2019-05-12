@@ -244,6 +244,10 @@ class PaymentStrategy(TimeStampedModel):
     def __str__(self):
         return f'{self.patron} ({self.platform})'
 
+    @property
+    def platform_name(self):
+        return dict(self.PLATFORM_CHOICES)[self.platform]
+
 
 class Payment(TimeStampedModel):
     """Record a pay event."""
@@ -254,10 +258,15 @@ class Payment(TimeStampedModel):
         'PaymentStrategy', verbose_name=_('estrategia de pago'),
         on_delete=models.SET_NULL, null=True)
     comments = models.TextField(_('comentarios'), blank=True)
-    invoice_id = models.CharField(_('ID de factura'), max_length=DEFAULT_MAX_LEN, blank=True)
+
+    # invoice selling point and number inside it, and if it was generated ok
+    invoice_spoint = models.PositiveIntegerField(_('Punto de venta'), blank=True, null=True)
+    invoice_number = models.PositiveIntegerField(_('Número de factura'), blank=True, null=True)
+    invoice_ok = models.BooleanField(_('Factura generada OK'), default=False)
 
     class Meta:
         get_latest_by = ['timestamp']
+        unique_together = ('invoice_spoint', 'invoice_number')
 
     def __str__(self):
         return f"<Payment {self.amount} [{self.timestamp}] from {self.strategy}>"
