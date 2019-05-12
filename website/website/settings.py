@@ -22,6 +22,15 @@ class Base(Configuration):
     # Quick-start development settings - unsuitable for production
     # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
+    # Configuring email from enviorenment and setting mailhog as default
+    EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'mail')
+    EMAIL_PORT = os.environ.get('EMAIL_PORT', 1025)
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
+    MAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
+
     # SECURITY WARNING: keep the secret key used in production secret!
     SECRET_KEY = 'svz&bkp-k(zydvn+v9$kqmds=ncl8w8(i-sp^1u280vez=g-zj'
 
@@ -41,6 +50,7 @@ class Base(Configuration):
         'django_extensions',
         'members.apps.MembersConfig',
         'crispy_forms',
+        'events.apps.EventsConfig',
     ]
 
     MIDDLEWARE = [
@@ -129,6 +139,20 @@ class Base(Configuration):
 
     LOGIN_URL = '/admin/login/'
 
+    AFIP = {
+        'url_wsaa': "https://wsaahomo.afip.gov.ar/ws/services/LoginCms?wsdl",
+        'url_wsfev1': "https://wswhomo.afip.gov.ar/wsfev1/service.asmx?WSDL",
+        'selling_point': 4000,
+        'cuit': 20267565393,
+        'auth_cert_path': '/tmp/reingart.crt',
+        'auth_key_path': '/tmp/reingart.key',
+    }
+
+    INVOICES_GDRIVE = {
+        'credentials_filepath': "",
+        'folder_id': "",
+    }
+
 
 # try to import the local settings; if the file is not there just create a stub class
 # for the inheritance later
@@ -171,3 +195,12 @@ class Prod(Base):
     EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
     EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
     MAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
+
+    AFIP = {
+        'url_wsaa': "https://wsaa.afip.gov.ar/ws/services/LoginCms?wsdl",
+        'url_wsfev1': "https://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL",
+        'selling_point': 7,
+        'cuit': 30715639129,
+        'auth_cert_path': '/tmp/afip_pyar.crt',
+        'auth_key_path': '/tmp/afip_pyar.key',
+    }

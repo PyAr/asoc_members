@@ -7,3 +7,7 @@ services:
       - "8000:8000"
     volumes:
       - .:/code
+  mail:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"
