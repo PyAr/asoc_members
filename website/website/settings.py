@@ -167,6 +167,20 @@ class Dev(LocalSettings, Base):
     """Development configuration."""
 
 
+class Staging(Base):
+    """Staging configuration."""
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('POSTGRES_DB', "memberships"),
+            'USER': os.environ.get('POSTGRES_USER', "postgres"),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', "secret"),
+            'HOST': os.environ.get('POSTGRES_HOST', "localhost"),
+            'PORT': os.environ.get('POSTGRES_PORT', 5432),
+        }
+    }
+
+
 class Prod(Base):
     """Production configuration."""
     DEBUG = False
