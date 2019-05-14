@@ -1,0 +1,21 @@
+{% extends "events_base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+  <div class="route-navigator" >
+      <ol class="breadcrumb">
+          <li><a href="{% url 'events_home' %}">Inicio</a></li>
+          <li><a href="{% url 'organizer_list' %}">Organizadores</a></li>
+          <li class="active"><a href="{% url 'organizer_signup' %}">Crear</a></li>
+      </ol>
+  </div>
+  <h3>Crear nuevo organizador</h3>
+  
+  <form method="post">
+    {% csrf_token %}
+    {% crispy form %}
+    <a class="btn btn-default" href="{% url 'organizer_list' %}">Volver</a>
+    <input type="submit" class="btn btn-success" value="Registrar" />
+  </form>
+</div>
+{% endblock %}
