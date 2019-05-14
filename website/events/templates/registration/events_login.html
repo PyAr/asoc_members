@@ -19,11 +19,11 @@
 
 <div class="events-login-form">
     <form method="post" action="{% url 'login' %}">
-    <h2 class="text-center">Autenticación</h2> 
+    <h2 class="text-center">Inicio de sesión</h2> 
     {% csrf_token %}
     {% crispy form %}
     <div class="form-group">
-        <input type="submit" class="btn btn-primary btn-block" value="Autenticar">
+        <input type="submit" class="btn btn-primary btn-block" value="Iniciar">
     </div>
     <div class="clearfix">
             <a href="{% url 'password_reset' %}" class="pull-right">¿Olvidó su contraseña?</a>

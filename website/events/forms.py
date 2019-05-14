@@ -24,7 +24,7 @@ class AuthenticationForm(AuthAuthenticationForm):
     """
     username = UsernameField(label=_("Usuario"), widget=forms.TextInput(attrs={'autofocus': True}))
     password = forms.CharField(
-        label=_("Password"),
+        label=_("Contraseña"),
         strip=False,
         widget=forms.PasswordInput,
     )

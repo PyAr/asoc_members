@@ -6,6 +6,10 @@
     width: 340px;
     margin: 50px auto;
 }
+.events-login-form .asteriskField {
+    display: none;
+}
+
 .events-login-form form {
     margin-bottom: 15px;
     background: #f7f7f7;
