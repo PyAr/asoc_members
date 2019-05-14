@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, update_session_auth_hash
 from django.contrib.auth.decorators import user_passes_test, login_required, permission_required
 from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
@@ -15,6 +15,7 @@ from django.contrib.auth.views import (
 
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
+from django.db import IntegrityError
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render  
 
@@ -34,7 +35,9 @@ from events.constants import (
 from events.forms import (
     AuthenticationForm,
     EventUpdateForm,
+    OrganizerUpdateForm,
     OrganizerUserSignupForm,
+    PasswordChangeForm,
     PasswordResetForm,
     SetPasswordForm,
     SponsorCategoryForm
@@ -85,17 +88,33 @@ class PasswordResetDoneView(PasswordResetDoneView):
 class LoginView(LoginView):
     form_class = AuthenticationForm
     template_name = 'registration/events_login.html'
-
+        
 
 class LogoutView(LogoutView):
     template_name = 'registration/custom_logged_out.html'
 
 
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important!
+            messages.success(request, _('Su password fue exitosamente actualizado'))
+            return redirect('change_password')
+        else:
+            messages.error(request, _('Por favor corriga los errores marcados'))
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'registration/custom_change_password.html', {
+        'form': form
+    })
+
 @login_required(login_url='/eventos/cuentas/login/')
 def events_home(request):
     return render(request, 'events_home.html')
 
-#TODO: change validation to verify if the user has add_organizer permision and not superuser
+
 @permission_required('events.add_organizer', login_url='/eventos/cuentas/login/')
 def organizer_signup(request):
     if request.method == 'POST':
@@ -115,18 +134,22 @@ def organizer_signup(request):
                 request=request,
                 use_https=request.is_secure(),
             )
-            #TODO: Redirect the user to the add organizers page, or add message of organizer created
-            return HttpResponse(_('Se le envio un mail al usuario organizador para que pueda ingresar sus credenciales de autenticación'))
+            messages.add_message(
+                request, 
+                messages.INFO, 
+                _('Se le envio un mail al usuario organizador para que pueda ingresar sus credenciales de autenticación')
+            )
+            return redirect('organizer_list')
     else:
         form = OrganizerUserSignupForm()
-    return render(request, 'organizer_signup.html', {'form': form})
+    return render(request, 'organizers/organizer_signup.html', {'form': form})
 
 
 class EventsListView(LoginRequiredMixin, generic.ListView):
     login_url = LOGIN_URL
     model = Event
     context_object_name = 'event_list'
-    template_name = 'event_list.html'
+    template_name = 'events/event_list.html'
     paginate_by = 5
 
     def get_queryset(self):
@@ -143,7 +166,7 @@ class EventsListView(LoginRequiredMixin, generic.ListView):
 class EventDetailView(PermissionRequiredMixin, generic.DetailView):
     login_url = LOGIN_URL
     model = Event
-    template_name = 'event_detail.html'
+    template_name = 'events/event_detail.html'
     permission_required = 'events.change_event'
 
     def get_context_data(self, **kwargs):
@@ -160,7 +183,7 @@ class EventDetailView(PermissionRequiredMixin, generic.DetailView):
     def has_permission(self):
         ret = super(EventDetailView, self).has_permission()
         if ret and not self.request.user.is_superuser:
-            #tiene que se organizador del evento
+            #must be event organizer
             event = self.get_object()
             try:
                 organizer = Organizer.objects.get(user=self.request.user)
@@ -187,7 +210,7 @@ class EventChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
     login_url = LOGIN_URL
     model = Event
     form_class = EventUpdateForm
-    template_name = 'event_change.html'
+    template_name = 'events/event_change.html'
     permission_required = 'events.change_event'
 
 
@@ -195,7 +218,7 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
     login_url = LOGIN_URL
     model = SponsorCategory
     form_class = SponsorCategoryForm
-    template_name = 'event_create_sponsor_category_modal.html'
+    template_name = 'events/event_create_sponsor_category_modal.html'
     permission_required = 'events.add_sponsorcategory'
     
     def form_valid(self, form):
@@ -213,10 +236,63 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
         context = super(SponsorCategoryCreateView, self).get_context_data(**kwargs)
         context['event'] = self._get_event()
         return context
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            return super().post(request, *args, **kwargs)
+        except IntegrityError:
+            messages.add_message(request, messages.ERROR,
+                             'Ya tiene registrada una categoria de sponsor con este nombre para el evento actual . ' + \
+                             'Las categorias de sponsor para un evento deben ser únicas.')
+            return redirect('event_detail', pk=self._get_event().pk)
         
 
+class OrganizersListView(PermissionRequiredMixin, generic.ListView):
+    login_url = LOGIN_URL
+    model = Organizer
+    context_object_name = 'organizer_list'
+    template_name = 'organizers/organizers_list.html'
+    paginate_by = 5
+    permission_required = 'events.add_organizer'
+
+
+class OrganizerDetailView(PermissionRequiredMixin, generic.DetailView):
+    login_url = LOGIN_URL
+    model = Organizer
+    template_name = 'organizers/organizer_detail.html'
+    permission_required = 'events.change_organizer'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(OrganizerDetailView, self).get_context_data(**kwargs)
+        organizer = self.get_object()
+        # Check that the user can see organizers and obtain them
+        user = self.request.user
+        context['is_request_user'] = organizer.user == user
+        return context
+    
+    def has_permission(self):
+        ret = super(OrganizerDetailView, self).has_permission()
+        if not ret and self.request.user == self.get_object().user:
+            # Can see own data.
+            return True
+        return ret
+
+class OrganizerChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
+    login_url = LOGIN_URL
+    model = Organizer
+    form_class = OrganizerUpdateForm
+    template_name = 'organizers/organizer_change.html'
+    permission_required = ''
+
+    def has_permission(self):
+        return self.request.user == self.get_object().user
 
 events_list = EventsListView.as_view()
 event_detail = EventDetailView.as_view()
 event_change = EventChangeView.as_view()
 event_create_sponsor_category = SponsorCategoryCreateView.as_view()
+
+organizers_list = OrganizersListView.as_view()
+organizer_detail = OrganizerDetailView.as_view()
+organizer_change = OrganizerChangeView.as_view()
