@@ -21,11 +21,11 @@ class Base(Configuration):
     """Base configuration for django app."""
     # Quick-start development settings - unsuitable for production
     # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
-    
-    # Configuring email from enviorenment and setting mailhog as default 
-    EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND','django.core.mail.backends.smtp.EmailBackend')
-    EMAIL_HOST = os.environ.get('EMAIL_HOST','mail')
-    EMAIL_PORT = os.environ.get('EMAIL_PORT',1025)
+
+    # Configuring email from enviorenment and setting mailhog as default
+    EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'mail')
+    EMAIL_PORT = os.environ.get('EMAIL_PORT', 1025)
     EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
     EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
@@ -139,6 +139,20 @@ class Base(Configuration):
 
     LOGIN_URL = '/admin/login/'
 
+    AFIP = {
+        'url_wsaa': "https://wsaahomo.afip.gov.ar/ws/services/LoginCms?wsdl",
+        'url_wsfev1': "https://wswhomo.afip.gov.ar/wsfev1/service.asmx?WSDL",
+        'selling_point': 4000,
+        'cuit': 20267565393,
+        'auth_cert_path': '/tmp/reingart.crt',
+        'auth_key_path': '/tmp/reingart.key',
+    }
+
+    INVOICES_GDRIVE = {
+        'credentials_filepath': "",
+        'folder_id': "",
+    }
+
 
 # try to import the local settings; if the file is not there just create a stub class
 # for the inheritance later
@@ -151,7 +165,21 @@ except ModuleNotFoundError as err:
 
 class Dev(LocalSettings, Base):
     """Development configuration."""
-    
+
+
+class Staging(Base):
+    """Staging configuration."""
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('POSTGRES_DB', "memberships"),
+            'USER': os.environ.get('POSTGRES_USER', "postgres"),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', "secret"),
+            'HOST': os.environ.get('POSTGRES_HOST', "localhost"),
+            'PORT': os.environ.get('POSTGRES_PORT', 5432),
+        }
+    }
+
 
 class Prod(Base):
     """Production configuration."""
@@ -173,4 +201,20 @@ class Prod(Base):
             'HOST': os.environ.get('POSTGRES_HOST', "localhost"),
             'PORT': os.environ.get('POSTGRES_PORT', 5432),
         }
+    }
+
+    EMAIL_HOST = os.environ.get('EMAIL_HOST')
+    EMAIL_PORT = os.environ.get('EMAIL_PORT')
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
+    MAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
+
+    AFIP = {
+        'url_wsaa': "https://wsaa.afip.gov.ar/ws/services/LoginCms?wsdl",
+        'url_wsfev1': "https://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL",
+        'selling_point': 7,
+        'cuit': 30715639129,
+        'auth_cert_path': '/tmp/afip_pyar.crt',
+        'auth_key_path': '/tmp/afip_pyar.key',
     }
