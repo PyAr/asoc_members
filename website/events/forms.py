@@ -2,6 +2,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import (
     AuthenticationForm as AuthAuthenticationForm,
+    PasswordChangeForm as AuthPasswordChangeForm,
     PasswordResetForm as AuthPasswordResetForm,
     SetPasswordForm as AuthSetPasswordForm,
     UserCreationForm, 
@@ -76,6 +77,38 @@ class PasswordResetForm(AuthPasswordResetForm):
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
 
+
+class PasswordChangeForm(AuthPasswordChangeForm):
+    error_messages = dict(SetPasswordForm.error_messages, **{
+        'password_incorrect': _("Su antiguo password fue introducido incorrectamente. "
+                                "Por favor ingreselo otra vez."),
+    })
+
+    old_password = forms.CharField(
+        label=_("Antigua contraseña"),
+        strip=False,
+        widget=forms.PasswordInput(attrs={'autofocus': True}),
+    )
+    new_password1 = forms.CharField(
+        label=_("Nueva contraseña"),
+        widget=forms.PasswordInput,
+        help_text=render_to_string('registration/password_validations.html',{
+            'helpers': PASSWORD_VALIDATOR_HELP_TEXTS
+        }),
+    )
+    new_password2 = forms.CharField(
+        label=_("Confirmación de nueva contraseña"),
+        widget=forms.PasswordInput,
+        help_text=_('Ingrese la mimsa contraseña que antes para verificar')
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(PasswordChangeForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+
 class OrganizerUserSignupForm(UserCreationForm):
     email = forms.EmailField(label=_('Correo Electrónico'), max_length=200, help_text='Required')
     username = forms.CharField(label = _('Nombre de Usuario'))
@@ -136,6 +169,18 @@ class EventUpdateForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'readonly': True}),
             'commission': forms.TextInput(attrs={'readonly': True}),
         }
+
+
+class OrganizerUpdateForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(OrganizerUpdateForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+    class Meta:
+        model = Organizer
+        fields = ['first_name', 'last_name'] 
 
 
 class SponsorCategoryForm(forms.ModelForm):

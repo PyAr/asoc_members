@@ -98,13 +98,16 @@ class EmailTest(TestCase):
             'email':'new_organizer@pyar.com',
         }
         response = self.client.post(reverse('organizer_signup'), data=data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(len(mail.outbox), 1)
         #TODO: use template here
         self.assertEqual(mail.outbox[0].subject, 'PyAr eventos alta organizador')
 
 
     def test_send_organizer_associated_to_event_sends_mails_with_subject(self):
+        """ Testing that function 'send_organizer_associated_to_event' sends emails to the 
+        listed organizers with the correct subject."""
+        
         event = Event.objects.filter(name='MyTest01').first()
         Organizer.objects.bulk_create([
             Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
@@ -147,7 +150,7 @@ class SingnupOrginizerTest(TestCase):
 
         response = self.client.get(reverse('organizer_signup'))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'organizer_signup.html')
+        self.assertTemplateUsed(response, 'organizers/organizer_signup.html')
 
 
 class EventAdminTest(TestCase):

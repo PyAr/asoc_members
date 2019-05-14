@@ -64,6 +64,12 @@ class Organizer(TimeStampedModel):
     
     def __str__(self):
         return f"{ self.user.username } - {self.email}"
+    
+    def get_absolute_url(self):
+        return reverse('organizer_detail', args=[str(self.pk)])
+    
+    class Meta:
+        ordering = ['-created']
 
 
 class Event(TimeStampedModel):
@@ -100,7 +106,7 @@ class Event(TimeStampedModel):
     )
     
     def get_absolute_url(self):
-        return reverse('event_detail', args=[str(self.id)])
+        return reverse('event_detail', args=[str(self.pk)])
 
     class Meta:
         permissions = (

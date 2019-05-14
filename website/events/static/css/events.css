@@ -1,3 +1,7 @@
+.empty-list{
+    text-align: center;
+}
+
 .events-login-form {
     width: 340px;
     margin: 50px auto;
