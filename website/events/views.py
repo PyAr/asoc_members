@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import user_passes_test, login_required, permission_required
@@ -53,6 +54,7 @@ def organizer_signup(request):
                 email_template_name='mails/organizer_set_password_email.html',
                 request=request,
                 use_https=request.is_secure(),
+                from_email=settings.MAIL_FROM,
             )
             messages.add_message(
                 request, 
