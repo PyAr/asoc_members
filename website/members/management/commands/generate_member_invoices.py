@@ -16,8 +16,6 @@ GMTminus3 = datetime.timezone(datetime.timedelta(hours=-3))
 
 # mail stuff
 MAIL_SUBJECT = "Factura por pago de cuota(s) a la Asociación Civil Python Argentina"
-MAIL_FROM = 'Lalita <lalita@ac.python.org.ar>'
-MAIL_MANAGER = 'presidencia@ac.python.org.ar>'
 MAIL_TEXT = """\
 Hola!
 
@@ -40,7 +38,7 @@ PDF_MIMETYPE = 'application/pdf'
 def _send_mail(payment_date, recipient, attach_path):
     text = MAIL_TEXT.format(payment_date=payment_date)
     mail = EmailMessage(
-        MAIL_SUBJECT, text, MAIL_FROM, [recipient], cc=[MAIL_MANAGER], reply_to=[MAIL_MANAGER])
+        MAIL_SUBJECT, text, settings.MAIL_FROM, [recipient], cc=[settings.MAIL_MANAGER], reply_to=[settings.MAIL_MANAGER])
 
     filename = os.path.basename(attach_path)
     with open(attach_path, "rb") as fh:

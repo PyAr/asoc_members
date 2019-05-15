@@ -7,6 +7,7 @@ import uuid
 from urllib import parse
 
 import certg
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import EmailMessage
@@ -92,10 +93,7 @@ class ReportsInitialView(OnlyAdminsViewMixin, TemplateView):
 
 class ReportDebts(OnlyAdminsViewMixin, View):
     """Handle the report about debts."""
-
     MAIL_SUBJECT = "Cuotas adeudadas a la Asociación Civil Python Argentina"
-    MAIL_FROM = 'Lalita <lalita@ac.python.org.ar>'
-    MAIL_MANAGER = 'presidencia@ac.python.org.ar>'
 
     def post(self, request):
         raw_sendmail = parse.parse_qs(request.body)[b'sendmail']
@@ -125,8 +123,8 @@ class ReportDebts(OnlyAdminsViewMixin, View):
                 return HttpResponse("Error al armar la página")
             recipient = f"{member.entity.full_name} <{member.entity.email}>"
             mail = EmailMessage(
-                self.MAIL_SUBJECT, text, self.MAIL_FROM, [recipient],
-                cc=[self.MAIL_MANAGER], reply_to=[self.MAIL_MANAGER])
+                self.MAIL_SUBJECT, text, settings.MAIL_FROM, [recipient],
+                cc=[settings.MAIL_MANAGER], reply_to=[settings.MAIL_MANAGER])
             try:
                 mail.send()
             except Exception as err:
@@ -188,10 +186,7 @@ class ReportDebts(OnlyAdminsViewMixin, View):
 
 class ReportMissing(OnlyAdminsViewMixin, View):
     """Handle the report about what different people miss to get approved as a member."""
-
     MAIL_SUBJECT = "Continuación del trámite de inscripción a la Asociación Civil Python Argentina"
-    MAIL_FROM = 'Lalita <lalita@ac.python.org.ar>'
-    MAIL_MANAGER = 'presidencia@ac.python.org.ar>'
 
     def _generate_letter(self, member):
         """Generate the letter to be signed."""
@@ -252,7 +247,7 @@ class ReportMissing(OnlyAdminsViewMixin, View):
             recipient = f"{member.entity.full_name} <{member.entity.email}>"
             mail = EmailMessage(
                 self.MAIL_SUBJECT, text, self.MAIL_FROM, [recipient],
-                cc=[self.MAIL_MANAGER], reply_to=[self.MAIL_MANAGER])
+                cc=[settings.MAIL_MANAGER], reply_to=[settings.MAIL_MANAGER])
             if missing_info['missing_signed_letter']:
                 mail.attach_file(letter_filepath)
 
