@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 
 from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
-from .constants import CUIT_REGEX, CAN_VIEW_ORGANIZERS_CODENAME
+from .constants import CUIT_REGEX, CAN_VIEW_EVENT_ORGANIZERS_CODENAME, CAN_VIEW_ORGANIZERS_CODENAME
 
 User = get_user_model()
 
@@ -18,7 +18,6 @@ class BankAccountData(TimeStampedModel):
         (CC, 'Cuenta corriente'),
         (CA, 'Caja de ahorros')
     )
-    #TODO: regex validator for cuit
     document_number = models.CharField(_('CUIT'), max_length=13, 
         help_text=_('CUIT del propietario de la cuenta'), 
         validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto'))]
@@ -69,6 +68,9 @@ class Organizer(TimeStampedModel):
         return reverse('organizer_detail', args=[str(self.pk)])
     
     class Meta:
+        permissions = (
+            (CAN_VIEW_ORGANIZERS_CODENAME,_('puede ver organizadores')),
+        )
         ordering = ['-created']
 
 
@@ -110,7 +112,7 @@ class Event(TimeStampedModel):
 
     class Meta:
         permissions = (
-            (CAN_VIEW_ORGANIZERS_CODENAME,_('puede ver organizadores')),
+            (CAN_VIEW_EVENT_ORGANIZERS_CODENAME,_('puede ver organizadores del evento')),
         )
         ordering = ['-start_date'] 
 

@@ -68,7 +68,7 @@ class Base(Configuration):
     TEMPLATES = [
         {
             'BACKEND': 'django.template.backends.django.DjangoTemplates',
-            'DIRS': [],
+            'DIRS': [os.path.join(BASE_DIR, 'templates')],
             'APP_DIRS': True,
             'OPTIONS': {
                 'context_processors': [
@@ -137,7 +137,7 @@ class Base(Configuration):
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR
 
-    LOGIN_URL = '/admin/login/'
+    LOGIN_URL = '/cuentas/login/'
 
     AFIP = {
         'url_wsaa': "https://wsaahomo.afip.gov.ar/ws/services/LoginCms?wsdl",

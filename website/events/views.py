@@ -1,17 +1,9 @@
+from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login, authenticate, update_session_auth_hash
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import user_passes_test, login_required, permission_required
 from django.contrib.auth.models import User
-from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.contrib.auth.views import ( 
-    PasswordResetView, 
-    PasswordResetConfirmView, 
-    PasswordResetCompleteView,
-    PasswordResetDoneView,
-    LoginView,
-    LogoutView
-    )
 
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
@@ -19,7 +11,6 @@ from django.db import IntegrityError
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render  
 
-from django.urls import reverse_lazy
 from django.utils.crypto import get_random_string
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -27,95 +18,25 @@ from django.utils.translation import gettext_lazy as _
 from django.views import generic, View
 
 from events.constants import (
+    CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
-    CAN_ASSOCIATE_ORGANIZER_CODENAME,
-    LOGIN_URL,
     MUST_BE_EVENT_ORGANIZAER_MESSAGE
     )
 from events.forms import (
-    AuthenticationForm,
     EventUpdateForm,
     OrganizerUpdateForm,
     OrganizerUserSignupForm,
-    PasswordChangeForm,
-    PasswordResetForm,
-    SetPasswordForm,
     SponsorCategoryForm
     )
 from events.helpers.tokens import account_activation_token
 from events.models import Event, Organizer, SponsorCategory
+from pyar_auth.forms import PasswordResetForm
 
-# Class-based password reset views
-# - PasswordResetView sends the mail
-# - PasswordResetDoneView shows a success message for the above
-# - PasswordResetConfirmView checks the link the user clicked and
-#   prompts for a new password
-# - PasswordResetCompleteView shows a success message for the above
-
-class PasswordResetView(PasswordResetView):
-    email_template_name = 'registration/custom_password_reset_email.html'
-    extra_email_context = None
-    form_class = PasswordResetForm
-    from_email = None
-    html_email_template_name = None
-    subject_template_name = 'mails/custom_password_reset_subject.txt'
-    success_url = reverse_lazy('password_reset_done')
-    template_name = 'registration/custom_password_reset_form.html'
-    title = _('Reseteo de contraseña')
-    token_generator = default_token_generator
-
-
-class PasswordResetConfirmView(PasswordResetConfirmView):
-    form_class = SetPasswordForm
-    post_reset_login = False
-    post_reset_login_backend = None
-    success_url = reverse_lazy('password_reset_complete')
-    template_name = 'registration/custom_password_reset_confirm.html'
-    title = _('Ingrese nueva contraseña')
-    token_generator = default_token_generator
-
-
-class PasswordResetCompleteView(PasswordResetCompleteView):
-    template_name = 'registration/custom_password_reset_complete.html'
-    title = _('Reseteo de contraseña completado')
-
-
-class PasswordResetDoneView(PasswordResetDoneView):
-    template_name = 'registration/custom_password_reset_done.html'
-    title = _('Cambio de contraseña enviado')
-
-
-class LoginView(LoginView):
-    form_class = AuthenticationForm
-    template_name = 'registration/events_login.html'
-        
-
-class LogoutView(LogoutView):
-    template_name = 'registration/custom_logged_out.html'
-
-
-def change_password(request):
-    if request.method == 'POST':
-        form = PasswordChangeForm(request.user, request.POST)
-        if form.is_valid():
-            user = form.save()
-            update_session_auth_hash(request, user)  # Important!
-            messages.success(request, _('Su password fue exitosamente actualizado'))
-            return redirect('change_password')
-        else:
-            messages.error(request, _('Por favor corriga los errores marcados'))
-    else:
-        form = PasswordChangeForm(request.user)
-    return render(request, 'registration/custom_change_password.html', {
-        'form': form
-    })
-
-@login_required(login_url='/eventos/cuentas/login/')
+@login_required()
 def events_home(request):
     return render(request, 'events_home.html')
 
-
-@permission_required('events.add_organizer', login_url='/eventos/cuentas/login/')
+@permission_required('events.add_organizer')
 def organizer_signup(request):
     if request.method == 'POST':
         #Create user with random password and send custom reset password form
@@ -146,7 +67,6 @@ def organizer_signup(request):
 
 
 class EventsListView(LoginRequiredMixin, generic.ListView):
-    login_url = LOGIN_URL
     model = Event
     context_object_name = 'event_list'
     template_name = 'events/event_list.html'
@@ -164,7 +84,6 @@ class EventsListView(LoginRequiredMixin, generic.ListView):
 
 
 class EventDetailView(PermissionRequiredMixin, generic.DetailView):
-    login_url = LOGIN_URL
     model = Event
     template_name = 'events/event_detail.html'
     permission_required = 'events.change_event'
@@ -175,7 +94,7 @@ class EventDetailView(PermissionRequiredMixin, generic.DetailView):
         event = self.get_object()
         # Check that the user can see organizers and obtain them
         user = self.request.user
-        if user.has_perm('events.' + CAN_VIEW_ORGANIZERS_CODENAME):
+        if user.has_perm('events.' + CAN_VIEW_EVENT_ORGANIZERS_CODENAME):
             organizers = event.organizers.all()
             context['organizers'] = organizers
         return context
@@ -207,7 +126,6 @@ class EventDetailView(PermissionRequiredMixin, generic.DetailView):
             
 
 class EventChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
-    login_url = LOGIN_URL
     model = Event
     form_class = EventUpdateForm
     template_name = 'events/event_change.html'
@@ -215,7 +133,6 @@ class EventChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
 
 
 class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView):
-    login_url = LOGIN_URL
     model = SponsorCategory
     form_class = SponsorCategoryForm
     template_name = 'events/event_create_sponsor_category_modal.html'
@@ -248,7 +165,6 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
         
 
 class OrganizersListView(PermissionRequiredMixin, generic.ListView):
-    login_url = LOGIN_URL
     model = Organizer
     context_object_name = 'organizer_list'
     template_name = 'organizers/organizers_list.html'
@@ -257,7 +173,6 @@ class OrganizersListView(PermissionRequiredMixin, generic.ListView):
 
 
 class OrganizerDetailView(PermissionRequiredMixin, generic.DetailView):
-    login_url = LOGIN_URL
     model = Organizer
     template_name = 'organizers/organizer_detail.html'
     permission_required = 'events.change_organizer'
@@ -279,7 +194,6 @@ class OrganizerDetailView(PermissionRequiredMixin, generic.DetailView):
         return ret
 
 class OrganizerChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
-    login_url = LOGIN_URL
     model = Organizer
     form_class = OrganizerUpdateForm
     template_name = 'organizers/organizer_change.html'

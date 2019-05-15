@@ -1,25 +1,12 @@
 from django.utils.translation import gettext_lazy as _
 
-LOGIN_URL = '/eventos/cuentas/login/'
-
-"""Helping constant for validate passwords."""
-ATTRIBUTE_SIMILARITY_HELP = _("La contraseña no puede ser similar a su otra información personal.")
-COMMON_PASSWORD_HELP = _("La contraseña no puede ser comunmente usada.")
-NUMERIC_PASSWORD_HELP = _("La constraseña no puede contener solo números.")
-MINIMUM_LENGTH_HELP = _("La contraseña debe contener al menos 8 caracteres.")
-
-PASSWORD_VALIDATOR_HELP_TEXTS = [
-    ATTRIBUTE_SIMILARITY_HELP,
-    COMMON_PASSWORD_HELP,
-    NUMERIC_PASSWORD_HELP,
-    MINIMUM_LENGTH_HELP,
-    ]
-
 CUIT_REGEX =r'^(20|23|24|27|30|33|34)-[0-9]{8}-[0-9]$'
 
 """Permissions codenames to create groups, asign, and test."""
-CAN_ASSOCIATE_ORGANIZER_CODENAME = 'add_eventorganizer'
+CAN_VIEW_EVENT_ORGANIZERS_CODENAME = 'view_event_organizers'
 CAN_VIEW_ORGANIZERS_CODENAME = 'view_organizers'
+CAN_VIEW_EVENTS_CODENAME = 'view_events'
+CAN_VIEW_SPONSORS_CODENAME = 'view_sponsors'
 
 """Messages constants, to use on views and test."""
 MUST_BE_EVENT_ORGANIZAER_MESSAGE = _('Para poder acceder a detalles del evento debe ser organizador del mismo')
