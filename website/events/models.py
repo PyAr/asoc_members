@@ -5,12 +5,13 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 
+from events.helpers.models import AudithUserTime
 from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
 from .constants import CUIT_REGEX, CAN_VIEW_EVENT_ORGANIZERS_CODENAME, CAN_VIEW_ORGANIZERS_CODENAME
 
 User = get_user_model()
 
-class BankAccountData(TimeStampedModel):
+class BankAccountData(AudithUserTime):
     """Account data for monetary transerences."""
     CC = 'CC'
     CA = 'CA'
@@ -39,7 +40,7 @@ class BankAccountData(TimeStampedModel):
     cbu = models.CharField(_('CBU'), max_length=DEFAULT_MAX_LEN, help_text=_('CBU de la cuenta'))
 
 
-class Organizer(TimeStampedModel):
+class Organizer(AudithUserTime):
     """Organizer, person asigned to administrate events."""
     first_name = models.CharField(_('nombre'), max_length=DEFAULT_MAX_LEN)
     last_name = models.CharField(_('apellido'), max_length=DEFAULT_MAX_LEN)
@@ -74,7 +75,7 @@ class Organizer(TimeStampedModel):
         ordering = ['-created']
 
 
-class Event(TimeStampedModel):
+class Event(AudithUserTime):
     """A representation of an Event."""
     PYDAY = 'PD'
     PYCON = 'PCo'
@@ -106,6 +107,8 @@ class Event(TimeStampedModel):
         verbose_name=_('organizadores'),
         related_name='events'
     )
+
+    close = models.BooleanField(_('cerrado'), default=False)
     
     def get_absolute_url(self):
         return reverse('event_detail', args=[str(self.pk)])
@@ -118,7 +121,7 @@ class Event(TimeStampedModel):
 
 
 
-class EventOrganizer(TimeStampedModel):
+class EventOrganizer(AudithUserTime):
     """Represents the many to many relationship between events and organizers. With TimeStamped
     is easy to kwon when a user start as organizer from an event, etc"""
     event = models.ForeignKey('Event', related_name='event_organizers', on_delete=models.CASCADE)
@@ -128,7 +131,7 @@ class EventOrganizer(TimeStampedModel):
         unique_together = ('event','organizer')
     
 
-class SponsorCategory(TimeStampedModel):
+class SponsorCategory(AudithUserTime):
     name = models.CharField(_('nombre'), max_length=DEFAULT_MAX_LEN)
     amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
     event = models.ForeignKey(

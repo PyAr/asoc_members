@@ -7,8 +7,19 @@ User = get_user_model()
 
 class AudithUserTime(TimeStampedModel):
     """Abstrac model to audith times and user """
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='%(app_label)s_%(class)s_created_by'
+        )
+        
+    changed_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='%(app_label)s_%(class)s_changed_by'
+        )
     
     def save(self, *args, **kwargs):
         user = get_current_user()
