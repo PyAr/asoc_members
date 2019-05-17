@@ -9,6 +9,7 @@ from events.admin import EventAdmin
 
 from events.helpers.notifications import email_notifier
 from events.helpers.tests import associate_users_permissions, organizer_permissions, super_organizer_permissions
+from events.middleware import set_current_user
 from events.models import Event, Organizer, EventOrganizer
 from unittest.mock import patch, MagicMock
 
@@ -47,8 +48,9 @@ def create_user_set():
     associate_organizer_perms(organizers)
     associate_super_organizer_perms(super_organizers)
 
-def create_event_set():
+def create_event_set(user):
     """Create Events to test."""
+    set_current_user(user)
     Event.objects.create(name='MyTest01', commission=20)
     Event.objects.create(name='MyTest02', commission=10)
 
@@ -86,7 +88,8 @@ def admin_event_associate_organizers_post_data(event, organizers):
 class EmailTest(TestCase):
     def setUp(self):
         create_user_set()
-        create_event_set()
+        user =User.objects.first()
+        create_event_set(user)
 
     def test_send_email_after_register_organizer(self):
         # Login client with super user
@@ -156,7 +159,8 @@ class SingnupOrginizerTest(TestCase):
 class EventAdminTest(TestCase):
     def setUp(self):
         create_user_set()
-        create_event_set()
+        user = User.objects.first()
+        create_event_set(user)
 
         Organizer.objects.bulk_create([
             Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
@@ -176,4 +180,5 @@ class EventAdminTest(TestCase):
 
         data = admin_event_associate_organizers_post_data(event, organizers)
         response = self.client.post(url, data=data)
+        #import pdb; pdb.set_trace()
         send_email_function.assert_called_once_with(event, organizers, {'domain': 'testserver', 'protocol': 'http'})

@@ -7,15 +7,16 @@ from events.models import Event, Organizer, EventOrganizer
 
 class EventOrganizerInline(admin.TabularInline):
     model = EventOrganizer
+    exclude = ('created_by','changed_by',)
     extra = 1
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    fields = ('name', 'commission', 'category','start_date', 'place')
+    fields = ('name', 'commission', 'category','start_date', 'place', 'close')
     inlines = (EventOrganizerInline,)
-    list_display = ('name', 'start_date', 'place', 'category' )
+    list_display = ('name', 'start_date', 'place', 'category', 'close' )
     search_fields = ('start_date', 'place', )
-    list_filter = ('category', )
+    list_filter = ('category', 'close' )
     
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
@@ -35,6 +36,7 @@ class EventAdmin(admin.ModelAdmin):
                 'domain': current_site.domain,
                 'protocol': 'https' if request.is_secure() else 'http'
             }
+            
             email_notifier.send_organizer_associated_to_event(event_instance, notify_organizers, context)    
 
 

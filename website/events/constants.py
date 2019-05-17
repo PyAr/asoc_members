@@ -9,4 +9,6 @@ CAN_VIEW_EVENTS_CODENAME = 'view_events'
 CAN_VIEW_SPONSORS_CODENAME = 'view_sponsors'
 
 """Messages constants, to use on views and test."""
-MUST_BE_EVENT_ORGANIZAER_MESSAGE = _('Para poder acceder a detalles del evento debe ser organizador del mismo')
+MUST_BE_EVENT_ORGANIZAER_MESSAGE = _('Para poder acceder a detalles del evento debe ser organizador del mismo.')
+CANT_CHANGE_CLOSE_EVENT_MESSAGE = _("No se puede modificar un evento cerrado. Pida a un administrador que vuelva" +
+    " a abrirlo, desde el administrador de eventos.")

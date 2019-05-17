@@ -18,6 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views import generic, View
 
 from events.constants import (
+    CANT_CHANGE_CLOSE_EVENT_MESSAGE,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
     MUST_BE_EVENT_ORGANIZAER_MESSAGE
@@ -114,13 +115,14 @@ class EventDetailView(PermissionRequiredMixin, generic.DetailView):
                 return ret
             else:
                 self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
-                messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+                
                 return False
             
         return ret
 
     def handle_no_permission(self):
         if self.get_permission_denied_message()== MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
             return redirect('event_list')
         else:
             return super(EventDetailView, self).handle_no_permission() 
@@ -131,6 +133,22 @@ class EventChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
     form_class = EventUpdateForm
     template_name = 'events/event_change.html'
     permission_required = 'events.change_event'
+
+    def has_permission(self):
+        event = self.get_object()
+        ret = super(EventChangeView, self).has_permission()
+        if ret and event.close:
+            self.permission_denied_message = CANT_CHANGE_CLOSE_EVENT_MESSAGE
+            return False
+        
+        return ret
+    
+    def handle_no_permission(self):
+        if self.get_permission_denied_message()== CANT_CHANGE_CLOSE_EVENT_MESSAGE:
+            messages.add_message(self.request, messages.ERROR, CANT_CHANGE_CLOSE_EVENT_MESSAGE)
+            return redirect('event_detail', pk=self.get_object().pk)
+        else:
+            return super(EventChangeView, self).handle_no_permission() 
 
 
 class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView):
