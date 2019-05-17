@@ -606,3 +606,7 @@ ul.fa-ul li {
 .login-form h2 {
     margin: 0 0 15px;
 }
+
+.navbar-right .pyar.dropdown-menu {
+    left: 0;
+}

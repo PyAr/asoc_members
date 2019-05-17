@@ -2,5 +2,11 @@
 {% load static %}
 {% block extra_statics %}
     <link rel="stylesheet" href="{% static 'css/events.css' %}">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+{% endblock %}
+{% block extra_logged_menu_option %}
+{% if user.organizer %}
+<li>
+    <a href="{% url 'organizer_detail' pk=user.organizer.pk %}">Datos Organizador</a>
+</li>
+{% endif %}
 {% endblock %}
