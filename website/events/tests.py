@@ -182,3 +182,26 @@ class EventAdminTest(TestCase):
         response = self.client.post(url, data=data)
         #import pdb; pdb.set_trace()
         send_email_function.assert_called_once_with(event, organizers, {'domain': 'testserver', 'protocol': 'http'})
+
+
+class EventViewsTest(TestCase):
+    def setUp(self):
+        create_user_set()
+        user = User.objects.first()
+        create_event_set(user)
+        
+        Organizer.objects.bulk_create([
+            Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
+            Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
+        ])
+
+    def test_event_change_redirects_on_closed_event(self):
+        event = Event.objects.filter(name='MyTest01').first()
+        EventOrganizer.objects.create(event=event, organizer=Organizer.objects.get(user__username='organizer01'))
+        event.close = True
+        event.save()
+        url = reverse('event_change', kwargs={'pk': event.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.get(url)
+        expected_url = reverse('event_detail', kwargs={'pk': event.pk})
+        self.assertRedirects(response, expected_url)
