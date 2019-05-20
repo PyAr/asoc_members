@@ -6,7 +6,7 @@ from events.middleware import get_current_user
 User = get_user_model()
 
 class AudithUserTime(TimeStampedModel):
-    """Abstrac model to audith times and user """
+    """Abstrac model to audith times and user."""
     created_by = models.ForeignKey(
         User, 
         on_delete=models.SET_NULL, 
@@ -23,7 +23,7 @@ class AudithUserTime(TimeStampedModel):
     
     def save(self, *args, **kwargs):
         user = get_current_user()
-        if user.is_authenticated:
+        if user and user.is_authenticated:
             if not self.pk: #: Is a create.
                 self.created_by = user
             self.changed_by = user    

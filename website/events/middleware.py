@@ -10,7 +10,10 @@ class CurrentUserMiddleware(MiddlewareMixin):
 
 def get_current_user():
     """Function to access from the model layer to the current user."""
-    return _thread.user
+    if hasattr(_thread, 'user'):
+        return _thread.user
+    else:
+        return None
 
 def set_current_user(user):
     """Function to set the current user. Usefull to test and not logged things"""

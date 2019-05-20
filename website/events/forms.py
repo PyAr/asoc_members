@@ -52,22 +52,20 @@ class EventUpdateForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
+        self.fields['name'].disabled = True
+        self.fields['commission'].disabled = True
     
-    def clean_name(self):
+    """def clean_name(self):
         # when field is cleaned, we always return the existing model field.
-        return self.instance.name
+        return self.instance.name"""
     
-    def clean_commission(self):
+    """def clean_commission(self):
         # when field is cleaned, we always return the existing model field.
-        return self.instance.commission
+        return self.instance.commission"""
 
     class Meta:
         model = Event
         fields = ['name', 'commission', 'category', 'start_date', 'place']
-        widgets = {
-            'name': forms.TextInput(attrs={'readonly': True}),
-            'commission': forms.TextInput(attrs={'readonly': True}),
-        }
 
 
 class OrganizerUpdateForm(forms.ModelForm):

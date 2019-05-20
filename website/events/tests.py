@@ -6,11 +6,16 @@ from django.test import TestCase
 from django.urls import reverse
 
 from events.admin import EventAdmin
-
+from events.constants import (
+    CANT_CHANGE_CLOSE_EVENT_MESSAGE,
+    DUPLICATED_SPONSOR_CATEGORY_MESSAGE,
+    MUST_BE_EVENT_ORGANIZAER_MESSAGE,
+    ORGANIZER_MAIL_NOTOFICATION_MESSAGE
+    )
 from events.helpers.notifications import email_notifier
-from events.helpers.tests import associate_users_permissions, organizer_permissions, super_organizer_permissions
+from events.helpers.tests import associate_users_permissions, CustomAssertMethods, organizer_permissions, super_organizer_permissions
 from events.middleware import set_current_user
-from events.models import Event, Organizer, EventOrganizer
+from events.models import Event, Organizer, EventOrganizer, SponsorCategory
 from unittest.mock import patch, MagicMock
 
 User = get_user_model()
@@ -51,8 +56,8 @@ def create_user_set():
 def create_event_set(user):
     """Create Events to test."""
     set_current_user(user)
-    Event.objects.create(name='MyTest01', commission=20)
-    Event.objects.create(name='MyTest02', commission=10)
+    Event.objects.create(name='MyTest01', commission=10)
+    Event.objects.create(name='MyTest02', commission=20)
 
 def admin_event_associate_organizers_post_data(event, organizers):
     """Create data to send to events admin url to associate organizers to event."""
@@ -85,7 +90,7 @@ def admin_event_associate_organizers_post_data(event, organizers):
     return data
 
 
-class EmailTest(TestCase):
+class EmailTest(TestCase, CustomAssertMethods):
     def setUp(self):
         create_user_set()
         user =User.objects.first()
@@ -103,8 +108,9 @@ class EmailTest(TestCase):
         response = self.client.post(reverse('organizer_signup'), data=data)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(len(mail.outbox), 1)
-        #TODO: use template here
-        self.assertEqual(mail.outbox[0].subject, 'PyAr eventos alta organizador')
+        self.assertEqual(mail.outbox[0].subject, render_to_string('mails/organizer_just_created_subject.txt'))
+
+        self.assertContainsMessage(response, ORGANIZER_MAIL_NOTOFICATION_MESSAGE)
 
 
     def test_send_organizer_associated_to_event_sends_mails_with_subject(self):
@@ -145,15 +151,23 @@ class SingnupOrginizerTest(TestCase):
         redirect_to_login_url = reverse('login') + '?next=' + reverse('organizer_signup')
         self.assertEqual(response.url, redirect_to_login_url)
 
-    
     def test_user_with_add_organizer_perm_no_redirects(self):
-        #TODO: use correct perm, and not superuser
         # Login client with super_organizer
         self.client.login(username='superOrganizer01', password='superOrganizer01')
 
         response = self.client.get(reverse('organizer_signup'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'organizers/organizer_signup.html')
+
+    def test_organizer_created_on_signup(self):
+        self.client.login(username='superOrganizer01', password='superOrganizer01')
+        url = reverse('organizer_signup')
+        data = {
+            'email':'test@mail.com',
+            'username':'organizador_test'
+        }
+        response = self.client.post(url, data=data)
+        self.assertTrue(Organizer.objects.filter(user=User.objects.get(username='organizador_test')).exists())        
 
 
 class EventAdminTest(TestCase):
@@ -184,7 +198,7 @@ class EventAdminTest(TestCase):
         send_email_function.assert_called_once_with(event, organizers, {'domain': 'testserver', 'protocol': 'http'})
 
 
-class EventViewsTest(TestCase):
+class EventViewsTest(TestCase, CustomAssertMethods):
     def setUp(self):
         create_user_set()
         user = User.objects.first()
@@ -194,14 +208,66 @@ class EventViewsTest(TestCase):
             Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
             Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
         ])
-
+    
+    def test_event_detail_redirects_no_associated_organizer(self):
+        event = Event.objects.filter(name='MyTest01').first()
+        url = reverse('event_detail', kwargs={'pk': event.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.get(url)
+        expected_url = reverse('event_list')
+        self.assertRedirects(response, expected_url)
+        self.assertContainsMessage(response, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+        
     def test_event_change_redirects_on_closed_event(self):
         event = Event.objects.filter(name='MyTest01').first()
         EventOrganizer.objects.create(event=event, organizer=Organizer.objects.get(user__username='organizer01'))
         event.close = True
         event.save()
+        
         url = reverse('event_change', kwargs={'pk': event.pk})
         self.client.login(username='organizer01', password='organizer01')
         response = self.client.get(url)
+        
         expected_url = reverse('event_detail', kwargs={'pk': event.pk})
         self.assertRedirects(response, expected_url)
+        self.assertContainsMessage(response, CANT_CHANGE_CLOSE_EVENT_MESSAGE)
+
+    def test_cant_duplicate_sponsor_category(self):
+        set_current_user(User.objects.filter(username='organizer01').first())
+        event = Event.objects.filter(name='MyTest01').first()
+        EventOrganizer.objects.create(event=event, organizer=Organizer.objects.get(user__username='organizer01'))
+        SponsorCategory.objects.create(name='Oro',amount=10000, event=event)
+        
+        url = reverse('event_create_sponsor_category', kwargs={'pk': event.pk})
+        data = {
+            'name':'Oro',
+            'amount': '10000'
+        }
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url, data)
+        expected_url = reverse('event_detail', kwargs={'pk': event.pk})
+        self.assertRedirects(response, expected_url)
+        self.assertContainsMessage(response, DUPLICATED_SPONSOR_CATEGORY_MESSAGE)
+        
+
+    def test_event_change_not_updating_name_and_commission(self):
+        event = Event.objects.filter(name='MyTest01').first()
+        EventOrganizer.objects.create(event=event, organizer=Organizer.objects.get(user__username='organizer01'))
+
+        old_name = event.name
+        old_commission = event.commission
+
+        url = reverse('event_change', kwargs={'pk': event.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        data = {
+            'name':'noChange',
+            'commission':'300',
+            'place': 'Villa adelina'
+        }
+        response = self.client.post(url, data)
+        expected_url = reverse('event_detail', kwargs={'pk': event.pk})
+        self.assertRedirects(response, expected_url)
+        event.refresh_from_db()
+        self.assertEqual(event.name, old_name)
+        self.assertEqual(event.commission, old_commission)
+        self.assertEqual(event.place, 'Villa adelina')

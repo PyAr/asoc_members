@@ -7,7 +7,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
+
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render  
 
@@ -21,7 +22,9 @@ from events.constants import (
     CANT_CHANGE_CLOSE_EVENT_MESSAGE,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
-    MUST_BE_EVENT_ORGANIZAER_MESSAGE
+    DUPLICATED_SPONSOR_CATEGORY_MESSAGE,
+    MUST_BE_EVENT_ORGANIZAER_MESSAGE,
+    ORGANIZER_MAIL_NOTOFICATION_MESSAGE
     )
 from events.forms import (
     EventUpdateForm,
@@ -60,7 +63,7 @@ def organizer_signup(request):
             messages.add_message(
                 request, 
                 messages.INFO, 
-                _('Se le envio un mail al usuario organizador para que pueda ingresar sus credenciales de autenticación')
+                ORGANIZER_MAIL_NOTOFICATION_MESSAGE
             )
             return redirect('organizer_list')
     else:
@@ -175,11 +178,10 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
     
     def post(self, request, *args, **kwargs):
         try:
-            return super().post(request, *args, **kwargs)
+            with transaction.atomic():
+                return super().post(request, *args, **kwargs)
         except IntegrityError:
-            messages.add_message(request, messages.ERROR,
-                             'Ya tiene registrada una categoria de sponsor con este nombre para el evento actual . ' + \
-                             'Las categorias de sponsor para un evento deben ser únicas.')
+            messages.add_message(request, messages.ERROR, DUPLICATED_SPONSOR_CATEGORY_MESSAGE)
             return redirect('event_detail', pk=self._get_event().pk)
         
 

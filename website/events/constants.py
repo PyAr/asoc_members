@@ -12,3 +12,7 @@ CAN_VIEW_SPONSORS_CODENAME = 'view_sponsors'
 MUST_BE_EVENT_ORGANIZAER_MESSAGE = _('Para poder acceder a detalles del evento debe ser organizador del mismo.')
 CANT_CHANGE_CLOSE_EVENT_MESSAGE = _("No se puede modificar un evento cerrado. Pida a un administrador que vuelva" +
     " a abrirlo, desde el administrador de eventos.")
+
+ORGANIZER_MAIL_NOTOFICATION_MESSAGE = _('Se le envio un mail al usuario organizador para que pueda ingresar sus credenciales de autenticación')
+DUPLICATED_SPONSOR_CATEGORY_MESSAGE = _('Ya tiene registrada una categoria de sponsor con este nombre para el evento actual . ' + \
+    'Las categorias de sponsor para un evento deben ser únicas.')

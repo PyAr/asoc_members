@@ -7,12 +7,18 @@ from django_extensions.db.models import TimeStampedModel
 
 from events.helpers.models import AudithUserTime
 from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
-from .constants import CUIT_REGEX, CAN_VIEW_EVENT_ORGANIZERS_CODENAME, CAN_VIEW_ORGANIZERS_CODENAME
+from .constants import (
+    CUIT_REGEX,
+    CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
+    CAN_VIEW_ORGANIZERS_CODENAME,
+    CAN_VIEW_EVENTS_CODENAME,
+    CAN_VIEW_SPONSORS_CODENAME
+)
 
 User = get_user_model()
 
 class BankAccountData(AudithUserTime):
-    """Account data for monetary transerences."""
+    """Account data for monetary transferences."""
     CC = 'CC'
     CA = 'CA'
     ACCOUNT_TYPE_CHOICES = (
