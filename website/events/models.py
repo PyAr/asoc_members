@@ -5,9 +5,8 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 
-from events.helpers.models import AudithUserTime
-from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
-from .constants import (
+from events.helpers.models import AudithUserTime, SaveReversionMixin
+from events.constants import (
     CUIT_REGEX,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
@@ -15,9 +14,13 @@ from .constants import (
     CAN_VIEW_SPONSORS_CODENAME
 )
 
+from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
+import reversion
+
 User = get_user_model()
 
-class BankAccountData(AudithUserTime):
+@reversion.register
+class BankAccountData(SaveReversionMixin, AudithUserTime):
     """Account data for monetary transferences."""
     CC = 'CC'
     CA = 'CA'
@@ -46,7 +49,8 @@ class BankAccountData(AudithUserTime):
     cbu = models.CharField(_('CBU'), max_length=DEFAULT_MAX_LEN, help_text=_('CBU de la cuenta'))
 
 
-class Organizer(AudithUserTime):
+@reversion.register(follow=('account_data',))
+class Organizer(SaveReversionMixin, AudithUserTime):
     """Organizer, person asigned to administrate events."""
     first_name = models.CharField(_('nombre'), max_length=DEFAULT_MAX_LEN)
     last_name = models.CharField(_('apellido'), max_length=DEFAULT_MAX_LEN)
@@ -80,8 +84,8 @@ class Organizer(AudithUserTime):
         )
         ordering = ['-created']
 
-
-class Event(AudithUserTime):
+@reversion.register(follow=('organizers', 'sponsors_categories',))
+class Event(SaveReversionMixin, AudithUserTime):
     """A representation of an Event."""
     PYDAY = 'PD'
     PYCON = 'PCo'
@@ -126,18 +130,19 @@ class Event(AudithUserTime):
         ordering = ['-start_date'] 
 
 
-
-class EventOrganizer(AudithUserTime):
+@reversion.register
+class EventOrganizer(SaveReversionMixin, AudithUserTime):
     """Represents the many to many relationship between events and organizers. With TimeStamped
-    is easy to kwon when a user start as organizer from an event, etc"""
+    is easy to kwon when a user start as organizer from an event, etc."""
     event = models.ForeignKey('Event', related_name='event_organizers', on_delete=models.CASCADE)
     organizer = models.ForeignKey('Organizer', related_name='organizer_events', on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ('event','organizer')
-    
 
-class SponsorCategory(AudithUserTime):
+
+@reversion.register
+class SponsorCategory(SaveReversionMixin, AudithUserTime):
     name = models.CharField(_('nombre'), max_length=DEFAULT_MAX_LEN)
     amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
     event = models.ForeignKey(

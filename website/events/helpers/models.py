@@ -3,6 +3,8 @@ from django.db import models
 from django_extensions.db.models import TimeStampedModel
 from events.middleware import get_current_user
 
+import reversion
+
 User = get_user_model()
 
 class AudithUserTime(TimeStampedModel):
@@ -31,3 +33,10 @@ class AudithUserTime(TimeStampedModel):
 
     class Meta:
         abstract = True
+
+class SaveReversionMixin:
+    '''Mixin to override save, wrapping with create_revision. 
+    To better work keep on left on inheritance.'''
+    def save(self, *args, **kwargs):
+        with reversion.create_revision():
+            super(SaveReversionMixin, self).save(*args, **kwargs)
