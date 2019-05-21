@@ -248,7 +248,33 @@ class EventViewsTest(TestCase, CustomAssertMethods):
         expected_url = reverse('event_detail', kwargs={'pk': event.pk})
         self.assertRedirects(response, expected_url)
         self.assertContainsMessage(response, DUPLICATED_SPONSOR_CATEGORY_MESSAGE)
-        
+    
+    def test_cant_create_sponsor_category_not_event_organizer(self):
+        set_current_user(User.objects.filter(username='organizer01').first())
+        event = Event.objects.filter(name='MyTest01').first()
+        url = reverse('event_create_sponsor_category', kwargs={'pk': event.pk})
+        data = {
+            'name':'Oro',
+            'amount': '10000'
+        }
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url, data)
+        self.assertContainsMessage(response, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+        self.assertFalse(SponsorCategory.objects.filter(name='Oro').exists())
+
+    def test_create_sponsor_category_by_event_organizer(self):
+        set_current_user(User.objects.filter(username='organizer01').first())
+        event = Event.objects.filter(name='MyTest01').first()
+        EventOrganizer.objects.create(event=event, organizer=Organizer.objects.get(user__username='organizer01'))
+        url = reverse('event_create_sponsor_category', kwargs={'pk': event.pk})
+        data = {
+            'name':'Oro',
+            'amount': '10000'
+        }
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url, data)
+        #self.assertContainsMessage(response, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+        self.assertTrue(SponsorCategory.objects.filter(name='Oro').exists())
 
     def test_event_change_not_updating_name_and_commission(self):
         event = Event.objects.filter(name='MyTest01').first()

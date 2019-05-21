@@ -183,6 +183,30 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
         except IntegrityError:
             messages.add_message(request, messages.ERROR, DUPLICATED_SPONSOR_CATEGORY_MESSAGE)
             return redirect('event_detail', pk=self._get_event().pk)
+
+    def has_permission(self):
+        event = self._get_event()
+        ret = super(SponsorCategoryCreateView, self).has_permission()
+        if ret and not self.request.user.is_superuser:
+            try:
+                organizer = Organizer.objects.get(user=self.request.user)
+            except Organizer.DoesNotExist:
+                organizer = None
+            
+            if organizer and (organizer in event.organizers.all()):
+                return ret
+            else:
+                self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+                return False
+            
+        return ret
+    
+    def handle_no_permission(self):
+        if self.get_permission_denied_message()== MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+            return redirect('event_detail', pk=self._get_event().pk)
+        else:
+            return super(SponsorCategoryCreateView, self).handle_no_permission() 
         
 
 class OrganizersListView(PermissionRequiredMixin, generic.ListView):
