@@ -6,16 +6,15 @@ from . import views
 
 urlpatterns = [
      #path('cuentas/login/', auth_views.login, name='login'),
-     path('cuentas/login/', views.LoginView.as_view(), name='login'),
-     path('cuentas/logout/', views.LogoutView.as_view(), name='logout'),
-     path('cuentas/cambio-clave/', views.PasswordResetView.as_view(), name='password_reset'),
-     path('cuentas/cambio-clave/finalizado', views.PasswordResetDoneView.as_view(), name='password_reset_done'),
-     path('cuentas/<uidb64>/<token>/', views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
-     path('cuentas/cambio-clave-completo/', views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
-     path('registrar-organizador/', views.organizer_signup, name='organizer_signup'),
-     path('activate/<uidb64>/<token>/',
-        views.activate, name='activate'),
-
      path('', views.events_home, name='events_home'),
+     path('eventos/', views.events_list, name='event_list'),
+     path('eventos/<pk>/', views.event_detail, name='event_detail'),
+     path('eventos/<pk>/editar/', views.event_change, name='event_change'),
+     path('eventos/<pk>/agregar-categoria-sponsor/', views.event_create_sponsor_category, name='event_create_sponsor_category'),
+
+     path('registrar-organizador/', views.organizer_signup, name='organizer_signup'),
+     path('organizadores/', views.organizers_list, name='organizer_list'),
+     path('organizadores/<pk>/', views.organizer_detail, name='organizer_detail'),
+     path('organizadores/<pk>/editar/', views.organizer_change, name='organizer_change'),
      
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -31,6 +31,9 @@ class Base(Configuration):
     EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
     MAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
 
+    MAIL_FROM ='Lalita <lalita@ac.python.org.ar>'
+    MAIL_MANAGER = 'presidencia@ac.python.org.ar'
+
     # SECURITY WARNING: keep the secret key used in production secret!
     SECRET_KEY = 'svz&bkp-k(zydvn+v9$kqmds=ncl8w8(i-sp^1u280vez=g-zj'
 
@@ -59,6 +62,7 @@ class Base(Configuration):
         'django.middleware.common.CommonMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
         'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'events.middleware.CurrentUserMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
     ]
@@ -68,7 +72,7 @@ class Base(Configuration):
     TEMPLATES = [
         {
             'BACKEND': 'django.template.backends.django.DjangoTemplates',
-            'DIRS': [],
+            'DIRS': [os.path.join(BASE_DIR, 'templates')],
             'APP_DIRS': True,
             'OPTIONS': {
                 'context_processors': [
@@ -137,7 +141,7 @@ class Base(Configuration):
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR
 
-    LOGIN_URL = '/admin/login/'
+    LOGIN_URL = '/cuentas/login/'
 
     AFIP = {
         'url_wsaa': "https://wsaahomo.afip.gov.ar/ws/services/LoginCms?wsdl",
