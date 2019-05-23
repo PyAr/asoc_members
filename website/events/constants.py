@@ -1,6 +1,6 @@
 from django.utils.translation import gettext_lazy as _
 
-CUIT_REGEX =r'^(20|23|24|27|30|33|34)-[0-9]{8}-[0-9]$'
+CUIT_REGEX = r'^(20|23|24|27|30|33|34)-[0-9]{8}-[0-9]$'
 
 """Permissions codenames to create groups, asign, and test."""
 CAN_VIEW_EVENT_ORGANIZERS_CODENAME = 'view_event_organizers'
@@ -9,10 +9,22 @@ CAN_VIEW_EVENTS_CODENAME = 'view_events'
 CAN_VIEW_SPONSORS_CODENAME = 'view_sponsors'
 
 """Messages constants, to use on views and test."""
-MUST_BE_EVENT_ORGANIZAER_MESSAGE = _('Para poder acceder a detalles del evento debe ser organizador del mismo.')
-CANT_CHANGE_CLOSE_EVENT_MESSAGE = _("No se puede modificar un evento cerrado. Pida a un administrador que vuelva" +
-    " a abrirlo, desde el administrador de eventos.")
+MUST_BE_EVENT_ORGANIZAER_MESSAGE = _(
+    'Para poder acceder a detalles del evento debe ser organizador del mismo.'
+)
 
-ORGANIZER_MAIL_NOTOFICATION_MESSAGE = _('Se le envio un mail al usuario organizador para que pueda ingresar sus credenciales de autenticación')
-DUPLICATED_SPONSOR_CATEGORY_MESSAGE = _('Ya tiene registrada una categoria de sponsor con este nombre para el evento actual . ' + \
-    'Las categorias de sponsor para un evento deben ser únicas.')
+CANT_CHANGE_CLOSE_EVENT_MESSAGE = _(
+    "No se puede modificar un evento cerrado. Pida a un administrador que vuelva" +
+    " a abrirlo, desde el administrador de eventos."
+)
+
+ORGANIZER_MAIL_NOTOFICATION_MESSAGE = _(
+    'Se le envio un mail al usuario organizador para que pueda '+
+    'ingresar sus credenciales de autenticación'
+)
+
+DUPLICATED_SPONSOR_CATEGORY_MESSAGE = _(
+    'Ya tiene registrada una categoria de sponsor con este ' +
+    'nombre para el evento actual. ' +
+    'Las categorias de sponsor para un evento deben ser únicas.'
+)

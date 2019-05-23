@@ -15,9 +15,5 @@ function close_modal()
 
 $(document).ready(function()
 {
-    /*var table = $('#tabla').dataTable( {
-        "language": {
-                url: "/static/localizacion/es_ES.json"
-        }
-    } );*/
+    
 });

@@ -29,6 +29,7 @@ from django.views import generic
 #   prompts for a new password
 # - PasswordResetCompleteView shows a success message for the above
 
+
 class PasswordResetView(PasswordResetView):
     extra_email_context = None
     form_class = PasswordResetForm
@@ -50,7 +51,7 @@ class PasswordResetConfirmView(PasswordResetConfirmView):
 
 class LoginView(LoginView):
     form_class = AuthenticationForm
-        
+
 
 def change_password(request):
     if request.method == 'POST':

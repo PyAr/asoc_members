@@ -1,20 +1,13 @@
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.decorators import user_passes_test, login_required, permission_required
-from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
-from django.contrib.sites.shortcuts import get_current_site
-from django.core.mail import EmailMessage
 from django.db import IntegrityError, transaction
 
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render  
+from django.shortcuts import get_object_or_404, redirect, render
 
 from django.utils.crypto import get_random_string
-from django.utils.encoding import force_bytes, force_text
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.translation import gettext_lazy as _
 from django.views import generic, View
 
@@ -32,24 +25,25 @@ from events.forms import (
     OrganizerUserSignupForm,
     SponsorCategoryForm
     )
-from events.helpers.tokens import account_activation_token
 from events.models import Event, Organizer, SponsorCategory
 from pyar_auth.forms import PasswordResetForm
+
 
 @login_required()
 def events_home(request):
     return render(request, 'events_home.html')
 
+
 @permission_required('events.add_organizer')
 def organizer_signup(request):
     if request.method == 'POST':
-        #Create user with random password and send custom reset password form
+        # Create user with random password and send custom reset password form.
         form = OrganizerUserSignupForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
             user.set_password(get_random_string())
             user.save()
-            #TODO: call a helper function to create de organizer with the correct group
+            # TODO: call a helper function to create de organizer with the correct group.
             Organizer.objects.create(user=user)
             reset_form = PasswordResetForm({'email': user.email})
             assert reset_form.is_valid()
@@ -61,8 +55,8 @@ def organizer_signup(request):
                 from_email=settings.MAIL_FROM,
             )
             messages.add_message(
-                request, 
-                messages.INFO, 
+                request,
+                messages.INFO,
                 ORGANIZER_MAIL_NOTOFICATION_MESSAGE
             )
             return redirect('organizer_list')
@@ -84,7 +78,6 @@ class EventsListView(LoginRequiredMixin, generic.ListView):
         else:
             organizers = Organizer.objects.filter(user=user)
             queryset = Event.objects.filter(organizers__in=organizers)
-        
         return queryset
 
 
@@ -94,33 +87,33 @@ class EventDetailView(PermissionRequiredMixin, generic.DetailView):
     permission_required = 'events.change_event'
 
     def get_context_data(self, **kwargs):
-        # Call the base implementation first to get a context
+        # Call the base implementation first to get a context.
         context = super(EventDetailView, self).get_context_data(**kwargs)
         event = self.get_object()
-        # Check that the user can see organizers and obtain them
+        # Check that the user can see organizers and obtain them.
         user = self.request.user
         if user.has_perm('events.' + CAN_VIEW_EVENT_ORGANIZERS_CODENAME):
             organizers = event.organizers.all()
             context['organizers'] = organizers
         return context
-    
+
     def has_permission(self):
         ret = super(EventDetailView, self).has_permission()
         if ret and not self.request.user.is_superuser:
-            #must be event organizer
+            # Must be event organizer.
             event = self.get_object()
             try:
                 organizer = Organizer.objects.get(user=self.request.user)
             except Organizer.DoesNotExist:
                 organizer = None
-            
+
             if organizer and (organizer in event.organizers.all()):
                 return ret
             else:
                 self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
-                
+
                 return False
-            
+
         return ret
 
     def handle_no_permission(self):
@@ -129,7 +122,7 @@ class EventDetailView(PermissionRequiredMixin, generic.DetailView):
             return redirect('event_list')
         else:
             return super(EventDetailView, self).handle_no_permission() 
-            
+
 
 class EventChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
     model = Event
@@ -143,9 +136,9 @@ class EventChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
         if ret and event.close:
             self.permission_denied_message = CANT_CHANGE_CLOSE_EVENT_MESSAGE
             return False
-        
+
         return ret
-    
+
     def handle_no_permission(self):
         if self.get_permission_denied_message()== CANT_CHANGE_CLOSE_EVENT_MESSAGE:
             messages.add_message(self.request, messages.ERROR, CANT_CHANGE_CLOSE_EVENT_MESSAGE)
@@ -159,7 +152,7 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
     form_class = SponsorCategoryForm
     template_name = 'events/event_create_sponsor_category_modal.html'
     permission_required = 'events.add_sponsorcategory'
-    
+
     def form_valid(self, form):
         form.instance.event = self._get_event()
         return super(SponsorCategoryCreateView, self).form_valid(form)
@@ -175,7 +168,7 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
         context = super(SponsorCategoryCreateView, self).get_context_data(**kwargs)
         context['event'] = self._get_event()
         return context
-    
+
     def post(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
@@ -192,22 +185,22 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
                 organizer = Organizer.objects.get(user=self.request.user)
             except Organizer.DoesNotExist:
                 organizer = None
-            
+
             if organizer and (organizer in event.organizers.all()):
                 return ret
             else:
                 self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
                 return False
-            
+
         return ret
-    
+
     def handle_no_permission(self):
         if self.get_permission_denied_message()== MUST_BE_EVENT_ORGANIZAER_MESSAGE:
             messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
             return redirect('event_detail', pk=self._get_event().pk)
         else:
             return super(SponsorCategoryCreateView, self).handle_no_permission() 
-        
+
 
 class OrganizersListView(PermissionRequiredMixin, generic.ListView):
     model = Organizer
@@ -230,13 +223,14 @@ class OrganizerDetailView(PermissionRequiredMixin, generic.DetailView):
         user = self.request.user
         context['is_request_user'] = organizer.user == user
         return context
-    
+
     def has_permission(self):
         ret = super(OrganizerDetailView, self).has_permission()
         if not ret and self.request.user == self.get_object().user:
             # Can see own data.
             return True
         return ret
+
 
 class OrganizerChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
     model = Organizer
@@ -246,6 +240,7 @@ class OrganizerChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
 
     def has_permission(self):
         return self.request.user == self.get_object().user
+
 
 events_list = EventsListView.as_view()
 event_detail = EventDetailView.as_view()
