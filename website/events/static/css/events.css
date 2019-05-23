@@ -68,3 +68,8 @@
     font-weight: normal;
     font-size: 20px;
 }
+
+.btn-disabled {
+    background-color: #ff7259;
+    color: black;
+}

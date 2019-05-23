@@ -38,7 +38,11 @@
                     </tr>
                 </tbody>
             </table>
+            {% if event.close %}
+            <a class="btn btn-disabled btn-block text-uppercase" href="#"><i class="fa fa-expeditedssl"></i> Cerrado</a>
+            {% else %}
             <a class="btn btn-primary btn-block text-uppercase" href="{% url 'event_change' event.pk %}">Editar</a>
+            {% endif %}
         </div>
         <div class="col-md-6">
             {% if perms.events.view_organizers %}
@@ -88,6 +92,7 @@
                 {% endif %}
                 
             {% endfor %}
+                {% if not event.close %}  
                 {% if perms.events.add_sponsorcategory %}
                 <div class="col-sm-3 col-md-3">
                     <div class="thumbnail">
@@ -101,6 +106,7 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
                 {% endif %}
             </div>
     </div>   

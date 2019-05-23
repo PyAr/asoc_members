@@ -140,11 +140,11 @@ class EventChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
         return ret
 
     def handle_no_permission(self):
-        if self.get_permission_denied_message()== CANT_CHANGE_CLOSE_EVENT_MESSAGE:
+        if self.get_permission_denied_message() == CANT_CHANGE_CLOSE_EVENT_MESSAGE:
             messages.add_message(self.request, messages.ERROR, CANT_CHANGE_CLOSE_EVENT_MESSAGE)
             return redirect('event_detail', pk=self.get_object().pk)
         else:
-            return super(EventChangeView, self).handle_no_permission() 
+            return super(EventChangeView, self).handle_no_permission()
 
 
 class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView):
