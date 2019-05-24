@@ -2,7 +2,7 @@
     text-align: center;
 }
 
-.events-form-control, .btn {
+.events-form-control .btn {
     min-height: 38px;
     border-radius: 2px;
 }

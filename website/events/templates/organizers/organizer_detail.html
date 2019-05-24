@@ -6,7 +6,7 @@
     <div class="route-navigator" >
             <ol class="breadcrumb">
                 <li><a href="{% url 'events_home' %}">Inicio</a></li>
-                {% if perms.events.add_organizers %}
+                {% if perms.events.view_organizers %}
                 <li><a href="{% url 'organizer_list' %}" >Organizadores</a></li>
                 {% endif %}
                 <li class="active"><a href="{% url 'organizer_detail' pk=organizer.pk %}">{{organizer.user.username}}</a></li>

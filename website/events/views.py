@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -25,6 +26,7 @@ from events.forms import (
     OrganizerUserSignupForm,
     SponsorCategoryForm
     )
+from events.helpers.views import seach_filterd_queryset
 from events.models import Event, Organizer, SponsorCategory
 from pyar_auth.forms import PasswordResetForm
 
@@ -70,6 +72,10 @@ class EventsListView(LoginRequiredMixin, generic.ListView):
     context_object_name = 'event_list'
     template_name = 'events/event_list.html'
     paginate_by = 5
+    search_fields = {
+        'name': 'icontains',
+        'place': 'icontains'
+    }
 
     def get_queryset(self):
         user = self.request.user
@@ -78,6 +84,10 @@ class EventsListView(LoginRequiredMixin, generic.ListView):
         else:
             organizers = Organizer.objects.filter(user=user)
             queryset = Event.objects.filter(organizers__in=organizers)
+
+        search_value = self.request.GET.get('search', None)
+        if search_value and search_value != '':
+            queryset = seach_filterd_queryset(queryset, self.search_fields, search_value)
         return queryset
 
 
@@ -207,7 +217,19 @@ class OrganizersListView(PermissionRequiredMixin, generic.ListView):
     context_object_name = 'organizer_list'
     template_name = 'organizers/organizers_list.html'
     paginate_by = 5
-    permission_required = 'events.add_organizer'
+    permission_required = 'events.view_organizers'
+    search_fields = {
+        'first_name': 'icontains',
+        'last_name': 'icontains',
+        'user__username': 'icontains'
+    }
+
+    def get_queryset(self):
+        queryset = Organizer.objects.all()
+        search_value = self.request.GET.get('search', None)
+        if search_value and search_value != '':
+            queryset = seach_filterd_queryset(queryset, self.search_fields, search_value)
+        return queryset
 
 
 class OrganizerDetailView(PermissionRequiredMixin, generic.DetailView):

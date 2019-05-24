@@ -4,6 +4,25 @@
     {% block route-navigator %}
     {%endblock%}
     
+    {% block list_title %}
+    {%endblock%}
+
+    {% block list_filter %}
+    <form method='GET'>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="input-group">
+                    
+                    <input type="text" name="search" class="form-control" placeholder="Buscar ..." value='{{ request.GET.search }}'>
+                    <span class="input-group-btn">
+                        <input type="submit" class="btn btn-success" value="Filtrar">
+                    </span>
+                </div><!-- /input-group -->
+            </div><!-- /.col-lg-6 -->
+        </div>
+    </form>
+    {%endblock%}
+
     {% block list_content %}
     {%endblock%}
     
