@@ -5,6 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 
 from django.db import IntegrityError, transaction
 from django.db.models import Q
+from django.http import HttpResponseRedirect
 
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -21,13 +22,14 @@ from events.constants import (
     ORGANIZER_MAIL_NOTOFICATION_MESSAGE
     )
 from events.forms import (
+    BankAccountDataForm,
     EventUpdateForm,
     OrganizerUpdateForm,
     OrganizerUserSignupForm,
     SponsorCategoryForm
     )
 from events.helpers.views import seach_filterd_queryset
-from events.models import Event, Organizer, SponsorCategory
+from events.models import BankAccountData, Event, Organizer, SponsorCategory
 from pyar_auth.forms import PasswordResetForm
 
 
@@ -157,6 +159,52 @@ class EventChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
             return super(EventChangeView, self).handle_no_permission()
 
 
+class BankOrganizerAccountDataCreateView(PermissionRequiredMixin, generic.edit.CreateView):
+    model = BankAccountData
+    form_class = BankAccountDataForm
+    template_name = 'organizers/create_bank_account_data_modal.html'
+    permission_required = ''
+
+    def has_permission(self):
+        ret = True
+        #ret = super(BankOrganizerAccountDataCreateView, self).has_permission()
+        try:
+            Organizer.objects.filter(user=self.request.user).exists()
+        except Organizer.DoesNotExist:
+            # TODO: add message requiring be an organizer user
+            return False
+        return ret
+
+    def handle_no_permission(self):
+        return super(BankOrganizerAccountDataCreateView, self).handle_no_permission()
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(BankOrganizerAccountDataCreateView, self).get_context_data(**kwargs)
+        context['organizer'] = self._get_organizer()
+        return context
+
+    def form_valid(self, form):
+        organizer = self._get_organizer()
+        self.object = form.save()
+        organizer.account_data = self.object
+        organizer.save()
+        # do something with self.object
+        # remember the import: from django.http import HttpResponseRedirect
+        return HttpResponseRedirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        ret = super(BankOrganizerAccountDataCreateView, self).form_invalid(form)
+        #import pdb; pdb.set_trace()
+        return ret
+
+    def get_success_url(self):
+        return self._get_organizer().get_absolute_url()
+
+    def _get_organizer(self):
+        return get_object_or_404(Organizer, pk=self.kwargs['pk'])
+
+
 class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView):
     model = SponsorCategory
     form_class = SponsorCategoryForm
@@ -205,11 +253,11 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
         return ret
 
     def handle_no_permission(self):
-        if self.get_permission_denied_message()== MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
             messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
             return redirect('event_detail', pk=self._get_event().pk)
         else:
-            return super(SponsorCategoryCreateView, self).handle_no_permission() 
+            return super(SponsorCategoryCreateView, self).handle_no_permission()
 
 
 class OrganizersListView(PermissionRequiredMixin, generic.ListView):
@@ -272,3 +320,4 @@ event_create_sponsor_category = SponsorCategoryCreateView.as_view()
 organizers_list = OrganizersListView.as_view()
 organizer_detail = OrganizerDetailView.as_view()
 organizer_change = OrganizerChangeView.as_view()
+organizer_create_bank_account_data = BankOrganizerAccountDataCreateView.as_view()

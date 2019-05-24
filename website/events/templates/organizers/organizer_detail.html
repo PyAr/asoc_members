@@ -74,7 +74,15 @@
                     </div>
                 {% endif %}
                 {% if is_request_user %}
-                    <a class="btn btn-primary btn-block text-uppercase" href="{% url 'organizer_list' %}">Actualizar cuenta</a>
+                    {% if organizer.account_data %}
+                    <a class="btn btn-primary btn-block text-uppercase" href="{% url 'organizerlist' %}">Actualizar cuenta</a>
+                    {% else %}
+                    <a class="btn btn-primary btn-block text-uppercase" 
+                    href="{% url 'organizer_create_bank_account_data' organizer.pk %}">
+                    {# onclick="return open_modal('{% url 'organizer_create_bank_account_data' organizer.pk %}')"> #}
+                    Crear cuenta
+                    </a>
+                    {% endif %}
                 {% endif %}
             
         </div>

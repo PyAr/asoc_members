@@ -18,5 +18,10 @@ urlpatterns = [
      path('organizadores/', views.organizers_list, name='organizer_list'),
      path('organizadores/<pk>/', views.organizer_detail, name='organizer_detail'),
      path('organizadores/<pk>/editar/', views.organizer_change, name='organizer_change'),
-     
+     path(
+          'organizadores/<pk>/agregar-cuenta-bancaria/',
+          views.organizer_create_bank_account_data,
+          name='organizer_create_bank_account_data'
+     ),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
