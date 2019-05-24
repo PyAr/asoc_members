@@ -13,6 +13,7 @@
                 <li class="active"><a href="#">Cuenta</a></li>
             </ol>
     </div>
+    <h3>Agregar datos cuenta bancaria</h3> 
     <form role="form" action="{% url 'organizer_create_bank_account_data' organizer.pk %}" method="post">
         {% csrf_token %}
         {% crispy form %}
@@ -23,6 +24,6 @@
         <input type="submit" class="btn btn-success" value="Crear">
         {% endif %}
     </form>
-    </div>
+    
 </div>       
 {% endblock %}
