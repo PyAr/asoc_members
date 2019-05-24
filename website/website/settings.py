@@ -157,6 +157,13 @@ class Base(Configuration):
         'folder_id': "",
     }
 
+    # Azure blob-storage
+    AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY")
+    AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME")
+    AZURE_CONTAINER = os.environ.get("AZURE_CONTAINER")
+    AZURE_SSL = os.environ.get("AZURE_SSL", True)
+    AZURE_QUERYSTRING_AUTH = os.environ.get("AZURE_QUERYSTRING_AUTH", False)
+
 
 # try to import the local settings; if the file is not there just create a stub class
 # for the inheritance later
@@ -170,6 +177,7 @@ except ModuleNotFoundError:
 class Dev(LocalSettings, Base):
     """Development configuration."""
 
+
 class Staging(Base):
     """Staging configuration."""
     DATABASES = {
@@ -182,6 +190,9 @@ class Staging(Base):
             'PORT': os.environ.get('POSTGRES_PORT', 5432),
         }
     }
+
+    DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+    STATICFILES_STORAGE = "storages.backends.azure_storage.AzureStorage"
 
 
 class Prod(Base):
@@ -224,11 +235,5 @@ class Prod(Base):
         'auth_key_path': '/tmp/afip_pyar.key',
     }
 
-    # Azure blob-storage
-    AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY")
-    AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME")
-    AZURE_CONTAINER = os.environ.get("AZURE_CONTAINER")
-    AZURE_SSL = os.environ.get("AZURE_SSL", True)
-    AZURE_QUERYSTRING_AUTH = os.environ.get("AZURE_QUERYSTRING_AUTH", False)
     DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
     STATICFILES_STORAGE = "storages.backends.azure_storage.AzureStorage"
