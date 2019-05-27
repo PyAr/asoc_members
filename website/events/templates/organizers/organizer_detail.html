@@ -38,7 +38,7 @@
         </div>
         <div class="col-md-6">
             
-                <h3>Datos de cuenta banco</h3>
+                <h3>Datos de cuenta bancaria</h3>
                 {% if organizer.account_data %}
                 <table class="table table-striped">
                     <tbody>
@@ -75,7 +75,8 @@
                 {% endif %}
                 {% if is_request_user %}
                     {% if organizer.account_data %}
-                    <a class="btn btn-primary btn-block text-uppercase" href="{% url 'organizer_list' %}">Actualizar cuenta</a>
+                    <a class="btn btn-primary btn-block text-uppercase" 
+                    href="{% url 'organizer_update_bank_account_data' organizer.account_data.pk %}">Actualizar cuenta</a>
                     {% else %}
                     <a class="btn btn-primary btn-block text-uppercase" 
                     href="{% url 'organizer_create_bank_account_data' organizer.pk %}">

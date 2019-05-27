@@ -30,31 +30,35 @@ class BankAccountData(SaveReversionMixin, AudithUserTime):
     document_number = models.CharField(
         _('CUIT'),
         max_length=13,
-        help_text=_('CUIT del propietario de la cuenta'),
-        validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto'))]
+        help_text=_('CUIT del propietario de la cuenta, formato ##-########-#'),
+        validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto.'))]
     )
 
     bank_entity = models.CharField(
         _('entidad bancaria'),
         max_length=DEFAULT_MAX_LEN,
-        help_text=_('nombre de la entiedad bancaria')
+        help_text=_('Nombre de la entiedad bancaria.')
     )
     account_number = models.CharField(
         _('número de cuenta'),
         max_length=13,
-        help_text=_('Número de cuenta')
+        help_text=_('Número de cuenta.')
     )
-    account_type = models.CharField(_('tipo cuenta'), max_length=3, choices=ACCOUNT_TYPE_CHOICES)
+    account_type = models.CharField(_('Tipo cuenta'), max_length=3, choices=ACCOUNT_TYPE_CHOICES)
 
     organization_name = models.CharField(
         _('razón social'),
         max_length=DEFAULT_MAX_LEN,
-        help_text=_('razón social o nombre del propietario de la cuenta')
+        help_text=_('Razón social o nombre del propietario de la cuenta.')
     )
     cbu = models.CharField(_('CBU'), max_length=DEFAULT_MAX_LEN, help_text=_('CBU de la cuenta'))
 
+    def is_owner(self, organizer):
+        '''Returns if the organizer is the owner of the current account.'''
+        return organizer in self.organizer_set.all()
 
-@reversion.register(follow=('account_data',))
+
+@reversion.register
 class Organizer(SaveReversionMixin, AudithUserTime):
     """Organizer, person asigned to administrate events."""
     first_name = models.CharField(_('nombre'), max_length=DEFAULT_MAX_LEN)
@@ -90,7 +94,7 @@ class Organizer(SaveReversionMixin, AudithUserTime):
         ordering = ['-created']
 
 
-@reversion.register(follow=('organizers', 'sponsors_categories',))
+@reversion.register
 class Event(SaveReversionMixin, AudithUserTime):
     """A representation of an Event."""
     PYDAY = 'PD'
@@ -141,7 +145,11 @@ class EventOrganizer(SaveReversionMixin, AudithUserTime):
     """Represents the many to many relationship between events and organizers. With TimeStamped
     is easy to kwon when a user start as organizer from an event, etc."""
     event = models.ForeignKey('Event', related_name='event_organizers', on_delete=models.CASCADE)
-    organizer = models.ForeignKey('Organizer', related_name='organizer_events', on_delete=models.CASCADE)
+    organizer = models.ForeignKey(
+        'Organizer',
+        related_name='organizer_events',
+        on_delete=models.CASCADE
+    )
 
     class Meta:
         unique_together = ('event', 'organizer')

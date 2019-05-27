@@ -18,7 +18,9 @@ from events.constants import (
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
     DUPLICATED_SPONSOR_CATEGORY_MESSAGE,
+    MUST_BE_ACCOUNT_OWNER_MESSAGE,
     MUST_BE_EVENT_ORGANIZAER_MESSAGE,
+    MUST_BE_ORGANIZER_MESSAGE,
     ORGANIZER_MAIL_NOTOFICATION_MESSAGE
     )
 from events.forms import (
@@ -129,11 +131,11 @@ class EventDetailView(PermissionRequiredMixin, generic.DetailView):
         return ret
 
     def handle_no_permission(self):
-        if self.get_permission_denied_message()== MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
             messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
             return redirect('event_list')
         else:
-            return super(EventDetailView, self).handle_no_permission() 
+            return super(EventDetailView, self).handle_no_permission()
 
 
 class EventChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
@@ -159,23 +161,72 @@ class EventChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
             return super(EventChangeView, self).handle_no_permission()
 
 
+class BankOrganizerAccountDataUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
+    model = BankAccountData
+    form_class = BankAccountDataForm
+    template_name = 'organizers/create_bank_account_data.html'
+    permission_required = 'events.change_bankaccountdata'
+
+    def has_permission(self):
+        bank_account = self.get_object()
+        ret = super(BankOrganizerAccountDataUpdateView, self).has_permission()
+        try:
+            organizer = self._get_organizer()
+        except Organizer.DoesNotExist:
+            self.permission_denied_message = MUST_BE_ORGANIZER_MESSAGE
+            return False
+
+        if ret and not bank_account.is_owner(organizer):
+            self.permission_denied_message = MUST_BE_ACCOUNT_OWNER_MESSAGE
+            return False
+
+        return ret
+
+    def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_ACCOUNT_OWNER_MESSAGE:
+            messages.add_message(self.request, messages.ERROR, MUST_BE_ACCOUNT_OWNER_MESSAGE)
+            return redirect('organizer_detail', pk=self._get_organizer().pk)
+
+        if self.get_permission_denied_message() == MUST_BE_ORGANIZER_MESSAGE:
+            messages.add_message(self.request, messages.ERROR, MUST_BE_ORGANIZER_MESSAGE)
+            return redirect('events_home')
+
+        return super(BankOrganizerAccountDataUpdateView, self).handle_no_permission()
+
+    def get_success_url(self):
+        return self._get_organizer().get_absolute_url()
+
+    def _get_organizer(self):
+        return Organizer.objects.get(user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(BankOrganizerAccountDataUpdateView, self).get_context_data(**kwargs)
+        context['organizer'] = self._get_organizer()
+        return context
+
+
 class BankOrganizerAccountDataCreateView(PermissionRequiredMixin, generic.edit.CreateView):
     model = BankAccountData
     form_class = BankAccountDataForm
-    template_name = 'organizers/create_bank_account_data_modal.html'
-    permission_required = ''
+    template_name = 'organizers/create_bank_account_data.html'
+    permission_required = 'events.add_bankaccountdata'
 
     def has_permission(self):
-        ret = True
-        #ret = super(BankOrganizerAccountDataCreateView, self).has_permission()
+        ret = super(BankOrganizerAccountDataCreateView, self).has_permission()
         try:
-            Organizer.objects.filter(user=self.request.user).exists()
+            Organizer.objects.get(user=self.request.user)
         except Organizer.DoesNotExist:
             # TODO: add message requiring be an organizer user
+            self.permission_denied_message = MUST_BE_ORGANIZER_MESSAGE
             return False
         return ret
 
     def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_ORGANIZER_MESSAGE:
+            messages.add_message(self.request, messages.ERROR, MUST_BE_ORGANIZER_MESSAGE)
+            return redirect('events_home')
+
         return super(BankOrganizerAccountDataCreateView, self).handle_no_permission()
 
     def get_context_data(self, **kwargs):
@@ -189,13 +240,10 @@ class BankOrganizerAccountDataCreateView(PermissionRequiredMixin, generic.edit.C
         self.object = form.save()
         organizer.account_data = self.object
         organizer.save()
-        # do something with self.object
-        # remember the import: from django.http import HttpResponseRedirect
         return HttpResponseRedirect(self.get_success_url())
 
     def form_invalid(self, form):
         ret = super(BankOrganizerAccountDataCreateView, self).form_invalid(form)
-        #import pdb; pdb.set_trace()
         return ret
 
     def get_success_url(self):
@@ -321,3 +369,4 @@ organizers_list = OrganizersListView.as_view()
 organizer_detail = OrganizerDetailView.as_view()
 organizer_change = OrganizerChangeView.as_view()
 organizer_create_bank_account_data = BankOrganizerAccountDataCreateView.as_view()
+organizer_update_bank_account_data = BankOrganizerAccountDataUpdateView.as_view()

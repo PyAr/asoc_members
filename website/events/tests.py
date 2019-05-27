@@ -8,6 +8,8 @@ from django.urls import reverse
 from events.constants import (
     CANT_CHANGE_CLOSE_EVENT_MESSAGE,
     DUPLICATED_SPONSOR_CATEGORY_MESSAGE,
+    MUST_BE_ACCOUNT_OWNER_MESSAGE,
+    MUST_BE_ORGANIZER_MESSAGE,
     MUST_BE_EVENT_ORGANIZAER_MESSAGE,
     ORGANIZER_MAIL_NOTOFICATION_MESSAGE
     )
@@ -19,7 +21,7 @@ from events.helpers.tests import (
     super_organizer_permissions
 )
 from events.middleware import set_current_user
-from events.models import Event, Organizer, EventOrganizer, SponsorCategory
+from events.models import Event, Organizer, EventOrganizer, SponsorCategory, BankAccountData
 from unittest.mock import patch, MagicMock
 
 User = get_user_model()
@@ -92,7 +94,7 @@ def admin_event_associate_organizers_post_data(event, organizers):
         'event_organizers-INITIAL_FORMS': ['0'],
         'event_organizers-MIN_NUM_FORMS': ['0'],
         'event_organizers-MAX_NUM_FORMS': ['1000'],
-         
+
         'event_organizers-__prefix__-id': [''],
         'event_organizers-__prefix__-event': ['1'],
         'event_organizers-__prefix__-organizer': [''],
@@ -226,6 +228,66 @@ class EventAdminTest(TestCase):
             organizers,
             {'domain': 'testserver', 'protocol': 'http'}
         )
+
+
+class BankAccountDataTest(TestCase, CustomAssertMethods):
+    account_data = {
+        'organization_name': 'Pablo', 
+        'document_number': '20-21321265-7',
+        'bank_entity': 'Banco Rio',
+        'account_type': 'CC',
+        'account_number': '4',
+        'cbu': '456548789'
+    }
+
+    def setUp(self):
+        create_user_set()
+        user = User.objects.first()
+        create_event_set(user)
+
+        Organizer.objects.bulk_create([
+            Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01")
+        ])
+
+    def test_must_be_organizer_to_create_banck_account(self):
+        organizer = Organizer.objects.get(user__username="organizer01")
+        url = reverse('organizer_create_bank_account_data', kwargs={'pk': organizer.pk})
+        self.client.login(username='organizer02', password='organizer02')
+        response = self.client.post(url, data=self.account_data)
+        expected_url = reverse('events_home')
+        self.assertRedirects(response, expected_url)
+        self.assertContainsMessage(response, MUST_BE_ORGANIZER_MESSAGE)
+
+    def test_must_be_owner_to_update_banck_account(self):
+        account = BankAccountData.objects.create(**self.account_data)
+        organizer02 = Organizer.objects.create(
+            user=User.objects.get(username="organizer02"),
+            first_name="organizer02"
+        )
+        organizer = Organizer.objects.get(user__username="organizer01")
+        organizer.account_data = account
+        organizer.save()
+        self.client.login(username='organizer02', password='organizer02')
+        url = reverse('organizer_update_bank_account_data', kwargs={'pk': account.pk})
+
+        data = self.account_data
+        data['organization_name'] = 'Andres'
+
+        response = self.client.post(url, data=data)
+        expected_url = reverse('organizer_detail', kwargs={'pk': organizer02.pk})
+        self.assertRedirects(response, expected_url)
+        self.assertContainsMessage(response, MUST_BE_ACCOUNT_OWNER_MESSAGE)
+
+    def test_account_create_is_associated_with_organizer(self):
+        organizer = Organizer.objects.get(user__username="organizer01")
+        self.assertIsNone(organizer.account_data)
+        url = reverse('organizer_create_bank_account_data', kwargs={'pk': organizer.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url, data=self.account_data)
+        expected_url = reverse('organizer_detail', kwargs={'pk': organizer.pk})
+        self.assertRedirects(response, expected_url)
+        organizer.refresh_from_db()
+        self.assertIsNotNone(organizer.account_data)
 
 
 class EventViewsTest(TestCase, CustomAssertMethods):

@@ -23,5 +23,10 @@ urlpatterns = [
           views.organizer_create_bank_account_data,
           name='organizer_create_bank_account_data'
      ),
+     path(
+          'cuenta-bancaria/<pk>/editar/',
+          views.organizer_update_bank_account_data,
+          name='organizer_update_bank_account_data'
+     ),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -98,4 +98,7 @@ class BankAccountDataForm(forms.ModelForm):
 
     class Meta:
         model = BankAccountData
-        fields = ['organization_name', 'document_number', 'bank_entity', 'account_type', 'account_number', 'cbu']
+        fields = [
+            'organization_name', 'document_number', 'bank_entity',
+            'account_type', 'account_number', 'cbu'
+            ]

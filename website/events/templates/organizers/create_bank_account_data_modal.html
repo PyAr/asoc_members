@@ -1,29 +1,18 @@
-{% extends "events_base.html" %}
+{% extends "base_bootstrap_modal_form.html" %}
 {% load crispy_forms_tags %}
-{% block content %}
-<div class="container">
+{% block modal_title %}
+<h3>Agregar datos cuenta bancaria</h3> 
+{% endblock %} 
 
-    <div class="route-navigator" >
-            <ol class="breadcrumb">
-                <li><a href="{% url 'events_home' %}">Inicio</a></li>
-                {% if perms.events.view_organizers %}
-                <li><a href="{% url 'organizer_list' %}">Organizadores</a></li>
-                {% endif %}
-                <li><a href="{% url 'organizer_detail' pk=organizer.pk %}">{{organizer.user.username}}</a></li>
-                <li class="active"><a href="#">Cuenta</a></li>
-            </ol>
-    </div>
-    <h3>Agregar datos cuenta bancaria</h3> 
-    <form role="form" action="{% url 'organizer_create_bank_account_data' organizer.pk %}" method="post">
-        {% csrf_token %}
-        {% crispy form %}
-        <a class="btn btn-default" href="{% url 'organizer_detail' organizer.pk %}">Volver</a>
-        {% if organizer.account_data %}
-        <input type="submit" class="btn btn-success" value="Actualizar">
-        {% else %}
-        <input type="submit" class="btn btn-success" value="Crear">
-        {% endif %}
-    </form>
-    
-</div>       
+{% block form_action %}
+<form role="form" action="{% url 'organizer_create_bank_account_data' organizer.pk %}" method="post">
 {% endblock %}
+
+{% block modal_content %}
+                {% csrf_token %}
+                {% crispy form %}
+{% endblock %} 
+{% block modal_footer %}
+<a class="btn btn-default" href="{% url 'organizer_detail' organizer.pk %}">Cancelar</a>
+<input type="submit" class="btn btn-primary" value="Crear">
+{% endblock %} 

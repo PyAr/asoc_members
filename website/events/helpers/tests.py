@@ -4,7 +4,7 @@ from django.contrib.messages import get_messages
 from django.utils.translation import ugettext_lazy as _
 
 from events.constants import CAN_VIEW_EVENT_ORGANIZERS_CODENAME, CAN_VIEW_ORGANIZERS_CODENAME
-from events.models import Event, Organizer, EventOrganizer, SponsorCategory
+from events.models import Event, Organizer, EventOrganizer, SponsorCategory, BankAccountData
 
 from unittest import TestCase
 
@@ -23,6 +23,17 @@ def organizer_permissions():
     permissions.append(Permission.objects.get(
         content_type=event_content_type,
         codename='add_sponsorcategory')
+    )
+
+    event_content_type = ContentType.objects.get_for_model(BankAccountData)
+    # BankAccountData create and change permmission.
+    permissions.append(Permission.objects.get(
+        content_type=event_content_type,
+        codename='add_bankaccountdata')
+    )
+    permissions.append(Permission.objects.get(
+        content_type=event_content_type,
+        codename='change_bankaccountdata')
     )
 
     return permissions

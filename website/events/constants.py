@@ -13,6 +13,14 @@ MUST_BE_EVENT_ORGANIZAER_MESSAGE = _(
     'Para poder acceder a detalles del evento debe ser organizador del mismo.'
 )
 
+MUST_BE_ACCOUNT_OWNER_MESSAGE = _(
+    'Para poder modificar los datos de la cuenta debe ser dueño de la misma.'
+)
+
+MUST_BE_ORGANIZER_MESSAGE = _(
+    'Para realizar la acción requerida debe ser un organizador registrado.'
+)
+
 CANT_CHANGE_CLOSE_EVENT_MESSAGE = _(
     "No se puede modificar un evento cerrado. Pida a un administrador que vuelva" +
     " a abrirlo, desde el administrador de eventos."
