@@ -31,7 +31,7 @@ class Base(Configuration):
     EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
     MAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
 
-    MAIL_FROM ='Lalita <lalita@ac.python.org.ar>'
+    MAIL_FROM = 'Lalita <lalita@ac.python.org.ar>'
     MAIL_MANAGER = 'presidencia@ac.python.org.ar'
 
     # SECURITY WARNING: keep the secret key used in production secret!
@@ -157,12 +157,19 @@ class Base(Configuration):
         'folder_id': "",
     }
 
+    # Azure blob-storage
+    AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY")
+    AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME")
+    AZURE_CONTAINER = os.environ.get("AZURE_CONTAINER")
+    AZURE_SSL = os.environ.get("AZURE_SSL", True)
+    AZURE_QUERYSTRING_AUTH = os.environ.get("AZURE_QUERYSTRING_AUTH", False)
+
 
 # try to import the local settings; if the file is not there just create a stub class
 # for the inheritance later
 try:
     from local_settings import LocalSettings
-except ModuleNotFoundError as err:
+except ModuleNotFoundError:
     class LocalSettings:
         pass
 
@@ -183,6 +190,9 @@ class Staging(Base):
             'PORT': os.environ.get('POSTGRES_PORT', 5432),
         }
     }
+
+    DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+    STATICFILES_STORAGE = "storages.backends.azure_storage.AzureStorage"
 
 
 class Prod(Base):
@@ -208,11 +218,13 @@ class Prod(Base):
     }
 
     EMAIL_HOST = os.environ.get('EMAIL_HOST')
-    EMAIL_PORT = os.environ.get('EMAIL_PORT')
+    EMAIL_PORT = os.environ.get('EMAIL_PORT', '587')
     EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
     EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
-    MAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', True)
+    EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '10'))
+    EMAIL_FROM = os.environ.get('EMAIL_FROM', 'do_not_reply@python.org.ar')
 
     AFIP = {
         'url_wsaa': "https://wsaa.afip.gov.ar/ws/services/LoginCms?wsdl",
@@ -222,3 +234,6 @@ class Prod(Base):
         'auth_cert_path': '/tmp/afip_pyar.crt',
         'auth_key_path': '/tmp/afip_pyar.key',
     }
+
+    DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+    STATICFILES_STORAGE = "storages.backends.azure_storage.AzureStorage"

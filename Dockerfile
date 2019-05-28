@@ -16,8 +16,4 @@ RUN pip install https://github.com/PyAr/pyafipws/archive/py3k.zip
 WORKDIR /code
 COPY . /code/
 
-VOLUME /code/static
-EXPOSE 8000
-
 WORKDIR /code/website
-CMD ["tail", "-f", "/dev/null"]
