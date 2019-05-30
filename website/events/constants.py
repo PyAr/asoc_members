@@ -36,3 +36,27 @@ DUPLICATED_SPONSOR_CATEGORY_MESSAGE = _(
     'nombre para el evento actual. ' +
     'Las categorias de sponsor para un evento deben ser únicas.'
 )
+
+"""VAT conditions from: https://github.com/WhyNotHugo/django-afip."""
+# http://www.afip.gov.ar/afip/resol1415_anexo2.html
+VAT_CONDITIONS = (
+    'IVA Responsable Inscripto',
+    'IVA Responsable No Inscripto',
+    'IVA Exento',
+    'No Responsable IVA',
+    'Responsable Monotributo',
+)
+
+CLIENT_VAT_CONDITIONS = (
+    'IVA Responsable Inscripto',
+    'IVA Responsable No Inscripto',
+    'IVA Sujeto Exento',
+    'Consumidor Final',
+    'Responsable Monotributo',
+    'Proveedor del Exterior',
+    'Cliente del Exterior',
+    'IVA Liberado - Ley Nº 19.640',
+    'IVA Responsable Inscripto - Agente de Percepción',
+    'Monotributista Social',
+    'IVA no alcanzado',
+)

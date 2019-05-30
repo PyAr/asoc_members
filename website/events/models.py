@@ -4,7 +4,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
-from events.helpers.models import AudithUserTime, SaveReversionMixin
+from events.helpers.models import AudithUserTime, SaveReversionMixin, ActiveManager
 from events.constants import (
     CUIT_REGEX,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
@@ -12,7 +12,8 @@ from events.constants import (
     CAN_VIEW_SPONSORS_CODENAME
 )
 
-from members.models import DEFAULT_MAX_LEN
+from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
+import os
 import reversion
 
 User = get_user_model()
@@ -166,5 +167,127 @@ class SponsorCategory(SaveReversionMixin, AudithUserTime):
         related_name='sponsors_categories'
     )
 
+    sponsors = models.ManyToManyField(
+        'Sponsor',
+        through='Sponsoring',
+        verbose_name=_('patrocinios'),
+        related_name='sponsor_categories'
+    )
     class Meta:
         unique_together = ('event', 'name')
+
+
+@reversion.register
+class Sponsoring(SaveReversionMixin, AudithUserTime):
+    """
+    Sponsoring:
+    Represents the many to many relationship between SponsorCategory and Sponsors. Is important
+    had this relation as model to payment fks, etc."""
+    sponsorcategory = models.ForeignKey('SponsorCategory', related_name='sponsor_by', on_delete=models.CASCADE)
+    sponsor = models.ForeignKey(
+        'Sponsor',
+        related_name='sponsoring',
+        on_delete=models.CASCADE
+    )
+    comments = models.TextField(_('comentarios'), blank=True)
+
+
+@reversion.register
+class Sponsor(SaveReversionMixin, AudithUserTime):
+    """Represents a sponsor. The active atributte is like a soft deletion."""
+
+    """VAT conditions from: https://github.com/WhyNotHugo/django-afip."""
+    # http://www.afip.gov.ar/afip/resol1415_anexo2.html
+    VAT_CONDITIONS = (
+        'IVA Responsable Inscripto',
+        'IVA Responsable No Inscripto',
+        'IVA Exento',
+        'No Responsable IVA',
+        'Responsable Monotributo',
+    )
+    CLIENT_VAT_CONDITIONS = (
+        'IVA Responsable Inscripto',
+        'IVA Responsable No Inscripto',
+        'IVA Sujeto Exento',
+        'Consumidor Final',
+        'Responsable Monotributo',
+        'Proveedor del Exterior',
+        'Cliente del Exterior',
+        'IVA Liberado - Ley Nº 19.640',
+        'IVA Responsable Inscripto - Agente de Percepción',
+        'Monotributista Social',
+        'IVA no alcanzado',
+    )
+
+    VAT_CONDITIONS_CHOICES = ((cond, cond) for cond in CLIENT_VAT_CONDITIONS)
+
+    enabled = models.BooleanField(_('cerrado'), default=False)
+    active = models.BooleanField(_('cerrado'), default=True)
+    
+    organization_name = models.CharField(
+        _('razón social'),
+        max_length=DEFAULT_MAX_LEN,
+        help_text=_('Razón social.')
+    )
+    document_number = models.CharField(
+        _('CUIT'),
+        max_length=13,
+        help_text=_('CUIT, formato ##-########-#'),
+        validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto.'))]
+    )
+
+    contact_info = models.TextField(_('información de contacto'), blank=True)
+
+    address = models.CharField(
+        _('direccion'),
+        max_length=LONG_MAX_LEN,
+        help_text=_('Dirección')
+    )
+    
+    vat_condition = models.CharField(
+        _('condición frente al iva'),
+        max_length=48,
+        choices=VAT_CONDITIONS_CHOICES
+    )
+    # Overrinding objects to explicit when need to show inactive objects.
+    objects = ActiveManager()
+    all_objects = models.Manager()
+
+    def __str__(self):
+        return f"{self.organization_name} - {self.document_number}"
+
+
+@reversion.register
+class Invoice(SaveReversionMixin, AudithUserTime):
+    amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
+    partial_payment = models.BooleanField(_('pago parcial'), default=False)
+    complete_payment = models.BooleanField(_('pago completo'), default=False)
+    close = models.BooleanField(_('cerrado'), default=True)
+    observations = models.CharField(_('observaciones'), max_length=LONG_MAX_LEN, blank=True)
+    file = models.FileField(_('archivo'), upload_to='invoices/documments/')
+    # TODO: clean partial and complete not true at same time
+
+
+@reversion.register
+class InvoiceAffect(SaveReversionMixin, AudithUserTime):
+    PAYMENT = 'Pay'
+    WITHHOLD = 'Hold'
+    OTHER = 'Oth'
+    TYPE_CHOICES = (
+        (PAYMENT, 'Pago'),
+        (WITHHOLD, 'Retencion'),
+        (OTHER, 'Otros')
+    )
+    
+    amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
+    observations = models.CharField(_('observaciones'), max_length=LONG_MAX_LEN, blank=True)
+    invoice = models.ForeignKey(
+        'Invoice',
+        verbose_name=_('factura'), 
+        on_delete=models.CASCADE 
+    )
+
+    file = models.FileField(_('archivo'), upload_to='invoice_affects/documments/')
+
+    category = models.CharField(
+        _('tipo'), max_length=5, choices=TYPE_CHOICES)
