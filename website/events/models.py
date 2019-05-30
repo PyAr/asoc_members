@@ -269,7 +269,7 @@ class Invoice(SaveReversionMixin, AudithUserTime):
     complete_payment = models.BooleanField(_('pago completo'), default=False)
     close = models.BooleanField(_('cerrado'), default=True)
     observations = models.CharField(_('observaciones'), max_length=LONG_MAX_LEN, blank=True)
-    file = models.FileField(_('archivo'), upload_to='invoices/documments/')
+    documment = models.FileField(_('archivo'), upload_to='invoices/documments/')
     # TODO: clean partial and complete not true at same time
 
 
@@ -292,7 +292,7 @@ class InvoiceAffect(SaveReversionMixin, AudithUserTime):
         on_delete=models.CASCADE
     )
 
-    file = models.FileField(_('archivo'), upload_to='invoice_affects/documments/')
+    documment = models.FileField(_('archivo'), upload_to='invoice_affects/documments/')
 
     category = models.CharField(
         _('tipo'), max_length=5, choices=TYPE_CHOICES
