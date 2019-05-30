@@ -196,6 +196,13 @@ class Sponsoring(SaveReversionMixin, AudithUserTime):
     )
     comments = models.TextField(_('comentarios'), blank=True)
 
+    def __str__(self):
+        return (
+            f"{self.sponsor.organization_name} "
+            f"- {self.sponsorcategory.event.name} "
+            f"({self.sponsorcategory.name})"
+        )
+
 
 @reversion.register
 class Sponsor(SaveReversionMixin, AudithUserTime):
@@ -226,8 +233,8 @@ class Sponsor(SaveReversionMixin, AudithUserTime):
 
     VAT_CONDITIONS_CHOICES = ((cond, cond) for cond in CLIENT_VAT_CONDITIONS)
 
-    enabled = models.BooleanField(_('cerrado'), default=False)
-    active = models.BooleanField(_('cerrado'), default=True)
+    enabled = models.BooleanField(_('habilitado'), default=False)
+    active = models.BooleanField(_('activo'), default=True)
 
     organization_name = models.CharField(
         _('razón social'),
@@ -246,7 +253,8 @@ class Sponsor(SaveReversionMixin, AudithUserTime):
     address = models.CharField(
         _('direccion'),
         max_length=LONG_MAX_LEN,
-        help_text=_('Dirección')
+        help_text=_('Dirección'),
+        blank=True
     )
 
     vat_condition = models.CharField(
@@ -255,8 +263,8 @@ class Sponsor(SaveReversionMixin, AudithUserTime):
         choices=VAT_CONDITIONS_CHOICES
     )
     # Overrinding objects to explicit when need to show inactive objects.
-    objects = ActiveManager()
     all_objects = models.Manager()
+    objects = ActiveManager()
 
     def __str__(self):
         return f"{self.organization_name} - {self.document_number}"
@@ -267,9 +275,17 @@ class Invoice(SaveReversionMixin, AudithUserTime):
     amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
     partial_payment = models.BooleanField(_('pago parcial'), default=False)
     complete_payment = models.BooleanField(_('pago completo'), default=False)
-    close = models.BooleanField(_('cerrado'), default=True)
+    close = models.BooleanField(_('cerrado'), default=False)
     observations = models.CharField(_('observaciones'), max_length=LONG_MAX_LEN, blank=True)
-    documment = models.FileField(_('archivo'), upload_to='invoices/documments/')
+    document = models.FileField(_('archivo'), upload_to='invoices/documments/')
+    invoice_ok = models.BooleanField(_('Factura generada OK'), default=False)
+    sponsoring = models.ForeignKey(
+        'Sponsoring',
+        related_name='invoices',
+        verbose_name=_('patrocinio'),
+        on_delete=models.SET_NULL,
+        null=True
+    )
     # TODO: clean partial and complete not true at same time
 
 
@@ -292,7 +308,7 @@ class InvoiceAffect(SaveReversionMixin, AudithUserTime):
         on_delete=models.CASCADE
     )
 
-    documment = models.FileField(_('archivo'), upload_to='invoice_affects/documments/')
+    document = models.FileField(_('archivo'), upload_to='invoice_affects/documments/')
 
     category = models.CharField(
         _('tipo'), max_length=5, choices=TYPE_CHOICES

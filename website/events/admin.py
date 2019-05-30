@@ -2,7 +2,15 @@ from django.contrib import admin
 from django.contrib.sites.shortcuts import get_current_site
 
 from events.helpers.notifications import email_notifier
-from events.models import Event, Organizer, EventOrganizer
+from events.models import (
+    Event,
+    EventOrganizer,
+    Invoice,
+    InvoiceAffect,
+    Organizer,
+    Sponsor,
+    Sponsoring
+)
 from reversion_compare.admin import CompareVersionAdmin
 
 
@@ -61,6 +69,91 @@ class OrganizerAdmin(CompareVersionAdmin):
         return obj.user.username
 
 
+class InvoiceAdmin(CompareVersionAdmin):
+    fields = (
+        'sponsoring',
+        'amount',
+        'observations',
+        'document',
+        'invoice_ok',
+        'partial_payment',
+        'complete_payment',
+        'close'
+    )
+    list_display = (
+        'sponsor',
+        'amount',
+        'partial_payment',
+        'complete_payment',
+        'invoice_ok',
+        'close')
+    search_fields = ('sponsoring__sponsor__organization_name', )
+    list_filter = ('invoice_ok', 'partial_payment', 'complete_payment', 'close')
+    list_select_related = (
+        'sponsoring',
+    )
+
+    def sponsor(self, obj):
+        return obj.sponsor.organization_name
+
+
+class SponsorAdmin(CompareVersionAdmin):
+    fields = (
+        'organization_name',
+        'document_number',
+        'vat_condition',
+        'contact_info',
+        'address',
+        'enabled',
+        'active',
+    )
+    list_display = ('organization_name', 'enabled', 'active')
+    search_fields = ('organization_name', )
+    list_filter = ('enabled', 'active',)
+
+
+class InvoiceAffectAdmin(CompareVersionAdmin):
+    fields = (
+        'amount',
+        'category',
+        'invoice',
+        'observations',
+        'document',
+    )
+    list_display = ('category', 'amount')
+    search_fields = (
+        'invoice__sponsoring__sponsor__organization_name',
+        'invoice__sponsoring__sponsorcategory__event__name'
+    )
+
+
+class SponsoringAdmin(CompareVersionAdmin):
+    fields = (
+        'sponsor',
+        'sponsorcategory',
+        'comments'
+    )
+    list_display = ('sponsor', 'event')
+    search_fields = (
+        'invoice__sponsoring__sponsor__organization_name',
+        'invoice__sponsoring__sponsorcategory__event__name'
+    )
+    list_select_related = (
+        'sponsor',
+        'sponsorcategory'
+    )
+
+    def sponsor(self, obj):
+        return obj.sponsor.organization_name
+
+    def event(self, obj):
+        return f"{obj.sponsorcategory.event.name}({obj.sponsorcategory.name})"
+
+
+admin.site.register(Sponsoring, SponsoringAdmin)
+admin.site.register(InvoiceAffect, InvoiceAffectAdmin)
+admin.site.register(Sponsor, SponsorAdmin)
+admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(Event, EventAdmin)
 # TODO: unregister just to develop.
 admin.site.register(Organizer, OrganizerAdmin)
