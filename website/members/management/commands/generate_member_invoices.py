@@ -38,7 +38,8 @@ PDF_MIMETYPE = 'application/pdf'
 def _send_mail(payment_date, recipient, attach_path):
     text = MAIL_TEXT.format(payment_date=payment_date)
     mail = EmailMessage(
-        MAIL_SUBJECT, text, settings.MAIL_FROM, [recipient], cc=[settings.MAIL_MANAGER], reply_to=[settings.MAIL_MANAGER])
+        MAIL_SUBJECT, text, settings.EMAIL_FROM, [recipient], cc=[settings.EMAIL_MANAGER],
+        reply_to=[settings.EMAIL_MANAGER])
 
     filename = os.path.basename(attach_path)
     with open(attach_path, "rb") as fh:
