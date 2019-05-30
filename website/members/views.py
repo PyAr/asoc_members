@@ -122,9 +122,7 @@ class ReportDebts(OnlyAdminsViewMixin, View):
                     "Error when building the report missing mail result, info: %s", debt_info)
                 return HttpResponse("Error al armar la página")
             recipient = f"{member.entity.full_name} <{member.entity.email}>"
-            mail = EmailMessage(
-                self.MAIL_SUBJECT, text, settings.EMAIL_FROM, [recipient],
-                cc=[settings.EMAIL_MANAGER], reply_to=[settings.EMAIL_MANAGER])
+            mail = EmailMessage(self.MAIL_SUBJECT, text, settings.EMAIL_FROM, [recipient])
             try:
                 mail.send()
             except Exception as err:
@@ -245,9 +243,7 @@ class ReportMissing(OnlyAdminsViewMixin, View):
 
             # build the mail
             recipient = f"{member.entity.full_name} <{member.entity.email}>"
-            mail = EmailMessage(
-                self.MAIL_SUBJECT, text, settings.EMAIL_FROM, [recipient],
-                cc=[settings.EMAIL_MANAGER], reply_to=[settings.EMAIL_MANAGER])
+            mail = EmailMessage(self.MAIL_SUBJECT, text, settings.EMAIL_FROM, [recipient])
             if missing_info['missing_signed_letter']:
                 mail.attach_file(letter_filepath)
 
