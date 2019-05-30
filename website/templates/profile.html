@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Datos de usuario{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row user-account">
+        
+        <div class="col-md-12">
+            <h3>Datos usuario </h3>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th scope="row">Nombre de usuario</th>
+                        <th scope="row">Correo Electrónico</th>
+                        
+                        <th scope="row">Contraseña</th>
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>********* <span style="text-align: right; width: 100%;"><a href="{% url 'change_password' %}">(cambiar contraseña)</a></span> </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -20,4 +20,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('members.urls')),
     path('eventos/', include('events.urls')),
+    path('cuentas/', include('pyar_auth.urls')),
 ]

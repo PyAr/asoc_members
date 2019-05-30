@@ -22,7 +22,7 @@
 		<!-- font-awesome -->
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 		<!-- google font -->
-	    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,300,400italic,700,800' rel='stylesheet' type='text/css'>
+		<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,300,400italic,700,800' rel='stylesheet' type='text/css'>
 
 		<!-- custom css -->
 		<link rel="stylesheet" href="{% static 'css/templatemo-style.css' %}">
@@ -51,6 +51,30 @@
 						<!-- <li><a href="#feature">Misión</a></li> -->
 						<li><a href="https://ac.python.org.ar">Asociación Civil</a></li>
 					</ul>
+					{% block extra_navbar_menu %}
+					{% endblock %}
+
+					{% if user.is_authenticated %}
+					<ul class="nav navbar-nav navbar-right">
+						<li class="nav-item dropdown">
+							<a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-4" data-toggle="dropdown"
+							aria-haspopup="true" aria-expanded="false" href="#">
+							<i class="fa fa-user"></i> {{ user.username }} </a>
+							
+							<ul class="pyar dropdown-menu" aria-labelledby="navbarDropdownMenuLink-4">
+								<li>
+									<a href="{% url 'profile' %}">Datos cuenta</a>
+								</li>
+								{% block extra_logged_menu_option %}
+								{% endblock %}
+								<li>
+									<a href="{% url 'logout' %}">Log out</a>
+								</li>
+							</ul>
+						</li>
+					</ul>
+					{% endif %}
+
 				</div>
 			</div>
 		</nav>
@@ -70,5 +94,6 @@
 		<script src="{% static 'js/jquery.js' %}"></script>
 		<script src="{% static 'js/bootstrap.min.js' %}"></script>
 		<script src="{% static 'js/jquery.singlePageNav.min.js' %}"></script>
+		{% block extra_js %}{% endblock %}
 	</body>
 </html>
