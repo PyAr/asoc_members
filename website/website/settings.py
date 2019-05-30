@@ -35,7 +35,6 @@ class Base(Configuration):
     EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
 
     EMAIL_FROM = 'Lalita <lalita@ac.python.org.ar>'
-    EMAIL_MANAGER = 'presidencia@ac.python.org.ar'
 
     # SECURITY WARNING: keep the secret key used in production secret!
     SECRET_KEY = 'svz&bkp-k(zydvn+v9$kqmds=ncl8w8(i-sp^1u280vez=g-zj'
