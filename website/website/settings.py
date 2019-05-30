@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import os
 from configurations import Configuration
 
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -29,10 +32,10 @@ class Base(Configuration):
     EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
     EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
-    MAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
+    EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
 
-    MAIL_FROM = 'Lalita <lalita@ac.python.org.ar>'
-    MAIL_MANAGER = 'presidencia@ac.python.org.ar'
+    EMAIL_FROM = 'Lalita <lalita@ac.python.org.ar>'
+    EMAIL_MANAGER = 'presidencia@ac.python.org.ar'
 
     # SECURITY WARNING: keep the secret key used in production secret!
     SECRET_KEY = 'svz&bkp-k(zydvn+v9$kqmds=ncl8w8(i-sp^1u280vez=g-zj'
@@ -159,6 +162,28 @@ class Base(Configuration):
         'folder_id': "",
     }
 
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': 'DEBUG',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            },
+            '': {
+                'handlers': ['console'],
+                'propagate': True,
+                'level': 'INFO',
+            },
+        },
+    }
+
     # Azure blob-storage
     AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY")
     AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME")
@@ -239,3 +264,8 @@ class Prod(Base):
 
     DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
     STATICFILES_STORAGE = "storages.backends.azure_storage.AzureStorage"
+
+    sentry_sdk.init(
+        dsn=os.environ.get('SENTRY_DSN'),
+        integrations=[DjangoIntegration()]
+    )

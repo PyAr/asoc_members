@@ -6,6 +6,7 @@ RUN mkdir /code
 RUN mkdir /config
 
 # Install dependencies
+RUN apt-get update && apt-get install -y inkscape && apt-get clean
 COPY /config/requirements.txt /config/
 RUN pip install --no-cache-dir -r /config/requirements.txt
 # Workaround to install pyafipws in python3.

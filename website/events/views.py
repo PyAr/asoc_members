@@ -58,7 +58,7 @@ def organizer_signup(request):
                 email_template_name='mails/organizer_set_password_email.html',
                 request=request,
                 use_https=request.is_secure(),
-                from_email=settings.MAIL_FROM,
+                from_email=settings.EMAIL_FROM,
             )
             messages.add_message(
                 request,
