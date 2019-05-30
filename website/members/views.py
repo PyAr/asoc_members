@@ -246,7 +246,7 @@ class ReportMissing(OnlyAdminsViewMixin, View):
             # build the mail
             recipient = f"{member.entity.full_name} <{member.entity.email}>"
             mail = EmailMessage(
-                self.MAIL_SUBJECT, text, self.MAIL_FROM, [recipient],
+                self.MAIL_SUBJECT, text, settings.EMAIL_FROM, [recipient],
                 cc=[settings.EMAIL_MANAGER], reply_to=[settings.EMAIL_MANAGER])
             if missing_info['missing_signed_letter']:
                 mail.attach_file(letter_filepath)
