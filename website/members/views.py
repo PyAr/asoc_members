@@ -123,8 +123,8 @@ class ReportDebts(OnlyAdminsViewMixin, View):
                 return HttpResponse("Error al armar la página")
             recipient = f"{member.entity.full_name} <{member.entity.email}>"
             mail = EmailMessage(
-                self.MAIL_SUBJECT, text, settings.MAIL_FROM, [recipient],
-                cc=[settings.MAIL_MANAGER], reply_to=[settings.MAIL_MANAGER])
+                self.MAIL_SUBJECT, text, settings.EMAIL_FROM, [recipient],
+                cc=[settings.EMAIL_MANAGER], reply_to=[settings.EMAIL_MANAGER])
             try:
                 mail.send()
             except Exception as err:
@@ -247,7 +247,7 @@ class ReportMissing(OnlyAdminsViewMixin, View):
             recipient = f"{member.entity.full_name} <{member.entity.email}>"
             mail = EmailMessage(
                 self.MAIL_SUBJECT, text, self.MAIL_FROM, [recipient],
-                cc=[settings.MAIL_MANAGER], reply_to=[settings.MAIL_MANAGER])
+                cc=[settings.EMAIL_MANAGER], reply_to=[settings.EMAIL_MANAGER])
             if missing_info['missing_signed_letter']:
                 mail.attach_file(letter_filepath)
 

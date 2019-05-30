@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core import mail
 from django.template.loader import render_to_string
 
-class EmailNotification():        
+class EmailNotification():
     EMAIL_TEMPLATES = {
         'organizer_associated_to_event':'mails/organizer_associated_to_event_email.html'
     }
@@ -37,7 +37,7 @@ class EmailNotification():
 
     def _contruct_message(self, subject, body, recipients):
         return mail.EmailMessage(
-            subject, body, settings.MAIL_FROM, [recipients],
-            cc= [settings.MAIL_MANAGER], reply_to= [settings.MAIL_MANAGER])
+            subject, body, settings.EMAIL_FROM, [recipients],
+            cc= [settings.EMAIL_MANAGER], reply_to= [settings.EMAIL_MANAGER])
 
 email_notifier = EmailNotification()

@@ -2,9 +2,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.views import ( 
-    PasswordResetView, 
-    PasswordResetConfirmView, 
+from django.contrib.auth.views import (
+    PasswordResetView,
+    PasswordResetConfirmView,
     PasswordResetCompleteView,
     PasswordResetDoneView,
     LoginView,
@@ -32,7 +32,7 @@ from django.views import generic
 class PasswordResetView(PasswordResetView):
     extra_email_context = None
     form_class = PasswordResetForm
-    from_email = settings.MAIL_FROM
+    from_email = settings.EMAIL_FROM
     html_email_template_name = None
     success_url = reverse_lazy('password_reset_done')
     title = _('Reseteo de contraseña')
@@ -50,7 +50,7 @@ class PasswordResetConfirmView(PasswordResetConfirmView):
 
 class LoginView(LoginView):
     form_class = AuthenticationForm
-        
+
 
 def change_password(request):
     if request.method == 'POST':

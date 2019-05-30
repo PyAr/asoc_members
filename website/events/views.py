@@ -10,7 +10,7 @@ from django.core.mail import EmailMessage
 from django.db import IntegrityError, transaction
 
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render  
+from django.shortcuts import get_object_or_404, redirect, render
 
 from django.utils.crypto import get_random_string
 from django.utils.encoding import force_bytes, force_text
@@ -58,11 +58,11 @@ def organizer_signup(request):
                 email_template_name='mails/organizer_set_password_email.html',
                 request=request,
                 use_https=request.is_secure(),
-                from_email=settings.MAIL_FROM,
+                from_email=settings.EMAIL_FROM,
             )
             messages.add_message(
-                request, 
-                messages.INFO, 
+                request,
+                messages.INFO,
                 ORGANIZER_MAIL_NOTOFICATION_MESSAGE
             )
             return redirect('organizer_list')
@@ -84,7 +84,7 @@ class EventsListView(LoginRequiredMixin, generic.ListView):
         else:
             organizers = Organizer.objects.filter(user=user)
             queryset = Event.objects.filter(organizers__in=organizers)
-        
+
         return queryset
 
 
@@ -103,7 +103,7 @@ class EventDetailView(PermissionRequiredMixin, generic.DetailView):
             organizers = event.organizers.all()
             context['organizers'] = organizers
         return context
-    
+
     def has_permission(self):
         ret = super(EventDetailView, self).has_permission()
         if ret and not self.request.user.is_superuser:
@@ -113,14 +113,14 @@ class EventDetailView(PermissionRequiredMixin, generic.DetailView):
                 organizer = Organizer.objects.get(user=self.request.user)
             except Organizer.DoesNotExist:
                 organizer = None
-            
+
             if organizer and (organizer in event.organizers.all()):
                 return ret
             else:
                 self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
-                
+
                 return False
-            
+
         return ret
 
     def handle_no_permission(self):
@@ -128,8 +128,8 @@ class EventDetailView(PermissionRequiredMixin, generic.DetailView):
             messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
             return redirect('event_list')
         else:
-            return super(EventDetailView, self).handle_no_permission() 
-            
+            return super(EventDetailView, self).handle_no_permission()
+
 
 class EventChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
     model = Event
@@ -143,15 +143,15 @@ class EventChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
         if ret and event.close:
             self.permission_denied_message = CANT_CHANGE_CLOSE_EVENT_MESSAGE
             return False
-        
+
         return ret
-    
+
     def handle_no_permission(self):
         if self.get_permission_denied_message()== CANT_CHANGE_CLOSE_EVENT_MESSAGE:
             messages.add_message(self.request, messages.ERROR, CANT_CHANGE_CLOSE_EVENT_MESSAGE)
             return redirect('event_detail', pk=self.get_object().pk)
         else:
-            return super(EventChangeView, self).handle_no_permission() 
+            return super(EventChangeView, self).handle_no_permission()
 
 
 class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView):
@@ -159,7 +159,7 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
     form_class = SponsorCategoryForm
     template_name = 'events/event_create_sponsor_category_modal.html'
     permission_required = 'events.add_sponsorcategory'
-    
+
     def form_valid(self, form):
         form.instance.event = self._get_event()
         return super(SponsorCategoryCreateView, self).form_valid(form)
@@ -175,7 +175,7 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
         context = super(SponsorCategoryCreateView, self).get_context_data(**kwargs)
         context['event'] = self._get_event()
         return context
-    
+
     def post(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
@@ -192,22 +192,22 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
                 organizer = Organizer.objects.get(user=self.request.user)
             except Organizer.DoesNotExist:
                 organizer = None
-            
+
             if organizer and (organizer in event.organizers.all()):
                 return ret
             else:
                 self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
                 return False
-            
+
         return ret
-    
+
     def handle_no_permission(self):
         if self.get_permission_denied_message()== MUST_BE_EVENT_ORGANIZAER_MESSAGE:
             messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
             return redirect('event_detail', pk=self._get_event().pk)
         else:
-            return super(SponsorCategoryCreateView, self).handle_no_permission() 
-        
+            return super(SponsorCategoryCreateView, self).handle_no_permission()
+
 
 class OrganizersListView(PermissionRequiredMixin, generic.ListView):
     model = Organizer
@@ -230,7 +230,7 @@ class OrganizerDetailView(PermissionRequiredMixin, generic.DetailView):
         user = self.request.user
         context['is_request_user'] = organizer.user == user
         return context
-    
+
     def has_permission(self):
         ret = super(OrganizerDetailView, self).has_permission()
         if not ret and self.request.user == self.get_object().user:
