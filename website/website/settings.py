@@ -57,6 +57,8 @@ class Base(Configuration):
         'members.apps.MembersConfig',
         'crispy_forms',
         'events.apps.EventsConfig',
+        'reversion',
+        'reversion_compare',
     ]
 
     MIDDLEWARE = [

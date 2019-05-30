@@ -6,7 +6,7 @@
     <div class="route-navigator" >
             <ol class="breadcrumb">
                 <li><a href="{% url 'events_home' %}">Inicio</a></li>
-                {% if perms.events.add_organizers %}
+                {% if perms.events.view_organizers %}
                 <li><a href="{% url 'organizer_list' %}" >Organizadores</a></li>
                 {% endif %}
                 <li class="active"><a href="{% url 'organizer_detail' pk=organizer.pk %}">{{organizer.user.username}}</a></li>
@@ -38,17 +38,17 @@
         </div>
         <div class="col-md-6">
             
-                <h3>Datos de cuenta banco</h3>
+                <h3>Datos de cuenta bancaria</h3>
                 {% if organizer.account_data %}
                 <table class="table table-striped">
                     <tbody>
                         <tr>
                             <th scope="row">Banco</th>
-                            <td>{{ organizer.account_data.bank_entity }} cambiar passsword</td>
+                            <td>{{ organizer.account_data.bank_entity }}</td>
                         </tr>
                         <tr>
                             <th scope="row">Tipo Cuenta</th>
-                            <td>{{ organizer.account_data.account_type }}</td>
+                            <td>{{ organizer.account_data.get_account_type_display }}</td>
                         </tr>
                         <tr>
                             <th scope="row">Número Cuenta</th>
@@ -74,7 +74,16 @@
                     </div>
                 {% endif %}
                 {% if is_request_user %}
-                    <a class="btn btn-primary btn-block text-uppercase" href="{% url 'organizer_list' %}">Actualizar cuenta</a>
+                    {% if organizer.account_data %}
+                    <a class="btn btn-primary btn-block text-uppercase" 
+                    href="{% url 'organizer_update_bank_account_data' organizer.account_data.pk %}">Actualizar cuenta</a>
+                    {% else %}
+                    <a class="btn btn-primary btn-block text-uppercase" 
+                    href="{% url 'organizer_create_bank_account_data' organizer.pk %}">
+                    {# onclick="return open_modal('{% url 'organizer_create_bank_account_data' organizer.pk %}')"> #}
+                    Crear cuenta
+                    </a>
+                    {% endif %}
                 {% endif %}
             
         </div>

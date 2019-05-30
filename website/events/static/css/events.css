@@ -2,7 +2,7 @@
     text-align: center;
 }
 
-.events-form-control, .btn {
+.events-form-control .btn {
     min-height: 38px;
     border-radius: 2px;
 }
@@ -67,4 +67,9 @@
     margin-top: 0;
     font-weight: normal;
     font-size: 20px;
+}
+
+.btn-disabled {
+    background-color: #ff7259;
+    color: black;
 }

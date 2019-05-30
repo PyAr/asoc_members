@@ -5,13 +5,11 @@ from django.contrib.auth.forms import (
     PasswordChangeForm as AuthPasswordChangeForm,
     PasswordResetForm as AuthPasswordResetForm,
     SetPasswordForm as AuthSetPasswordForm,
-    UserCreationForm, 
     UsernameField,
     )
 from django.utils.translation import ugettext_lazy as _
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, Row
 
 """Helping constant for validate passwords, and custom atuthetication forms."""
 ATTRIBUTE_SIMILARITY_HELP = _("La contraseña no puede ser similar a su otra información personal.")
@@ -25,6 +23,7 @@ PASSWORD_VALIDATOR_HELP_TEXTS = [
     NUMERIC_PASSWORD_HELP,
     MINIMUM_LENGTH_HELP,
     ]
+
 
 class AuthenticationForm(AuthAuthenticationForm):
     """
@@ -44,7 +43,7 @@ class AuthenticationForm(AuthAuthenticationForm):
         ),
         'inactive': _("Esta cuenta no se encuentra activa."),
     }
-    
+
     def __init__(self, *args, **kwargs):
         super(AuthenticationForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()

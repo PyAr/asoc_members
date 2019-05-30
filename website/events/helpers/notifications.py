@@ -2,12 +2,13 @@ from django.conf import settings
 from django.core import mail
 from django.template.loader import render_to_string
 
+
 class EmailNotification():
     EMAIL_TEMPLATES = {
-        'organizer_associated_to_event':'mails/organizer_associated_to_event_email.html'
+        'organizer_associated_to_event': 'mails/organizer_associated_to_event_email.html'
     }
     EMAIL_SUBJECTS = {
-        'organizer_associated_to_event':'mails/organizer_associated_to_event_subject.txt'
+        'organizer_associated_to_event': 'mails/organizer_associated_to_event_subject.txt'
     }
 
     def send_organizer_associated_to_event(self, event, organizers, context):
@@ -21,11 +22,11 @@ class EmailNotification():
         subject = render_to_string(self.EMAIL_SUBJECTS.get('organizer_associated_to_event'))
         messages = []
         for organizer in organizers:
-            context['event']=event
-            context['organizer']=organizer
-            body =render_to_string(template, context)
+            context['event'] = event
+            context['organizer'] = organizer
+            body = render_to_string(template, context)
             recipients = organizer.user.email
-            message = self._contruct_message(subject, body,recipients)
+            message = self._contruct_message(subject, body, recipients)
             messages.append(message)
 
         connection = mail.get_connection()

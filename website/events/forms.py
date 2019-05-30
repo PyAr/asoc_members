@@ -6,11 +6,12 @@ from crispy_forms.layout import Layout, Div, Row
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 
-from events.models import Event, Organizer, SponsorCategory
+from events.models import Event, Organizer, SponsorCategory, BankAccountData
+
 
 class OrganizerUserSignupForm(UserCreationForm):
     email = forms.EmailField(label=_('Correo Electrónico'), max_length=200, help_text='Required')
-    username = forms.CharField(label = _('Nombre de Usuario'))
+    username = forms.CharField(label=_('Nombre de Usuario'))
 
     def __init__(self, *args, **kwargs):
         super(OrganizerUserSignupForm, self).__init__(*args, **kwargs)
@@ -20,16 +21,16 @@ class OrganizerUserSignupForm(UserCreationForm):
         # password or both password' validation will be triggered.
         self.fields['password1'].widget.attrs['autocomplete'] = 'off'
         self.fields['password2'].widget.attrs['autocomplete'] = 'off'
-        
+
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
-        #TODO: ver layout para solo tener los campos requeridos 
+        # TODO: ver layout para solo tener los campos requeridos.
         self.helper.layout = Layout(
             'username',
             'email',
         )
-    
+
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")
         password2 = super(OrganizerUserSignupForm, self).clean_password2()
@@ -43,9 +44,12 @@ class OrganizerUserSignupForm(UserCreationForm):
 
 
 class EventUpdateForm(forms.ModelForm):
-    start_date = forms.DateField(label=_('Fecha de inicio'),
-        input_formats=settings.DATE_INPUT_FORMATS, help_text=_('Formato: DD/MM/AAAA'), 
-        widget=forms.widgets.DateInput(format=settings.DATE_INPUT_FORMATS[0]), required=False)
+    start_date = forms.DateField(
+        label=_('Fecha de inicio'),
+        input_formats=settings.DATE_INPUT_FORMATS, help_text=_('Formato: DD/MM/AAAA'),
+        widget=forms.widgets.DateInput(format=settings.DATE_INPUT_FORMATS[0]),
+        required=False
+    )
 
     def __init__(self, *args, **kwargs):
         super(EventUpdateForm, self).__init__(*args, **kwargs)
@@ -54,14 +58,6 @@ class EventUpdateForm(forms.ModelForm):
         self.helper.form_tag = False
         self.fields['name'].disabled = True
         self.fields['commission'].disabled = True
-    
-    """def clean_name(self):
-        # when field is cleaned, we always return the existing model field.
-        return self.instance.name"""
-    
-    """def clean_commission(self):
-        # when field is cleaned, we always return the existing model field.
-        return self.instance.commission"""
 
     class Meta:
         model = Event
@@ -90,3 +86,19 @@ class SponsorCategoryForm(forms.ModelForm):
     class Meta:
         model = SponsorCategory
         fields = ['name', 'amount']
+
+
+class BankAccountDataForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(BankAccountDataForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+    class Meta:
+        model = BankAccountData
+        fields = [
+            'organization_name', 'document_number', 'bank_entity',
+            'account_type', 'account_number', 'cbu'
+            ]

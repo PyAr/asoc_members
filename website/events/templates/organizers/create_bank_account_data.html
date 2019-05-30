@@ -10,16 +10,21 @@
                 <li><a href="{% url 'organizer_list' %}">Organizadores</a></li>
                 {% endif %}
                 <li><a href="{% url 'organizer_detail' pk=organizer.pk %}">{{organizer.user.username}}</a></li>
-                <li class="active"><a href="{% url 'organizer_change' pk=organizer.pk %}">Edición</a></li>
+                <li class="active"><a href="#">Cuenta</a></li>
             </ol>
     </div>
+    <h3>Agregar datos cuenta bancaria</h3> 
     
-    <form method="POST">
+    <form role="form" method="post">
         {% csrf_token %}
         {% crispy form %}
         <a class="btn btn-default" href="{% url 'organizer_detail' organizer.pk %}">Volver</a>
-        <input type="submit" class="btn btn-success" value="Actualizar!">
+        {% if organizer.account_data %}
+        <input type="submit" class="btn btn-success" value="Actualizar">
+        {% else %}
+        <input type="submit" class="btn btn-success" value="Crear">
+        {% endif %}
     </form>
-       
+    
 </div>       
 {% endblock %}
