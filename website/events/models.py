@@ -173,6 +173,7 @@ class SponsorCategory(SaveReversionMixin, AudithUserTime):
         verbose_name=_('patrocinios'),
         related_name='sponsor_categories'
     )
+
     class Meta:
         unique_together = ('event', 'name')
 
@@ -183,7 +184,11 @@ class Sponsoring(SaveReversionMixin, AudithUserTime):
     Sponsoring:
     Represents the many to many relationship between SponsorCategory and Sponsors. Is important
     had this relation as model to payment fks, etc."""
-    sponsorcategory = models.ForeignKey('SponsorCategory', related_name='sponsor_by', on_delete=models.CASCADE)
+    sponsorcategory = models.ForeignKey(
+        'SponsorCategory',
+        related_name='sponsor_by',
+        on_delete=models.CASCADE
+    )
     sponsor = models.ForeignKey(
         'Sponsor',
         related_name='sponsoring',
@@ -223,7 +228,7 @@ class Sponsor(SaveReversionMixin, AudithUserTime):
 
     enabled = models.BooleanField(_('cerrado'), default=False)
     active = models.BooleanField(_('cerrado'), default=True)
-    
+
     organization_name = models.CharField(
         _('razón social'),
         max_length=DEFAULT_MAX_LEN,
@@ -243,7 +248,7 @@ class Sponsor(SaveReversionMixin, AudithUserTime):
         max_length=LONG_MAX_LEN,
         help_text=_('Dirección')
     )
-    
+
     vat_condition = models.CharField(
         _('condición frente al iva'),
         max_length=48,
@@ -278,16 +283,17 @@ class InvoiceAffect(SaveReversionMixin, AudithUserTime):
         (WITHHOLD, 'Retencion'),
         (OTHER, 'Otros')
     )
-    
+
     amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
     observations = models.CharField(_('observaciones'), max_length=LONG_MAX_LEN, blank=True)
     invoice = models.ForeignKey(
         'Invoice',
-        verbose_name=_('factura'), 
-        on_delete=models.CASCADE 
+        verbose_name=_('factura'),
+        on_delete=models.CASCADE
     )
 
     file = models.FileField(_('archivo'), upload_to='invoice_affects/documments/')
 
     category = models.CharField(
-        _('tipo'), max_length=5, choices=TYPE_CHOICES)
+        _('tipo'), max_length=5, choices=TYPE_CHOICES
+    )
