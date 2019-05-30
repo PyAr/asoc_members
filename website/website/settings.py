@@ -257,8 +257,8 @@ class Prod(Base):
         'url_wsfev1': "https://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL",
         'selling_point': 7,
         'cuit': 30715639129,
-        'auth_cert_path': '/tmp/afip_pyar.crt',
-        'auth_key_path': '/tmp/afip_pyar.key',
+        'auth_cert_path': '/etc/secrets/afip_pyar.crt',
+        'auth_key_path': '/etc/secrets/afip_pyar.key',
     }
 
     DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
@@ -268,3 +268,10 @@ class Prod(Base):
         dsn=os.environ.get('SENTRY_DSN'),
         integrations=[DjangoIntegration()]
     )
+
+    INVOICES_GDRIVE = {
+        'credentials_filepath': "/etc/secrets/gdrive.json",
+        # "Factura Socies"
+        # https://drive.google.com/drive/u/1/folders/1V2z4ww1B1yNdkO0yxkah45FX7sZvt961
+        'folder_id': "1V2z4ww1B1yNdkO0yxkah45FX7sZvt961",
+    }
