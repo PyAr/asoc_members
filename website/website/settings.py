@@ -153,6 +153,28 @@ class Base(Configuration):
         'folder_id': "",
     }
 
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': 'DEBUG',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            },
+            '': {
+                'handlers': ['console'],
+                'propagate': True,
+                'level': 'INFO',
+            },
+        },
+    }
+
 
 # try to import the local settings; if the file is not there just create a stub class
 # for the inheritance later
