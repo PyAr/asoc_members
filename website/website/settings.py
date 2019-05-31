@@ -35,7 +35,6 @@ class Base(Configuration):
     EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
 
     EMAIL_FROM = 'Lalita <lalita@ac.python.org.ar>'
-    EMAIL_MANAGER = 'presidencia@ac.python.org.ar'
 
     # SECURITY WARNING: keep the secret key used in production secret!
     SECRET_KEY = 'svz&bkp-k(zydvn+v9$kqmds=ncl8w8(i-sp^1u280vez=g-zj'
@@ -258,8 +257,8 @@ class Prod(Base):
         'url_wsfev1': "https://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL",
         'selling_point': 7,
         'cuit': 30715639129,
-        'auth_cert_path': '/tmp/afip_pyar.crt',
-        'auth_key_path': '/tmp/afip_pyar.key',
+        'auth_cert_path': '/etc/secrets/afip_pyar.crt',
+        'auth_key_path': '/etc/secrets/afip_pyar.key',
     }
 
     DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
@@ -269,3 +268,10 @@ class Prod(Base):
         dsn=os.environ.get('SENTRY_DSN'),
         integrations=[DjangoIntegration()]
     )
+
+    INVOICES_GDRIVE = {
+        'credentials_filepath': "/etc/secrets/gdrive.json",
+        # "Factura Socies"
+        # https://drive.google.com/drive/u/1/folders/1V2z4ww1B1yNdkO0yxkah45FX7sZvt961
+        'folder_id': "1V2z4ww1B1yNdkO0yxkah45FX7sZvt961",
+    }

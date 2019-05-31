@@ -37,8 +37,6 @@ class EmailNotification():
         connection.close()
 
     def _contruct_message(self, subject, body, recipients):
-        return mail.EmailMessage(
-            subject, body, settings.EMAIL_FROM, [recipients],
-            cc= [settings.EMAIL_MANAGER], reply_to= [settings.EMAIL_MANAGER])
+        return mail.EmailMessage(subject, body, settings.EMAIL_FROM, [recipients])
 
 email_notifier = EmailNotification()
