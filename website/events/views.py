@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.sites.shortcuts import get_current_site
 
 from django.db import IntegrityError, transaction
 from django.db.models import Q
@@ -31,6 +32,7 @@ from events.forms import (
     SponsorForm,
     SponsorCategoryForm
     )
+from events.helpers.notifications import email_notifier
 from events.helpers.views import seach_filterd_queryset
 from events.models import (
     BankAccountData,
@@ -394,7 +396,18 @@ class SponsorCreateView(PermissionRequiredMixin, generic.edit.CreateView):
 
     def form_valid(self, form):
         ret = super(SponsorCreateView, self).form_valid(form)
-        # TODO: send mail 
+        current_site = get_current_site(self.request)
+        context = {
+            'domain': current_site.domain,
+            'protocol': 'https' if self.request.is_secure() else 'http'
+        }
+        sponsor = form.instance
+        user = self.request.user
+        email_notifier.send_new_sponsor_created(
+            sponsor,
+            user,
+            context
+        )
         return ret
 
 
@@ -417,6 +430,11 @@ class SponsorSetEnabled(PermissionRequiredMixin, View):
         sponsor = get_object_or_404(Sponsor, pk=kwargs['pk'])
         sponsor.enabled = True
         sponsor.save()
+        messages.add_message(
+            request,
+            messages.SUCCESS,
+            _('Patrocinador habilitado exitosamente ')
+        )
         return redirect('sponsor_detail', pk=kwargs['pk'])
 
 

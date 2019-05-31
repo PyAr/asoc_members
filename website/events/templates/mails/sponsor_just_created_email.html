@@ -1,0 +1,32 @@
+{% autoescape off %}
+
+El usuario "{{ user.username }}" ha creado un nuevo sponsor con la siguiente información
+<table class="table table-striped">
+    <tbody>
+        <tr>
+            <th scope="row">Razón social</th>
+            <td>{{ sponsor.organization_name }}</td>
+        </tr>
+        <tr>
+            <th scope="row">CUIT</th>
+            <td>{{ sponsor.document_number }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Condición frente al IVA</th>
+            <td>{{ sponsor.get_vat_condition_display }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Dirección</th>
+            <td>{{ sponsor.address }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Información de contacto</th>
+            <td>{{ sponsor.contact_info }}</td>
+        </tr>
+    </tbody>
+</table>
+Por favor ingrese al mismo para configurar la información faltante.
+{{ protocol }}://{{ domain }}{% url 'sponsor_detail' pk=sponsor.pk %}
+
+
+{% endautoescape %}
