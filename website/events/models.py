@@ -7,6 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from events.helpers.models import AudithUserTime, SaveReversionMixin, ActiveManager
 from events.constants import (
     CUIT_REGEX,
+    CAN_SET_SPONSORS_ENABLED_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
     CAN_VIEW_SPONSORS_CODENAME
@@ -263,11 +264,21 @@ class Sponsor(SaveReversionMixin, AudithUserTime):
         choices=VAT_CONDITIONS_CHOICES
     )
     # Overrinding objects to explicit when need to show inactive objects.
-    all_objects = models.Manager()
     objects = ActiveManager()
+    all_objects = models.Manager()
+
+    class Meta:
+        permissions = (
+            (CAN_SET_SPONSORS_ENABLED_CODENAME, _('puede habilitar patrocinadores')),
+            (CAN_VIEW_SPONSORS_CODENAME, _('puede ver patrocinadores')),
+        )
+        ordering = ['-created']
 
     def __str__(self):
         return f"{self.organization_name} - {self.document_number}"
+
+    def get_absolute_url(self):
+        return reverse('sponsor_detail', args=[str(self.pk)])
 
 
 @reversion.register

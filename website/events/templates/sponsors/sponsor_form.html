@@ -1,0 +1,34 @@
+{% extends "events_base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+
+    <div class="route-navigator" >
+            <ol class="breadcrumb">
+                <li><a href="{% url 'events_home' %}">Inicio</a></li>
+                <li><a href="{% url 'sponsor_list' %}">Patrocinadores</a></li>
+                {% if form.instance.pk %}
+                <li><a href="{% url 'sponsor_detail' pk=form.instance.pk %}">{{form.instance.organization_name}}</a></li>
+                <li class="active"><a href="#">Edición</a></li>
+                {% else %}
+                <li class="active"><a href="#">Crear</a></li>
+                {% endif %}
+                
+                
+            </ol>
+    </div>
+    
+    <form method="POST">
+        {% csrf_token %}
+        {% crispy form %}
+        {% if form.instance.pk %}
+        <a class="btn btn-default" href="{% url 'sponsor_detail' form.instance.pk %}">Volver</a>
+        <input type="submit" class="btn btn-success" value="Actualizar!">
+        {% else %}
+        <a class="btn btn-default" href="{% url 'sponsor_list' %}">Volver</a>
+        <input type="submit" class="btn btn-success" value="Crear">
+        {% endif %}
+    </form>
+       
+</div>       
+{% endblock %}

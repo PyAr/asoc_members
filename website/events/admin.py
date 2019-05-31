@@ -111,6 +111,13 @@ class SponsorAdmin(CompareVersionAdmin):
     search_fields = ('organization_name', )
     list_filter = ('enabled', 'active',)
 
+    def get_queryset(self, request):
+        qs = Sponsor.all_objects
+        ordering = self.get_ordering(request)
+        if ordering:
+            qs = qs.order_by(*ordering)
+        return qs
+
 
 class InvoiceAffectAdmin(CompareVersionAdmin):
     fields = (
