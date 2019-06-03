@@ -123,6 +123,7 @@ class SponsorForm(forms.ModelForm):
             'organization_name',
             'document_number',
             'vat_condition',
+            'other_vat_condition_text',
             'address',
             'contact_info',
         ]

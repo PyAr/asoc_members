@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.models import Group
 from django.contrib.sites.shortcuts import get_current_site
 
 from django.db import IntegrityError, transaction
@@ -34,6 +35,7 @@ from events.forms import (
     )
 from events.helpers.notifications import email_notifier
 from events.helpers.views import seach_filterd_queryset
+from events.helpers.permissions import ORGANIZER_GROUP_NAME
 from events.models import (
     BankAccountData,
     Event,
@@ -55,11 +57,15 @@ def organizer_signup(request):
         # Create user with random password and send custom reset password form.
         form = OrganizerUserSignupForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            user.set_password(get_random_string())
-            user.save()
-            # TODO: call a helper function to create de organizer with the correct group.
-            Organizer.objects.create(user=user)
+            with transaction.atomic():  # ensure that user, organizer and group association is atomic
+                user = form.save(commit=False)
+                user.set_password(get_random_string())
+                user.save()
+                group = Group.objects.get(name=ORGANIZER_GROUP_NAME)
+                user.groups.add(group)
+                # TODO: call a helper function to create de organizer with the correct group.
+                Organizer.objects.create(user=user)
+
             reset_form = PasswordResetForm({'email': user.email})
             assert reset_form.is_valid()
             reset_form.save(

@@ -209,30 +209,17 @@ class Sponsoring(SaveReversionMixin, AudithUserTime):
 class Sponsor(SaveReversionMixin, AudithUserTime):
     """Represents a sponsor. The active atributte is like a soft deletion."""
 
-    """VAT conditions from: https://github.com/WhyNotHugo/django-afip."""
-    # http://www.afip.gov.ar/afip/resol1415_anexo2.html
-    VAT_CONDITIONS = (
-        'IVA Responsable Inscripto',
-        'IVA Responsable No Inscripto',
-        'IVA Exento',
-        'No Responsable IVA',
-        'Responsable Monotributo',
-    )
-    CLIENT_VAT_CONDITIONS = (
-        'IVA Responsable Inscripto',
-        'IVA Responsable No Inscripto',
-        'IVA Sujeto Exento',
-        'Consumidor Final',
-        'Responsable Monotributo',
-        'Proveedor del Exterior',
-        'Cliente del Exterior',
-        'IVA Liberado - Ley Nº 19.640',
-        'IVA Responsable Inscripto - Agente de Percepción',
-        'Monotributista Social',
-        'IVA no alcanzado',
-    )
+    RESPONSABLE_INSCRIPTO = 'responsable inscripto'
+    MONOTRIBUTO = 'monotributo'
+    EXTERIOR = 'exterior'
+    OTRO = 'otro'
 
-    VAT_CONDITIONS_CHOICES = ((cond, cond) for cond in CLIENT_VAT_CONDITIONS)
+    VAT_CONDITIONS_CHOICES = (
+        (RESPONSABLE_INSCRIPTO, 'Responsable Inscripto'),
+        (MONOTRIBUTO, 'Monotributo'),
+        (EXTERIOR, 'Exterior'),
+        (OTRO, 'Otro'),
+    )
 
     enabled = models.BooleanField(_('habilitado'), default=False)
     active = models.BooleanField(_('activo'), default=True)
@@ -246,7 +233,8 @@ class Sponsor(SaveReversionMixin, AudithUserTime):
         _('CUIT'),
         max_length=13,
         help_text=_('CUIT, formato ##-########-#'),
-        validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto.'))]
+        validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto.'))],
+        unique=True
     )
 
     contact_info = models.TextField(_('información de contacto'), blank=True)
@@ -260,8 +248,16 @@ class Sponsor(SaveReversionMixin, AudithUserTime):
 
     vat_condition = models.CharField(
         _('condición frente al iva'),
-        max_length=48,
+        max_length=DEFAULT_MAX_LEN,
         choices=VAT_CONDITIONS_CHOICES
+    )
+
+    other_vat_condition_text = models.CharField(
+        _('otra condicion frente al iva'),
+        max_length=DEFAULT_MAX_LEN,
+        blank=True,
+        default='',
+        help_text=_('Especifica otra condición frente al iva'),
     )
     # Overrinding objects to explicit when need to show inactive objects.
     objects = ActiveManager()

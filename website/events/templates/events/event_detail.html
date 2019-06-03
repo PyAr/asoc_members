@@ -45,7 +45,7 @@
             {% endif %}
         </div>
         <div class="col-md-6">
-            {% if perms.events.view_organizers %}
+            {% if perms.events.view_event_organizers %}
                 <h3>Organizadores <span class="badge badge-light">{{organizers.count}}</span></h3>
                 {% if organizers %}
                     <ul>

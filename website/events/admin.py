@@ -102,6 +102,7 @@ class SponsorAdmin(CompareVersionAdmin):
         'organization_name',
         'document_number',
         'vat_condition',
+        'other_vat_condition_text'
         'contact_info',
         'address',
         'enabled',
