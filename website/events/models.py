@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.urls import reverse
@@ -175,6 +176,9 @@ class SponsorCategory(SaveReversionMixin, AudithUserTime):
         related_name='sponsor_categories'
     )
 
+    def __str__(self):
+        return f"{self.event.name} ( {self.name} )"
+
     class Meta:
         unique_together = ('event', 'name')
 
@@ -284,7 +288,7 @@ class Invoice(SaveReversionMixin, AudithUserTime):
     complete_payment = models.BooleanField(_('pago completo'), default=False)
     close = models.BooleanField(_('cerrado'), default=False)
     observations = models.CharField(_('observaciones'), max_length=LONG_MAX_LEN, blank=True)
-    document = models.FileField(_('archivo'), upload_to='invoices/documments/')
+    document = models.FileField(_('archivo'), upload_to='invoices/documments/', blank=True)
     invoice_ok = models.BooleanField(_('Factura generada OK'), default=False)
     sponsoring = models.ForeignKey(
         'Sponsoring',
@@ -293,7 +297,13 @@ class Invoice(SaveReversionMixin, AudithUserTime):
         on_delete=models.SET_NULL,
         null=True
     )
-    # TODO: clean partial and complete not true at same time
+
+    def clean(self):
+        if self.partial_payment and self.complete_payment:
+            raise ValidationError(
+                _('los atributos partial_payment (pago parcial) y complete_payment (pago completo) '+
+                'no pueden estar ambos seteados en Verdadero')
+            )
 
 
 @reversion.register
@@ -315,7 +325,7 @@ class InvoiceAffect(SaveReversionMixin, AudithUserTime):
         on_delete=models.CASCADE
     )
 
-    document = models.FileField(_('archivo'), upload_to='invoice_affects/documments/')
+    document = models.FileField(_('archivo'), upload_to='invoice_affects/documments/', blank=True)
 
     category = models.CharField(
         _('tipo'), max_length=5, choices=TYPE_CHOICES

@@ -15,7 +15,7 @@ def update_permissions(schema, group):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('events', '0002_auto_20190603_1817'),
+        ('events', '0002_auto_20190604_1630'),
     ]
 
     operations = [

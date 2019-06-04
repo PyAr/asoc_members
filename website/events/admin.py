@@ -81,7 +81,7 @@ class InvoiceAdmin(CompareVersionAdmin):
         'close'
     )
     list_display = (
-        'sponsor',
+        'sponsoring',
         'amount',
         'partial_payment',
         'complete_payment',
