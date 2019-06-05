@@ -2,7 +2,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, Row
+from crispy_forms.layout import Layout
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 
@@ -73,7 +73,7 @@ class OrganizerUpdateForm(forms.ModelForm):
 
     class Meta:
         model = Organizer
-        fields = ['first_name', 'last_name'] 
+        fields = ['first_name', 'last_name']
 
 
 class SponsorCategoryForm(forms.ModelForm):
@@ -101,4 +101,4 @@ class BankAccountDataForm(forms.ModelForm):
         fields = [
             'organization_name', 'document_number', 'bank_entity',
             'account_type', 'account_number', 'cbu'
-            ]
+        ]

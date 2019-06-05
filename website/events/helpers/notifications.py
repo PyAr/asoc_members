@@ -39,4 +39,5 @@ class EmailNotification():
     def _contruct_message(self, subject, body, recipients):
         return mail.EmailMessage(subject, body, settings.EMAIL_FROM, [recipients])
 
+
 email_notifier = EmailNotification()

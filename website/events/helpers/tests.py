@@ -47,7 +47,8 @@ def super_organizer_permissions():
     organizer_content_type = ContentType.objects.get_for_model(Organizer)
     event_organizer_content_type = ContentType.objects.get_for_model(EventOrganizer)
 
-    permissions.append(Permission.objects.get(content_type=event_content_type, codename='add_event'))
+    permissions.append(
+        Permission.objects.get(content_type=event_content_type, codename='add_event'))
     # Event create permmission.
     permissions.append(Permission.objects.get(content_type=event_content_type,
                                               codename=CAN_VIEW_EVENT_ORGANIZERS_CODENAME))

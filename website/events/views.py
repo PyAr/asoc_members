@@ -4,32 +4,29 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
 from django.db import IntegrityError, transaction
-from django.db.models import Q
 from django.http import HttpResponseRedirect
 
 from django.shortcuts import get_object_or_404, redirect, render
 
 from django.utils.crypto import get_random_string
-from django.utils.translation import gettext_lazy as _
-from django.views import generic, View
+from django.views import generic
 
 from events.constants import (
     CANT_CHANGE_CLOSE_EVENT_MESSAGE,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
-    CAN_VIEW_ORGANIZERS_CODENAME,
     DUPLICATED_SPONSOR_CATEGORY_MESSAGE,
     MUST_BE_ACCOUNT_OWNER_MESSAGE,
     MUST_BE_EVENT_ORGANIZAER_MESSAGE,
     MUST_BE_ORGANIZER_MESSAGE,
     ORGANIZER_MAIL_NOTOFICATION_MESSAGE
-    )
+)
 from events.forms import (
     BankAccountDataForm,
     EventUpdateForm,
     OrganizerUpdateForm,
     OrganizerUserSignupForm,
     SponsorCategoryForm
-    )
+)
 from events.helpers.views import seach_filterd_queryset
 from events.models import BankAccountData, Event, Organizer, SponsorCategory
 from pyar_auth.forms import PasswordResetForm
