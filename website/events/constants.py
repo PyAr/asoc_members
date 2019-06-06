@@ -37,3 +37,12 @@ DUPLICATED_SPONSOR_CATEGORY_MESSAGE = _(
     'nombre para el evento actual. ' +
     'Las categorias de sponsor para un evento deben ser únicas.'
 )
+
+
+# Sponsoring/invoice states
+SPONSOR_STATE_UNBILLED = _('no facturado')
+SPONSOR_STATE_INVOICED = _('facturado')
+SPONSOR_STATE_CHECKED = _('facturado chequeado')
+SPONSOR_STATE_PARTIALLY_PAID = _('pago parcial')
+SPONSOR_STATE_COMPLETELY_PAID = _('pago completo')
+SPONSOR_STATE_CLOSED = _('cerrado')

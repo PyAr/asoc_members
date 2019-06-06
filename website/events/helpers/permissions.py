@@ -5,6 +5,7 @@ from events.constants import (
     CAN_VIEW_ORGANIZERS_CODENAME,
     CAN_VIEW_SPONSORS_CODENAME
 )
+from events.models import Organizer
 
 Group = apps.get_model("auth", "Group")
 Permission = apps.get_model("auth", "Permission")
@@ -91,3 +92,20 @@ def remove_organizer_group(apps, schema_editor):
     Group = apps.get_model("auth", "Group")
     organizer_group = Group.objects.get(name=ORGANIZER_GROUP_NAME)
     organizer_group.delete()
+
+
+def is_event_organizer(user, event):
+    # Returns if a user is organizer of an event, or is a superuser.
+    if not user.is_superuser:
+        try:
+            organizer = Organizer.objects.get(user=user)
+        except Organizer.DoesNotExist:
+            organizer = None
+        if organizer and (organizer in event.organizers.all()):
+            return True
+        else:
+            return False
+    else:
+        return True
+
+    return False

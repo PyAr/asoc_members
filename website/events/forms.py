@@ -11,7 +11,8 @@ from events.models import (
     Event,
     Organizer,
     Sponsor,
-    SponsorCategory
+    SponsorCategory,
+    Sponsoring
 )
 
 
@@ -126,4 +127,23 @@ class SponsorForm(forms.ModelForm):
             'other_vat_condition_text',
             'address',
             'contact_info',
+        ]
+
+
+class SponsoringForm(forms.ModelForm):
+    def __init__(self, event, *args, **kwargs):
+        super(SponsoringForm, self).__init__(*args, **kwargs)
+        # Pre-filter sponsorcategory by event
+        self.fields['sponsorcategory'].queryset = SponsorCategory.objects.filter(event=event)
+        self.fields['sponsor'].queryset = Sponsor.objects.filter(enabled=True)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+    class Meta:
+        model = Sponsoring
+        fields = [
+            'sponsorcategory',
+            'sponsor',
+            'comments',
         ]

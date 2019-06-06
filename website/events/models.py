@@ -11,7 +11,13 @@ from events.constants import (
     CAN_SET_SPONSORS_ENABLED_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
-    CAN_VIEW_SPONSORS_CODENAME
+    CAN_VIEW_SPONSORS_CODENAME,
+    SPONSOR_STATE_CHECKED,
+    SPONSOR_STATE_CLOSED,
+    SPONSOR_STATE_COMPLETELY_PAID,
+    SPONSOR_STATE_INVOICED,
+    SPONSOR_STATE_PARTIALLY_PAID,
+    SPONSOR_STATE_UNBILLED
 )
 
 from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
@@ -75,8 +81,8 @@ class Organizer(SaveReversionMixin, AudithUserTime):
 
     account_data = models.ForeignKey(
         'BankAccountData',
-        verbose_name=_('datos cuenta bancaria'), 
-        on_delete=models.CASCADE, 
+        verbose_name=_('datos cuenta bancaria'),
+        on_delete=models.CASCADE,
         null=True
     )
 
@@ -136,11 +142,18 @@ class Event(SaveReversionMixin, AudithUserTime):
     def get_absolute_url(self):
         return reverse('event_detail', args=[str(self.pk)])
 
+    def __str__(self):
+        return (
+            f"{self.get_category_display()} "
+            f"- {self.name} "
+            f"({self.place})"
+        )
+
     class Meta:
         permissions = (
             (CAN_VIEW_EVENT_ORGANIZERS_CODENAME, _('puede ver organizadores del evento')),
         )
-        ordering = ['-start_date'] 
+        ordering = ['-start_date']
 
 
 @reversion.register
@@ -207,6 +220,24 @@ class Sponsoring(SaveReversionMixin, AudithUserTime):
             f"- {self.sponsorcategory.event.name} "
             f"({self.sponsorcategory.name})"
         )
+
+    @property
+    def state(self):
+        # TODO: to not use so many "if" can write a decision matriz.
+        current_state = SPONSOR_STATE_UNBILLED
+        if hasattr(self, 'invoice'):
+            invoice = self.invoice
+            current_state = SPONSOR_STATE_INVOICED
+            if invoice.invoice_ok:
+                current_state = SPONSOR_STATE_CHECKED
+                if invoice.partial_payment:
+                    current_state = SPONSOR_STATE_PARTIALLY_PAID
+                if invoice.complete_payment:
+                    current_state = SPONSOR_STATE_COMPLETELY_PAID
+                if invoice.close:
+                    current_state = SPONSOR_STATE_CLOSED
+
+        return current_state
 
 
 @reversion.register
@@ -290,9 +321,9 @@ class Invoice(SaveReversionMixin, AudithUserTime):
     observations = models.CharField(_('observaciones'), max_length=LONG_MAX_LEN, blank=True)
     document = models.FileField(_('archivo'), upload_to='invoices/documments/', blank=True)
     invoice_ok = models.BooleanField(_('Factura generada OK'), default=False)
-    sponsoring = models.ForeignKey(
+    sponsoring = models.OneToOneField(
         'Sponsoring',
-        related_name='invoices',
+        related_name='invoice',
         verbose_name=_('patrocinio'),
         on_delete=models.SET_NULL,
         null=True
@@ -301,8 +332,8 @@ class Invoice(SaveReversionMixin, AudithUserTime):
     def clean(self):
         if self.partial_payment and self.complete_payment:
             raise ValidationError(
-                _('los atributos partial_payment (pago parcial) y complete_payment (pago completo) '+
-                'no pueden estar ambos seteados en Verdadero')
+                _('los atributos partial_payment (pago parcial) y complete_payment ' +
+                  '(pago completo) no pueden estar ambos seteados en Verdadero')
             )
 
 

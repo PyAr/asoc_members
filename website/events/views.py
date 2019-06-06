@@ -31,17 +31,19 @@ from events.forms import (
     OrganizerUpdateForm,
     OrganizerUserSignupForm,
     SponsorForm,
-    SponsorCategoryForm
+    SponsorCategoryForm,
+    SponsoringForm
     )
 from events.helpers.notifications import email_notifier
 from events.helpers.views import seach_filterd_queryset
-from events.helpers.permissions import ORGANIZER_GROUP_NAME
+from events.helpers.permissions import is_event_organizer, ORGANIZER_GROUP_NAME
 from events.models import (
     BankAccountData,
     Event,
     Organizer,
     Sponsor,
-    SponsorCategory
+    SponsorCategory,
+    Sponsoring
 )
 from pyar_auth.forms import PasswordResetForm
 
@@ -128,21 +130,11 @@ class EventDetailView(PermissionRequiredMixin, generic.DetailView):
 
     def has_permission(self):
         ret = super(EventDetailView, self).has_permission()
-        if ret and not self.request.user.is_superuser:
-            # Must be event organizer.
-            event = self.get_object()
-            try:
-                organizer = Organizer.objects.get(user=self.request.user)
-            except Organizer.DoesNotExist:
-                organizer = None
-
-            if organizer and (organizer in event.organizers.all()):
-                return ret
-            else:
-                self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
-
-                return False
-
+        # Must be event organizer.
+        event = self.get_object()
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
         return ret
 
     def handle_no_permission(self):
@@ -301,18 +293,10 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
     def has_permission(self):
         event = self._get_event()
         ret = super(SponsorCategoryCreateView, self).has_permission()
-        if ret and not self.request.user.is_superuser:
-            try:
-                organizer = Organizer.objects.get(user=self.request.user)
-            except Organizer.DoesNotExist:
-                organizer = None
-
-            if organizer and (organizer in event.organizers.all()):
-                return ret
-            else:
-                self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
-                return False
-
+        # Must be event organizer.
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
         return ret
 
     def handle_no_permission(self):
@@ -444,6 +428,96 @@ class SponsorSetEnabled(PermissionRequiredMixin, View):
         return redirect('sponsor_detail', pk=kwargs['pk'])
 
 
+class SponsoringCreateView(PermissionRequiredMixin, generic.edit.CreateView):
+    model = Sponsoring
+    form_class = SponsoringForm
+    template_name = 'events/sponsoring_form.html'
+    permission_required = 'events.add_sponsoring'
+
+    def get_form(self, form_class=None):
+        event = self._get_event()
+        if form_class is None:
+            form_class = self.get_form_class()
+        return form_class(event, **self.get_form_kwargs())
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context.
+        context = super(SponsoringCreateView, self).get_context_data(**kwargs)
+        event = self._get_event()
+        context['event'] = event
+        return context
+
+    def get(self, request, *args, **kwargs):
+        event = self._get_event()
+        exists_category = SponsorCategory.objects.filter(event=event).exists()
+        exists_sponsors = Sponsor.objects.filter(enabled=True).exists()
+        if not exists_category:
+            messages.add_message(
+                request,
+                messages.WARNING,
+                _('No se puede asociar patrocinios sin categorias de sponsor en el evento')
+            )
+        if not exists_sponsors:
+            messages.add_message(
+                request,
+                messages.WARNING,
+                _('No se puede asociar patrocinios sin sponsors habilitados')
+            )
+
+        if not exists_category or not exists_sponsors:
+            return redirect('event_detail', pk=event.pk)
+
+        return super(SponsoringCreateView, self).get(request, *args, **kwargs)
+
+    def get_success_url(self):
+        # TODO: redirect to sponsoring list
+        return self._get_event().get_absolute_url()
+
+    def _get_event(self):
+        return get_object_or_404(Event, pk=self.kwargs['event_pk'])
+
+    def has_permission(self):
+        ret = super(SponsoringCreateView, self).has_permission()
+        # Must be event organizer.
+        event = self._get_event()
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
+        return ret
+
+
+class SponsoringListView(PermissionRequiredMixin, generic.ListView):
+    model = Sponsoring
+    context_object_name = 'sponsoring_list'
+    template_name = 'events/sponsoring_list.html'
+    permission_required = 'events.add_sponsoring'
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = super(SponsoringListView, self).get_queryset()
+        event = self._get_event()
+        return queryset.filter(sponsorcategory__event=event)
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context.
+        context = super(SponsoringListView, self).get_context_data(**kwargs)
+        event = self._get_event()
+        context['event'] = event
+        return context
+
+    def _get_event(self):
+        return get_object_or_404(Event, pk=self.kwargs['event_pk'])
+
+    def has_permission(self):
+        ret = super(SponsoringListView, self).has_permission()
+        # Must be event organizer.
+        event = self._get_event()
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
+        return ret
+
+
 events_list = EventsListView.as_view()
 event_detail = EventDetailView.as_view()
 event_change = EventChangeView.as_view()
@@ -460,3 +534,6 @@ sponsor_detail = SponsorDetailView.as_view()
 sponsor_change = SponsorChangeView.as_view()
 sponsor_create = SponsorCreateView.as_view()
 sponsor_set_enabled = SponsorSetEnabled.as_view()
+
+sponsoring_list = SponsoringListView.as_view()
+sponsoring_create = SponsoringCreateView.as_view()
