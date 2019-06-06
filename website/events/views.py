@@ -6,7 +6,6 @@ from django.contrib.auth.models import Group
 from django.contrib.sites.shortcuts import get_current_site
 
 from django.db import IntegrityError, transaction
-from django.db.models import Q
 from django.http import HttpResponseRedirect
 
 from django.shortcuts import get_object_or_404, redirect, render
@@ -18,13 +17,12 @@ from django.views import generic, View
 from events.constants import (
     CANT_CHANGE_CLOSE_EVENT_MESSAGE,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
-    CAN_VIEW_ORGANIZERS_CODENAME,
     DUPLICATED_SPONSOR_CATEGORY_MESSAGE,
     MUST_BE_ACCOUNT_OWNER_MESSAGE,
     MUST_BE_EVENT_ORGANIZAER_MESSAGE,
     MUST_BE_ORGANIZER_MESSAGE,
     ORGANIZER_MAIL_NOTOFICATION_MESSAGE
-    )
+)
 from events.forms import (
     BankAccountDataForm,
     EventUpdateForm,
@@ -33,7 +31,7 @@ from events.forms import (
     SponsorForm,
     SponsorCategoryForm,
     SponsoringForm
-    )
+)
 from events.helpers.notifications import email_notifier
 from events.helpers.views import seach_filterd_queryset
 from events.helpers.permissions import is_event_organizer, ORGANIZER_GROUP_NAME
@@ -59,7 +57,8 @@ def organizer_signup(request):
         # Create user with random password and send custom reset password form.
         form = OrganizerUserSignupForm(request.POST)
         if form.is_valid():
-            with transaction.atomic():  # ensure that user, organizer and group association is atomic
+            with transaction.atomic():
+                # ensure that user, organizer and group association is atomic
                 user = form.save(commit=False)
                 user.set_password(get_random_string())
                 user.save()

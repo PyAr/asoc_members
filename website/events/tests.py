@@ -12,7 +12,7 @@ from events.constants import (
     MUST_BE_ORGANIZER_MESSAGE,
     MUST_BE_EVENT_ORGANIZAER_MESSAGE,
     ORGANIZER_MAIL_NOTOFICATION_MESSAGE
-    )
+)
 from events.helpers.notifications import email_notifier
 from events.helpers.permissions import (
     associate_users_permissions,
@@ -21,6 +21,7 @@ from events.helpers.permissions import (
     super_organizer_permissions
 )
 from events.helpers.tests import CustomAssertMethods
+
 from events.middleware import set_current_user
 from events.models import (
     BankAccountData,
@@ -30,7 +31,7 @@ from events.models import (
     Sponsor,
     SponsorCategory,
 )
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 User = get_user_model()
 
@@ -59,24 +60,24 @@ def create_user_set():
         username="organizer01",
         email="test01@test.com",
         password="organizer01"
-        ))
+    ))
     organizers.append(User.objects.create_user(
         username="organizer02",
         email="test02@test.com",
         password="organizer02"
-        ))
+    ))
 
     super_organizers.append(User.objects.create_user(
         username="superOrganizer01",
         email="super01@test.com",
         password="superOrganizer01"
-        ))
+    ))
     # Created to test perms without use superuser.
     User.objects.create_superuser(
         username="administrator",
         email="admin@test.com",
         password="administrator"
-        )
+    )
 
     associate_organizer_perms(organizers)
     associate_super_organizer_perms(super_organizers)
@@ -107,7 +108,7 @@ def admin_event_associate_organizers_post_data(event, organizers):
         'event_organizers-__prefix__-event': ['1'],
         'event_organizers-__prefix__-organizer': [''],
         '_save': ['Save']
-        }
+    }
 
     association_num = 0
     for organizer in organizers:
@@ -176,7 +177,7 @@ class EmailTest(TestCase, CustomAssertMethods):
             event,
             Organizer.objects.all(),
             {'domain': 'testserver', 'protocol': 'http'}
-            )
+        )
         self.assertEqual(len(mail.outbox), 2)
 
         send_to = []
@@ -264,7 +265,7 @@ class EventAdminTest(TestCase):
         url = reverse('admin:events_event_change', kwargs={'object_id': event.pk})
         self.client.login(username='administrator', password='administrator')
 
-        organizers = [] 
+        organizers = []
         for organizer in Organizer.objects.all():
             organizers.append(organizer)
 
@@ -279,7 +280,7 @@ class EventAdminTest(TestCase):
 
 class BankAccountDataTest(TestCase, CustomAssertMethods):
     account_data = {
-        'organization_name': 'Pablo', 
+        'organization_name': 'Pablo',
         'document_number': '20-21321265-7',
         'bank_entity': 'Banco Rio',
         'account_type': 'CC',

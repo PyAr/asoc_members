@@ -1,4 +1,5 @@
 import os
+import shutil
 
 import httplib2
 from apiclient import discovery, http
@@ -8,6 +9,7 @@ from django.conf import settings
 
 SCOPE = 'https://www.googleapis.com/auth/drive'
 APPLICATION_NAME = 'AutoFacturador'
+SETTINGS_FILE = "/tmp/gdrive_settings.json"
 
 
 def get_credentials():
@@ -19,7 +21,10 @@ def get_credentials():
     Returns:
         Credentials, the obtained credential.
     """
-    store = Storage(settings.INVOICES_GDRIVE['credentials_filepath'])
+    if not os.path.exists(SETTINGS_FILE):
+        # oauth2client don't support symlinks and k8s is mounting the secrets as symlinks.
+        shutil.copy(settings.INVOICES_GDRIVE['credentials_filepath'], SETTINGS_FILE)
+    store = Storage(SETTINGS_FILE)
     credentials = store.get()
     if not credentials or credentials.invalid:
         raise RuntimeError("Invalid Google Drive credentials! Call the guru")

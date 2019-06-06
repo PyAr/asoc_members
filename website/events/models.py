@@ -1,5 +1,5 @@
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.urls import reverse
@@ -21,7 +21,6 @@ from events.constants import (
 )
 
 from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
-import os
 import reversion
 
 User = get_user_model()

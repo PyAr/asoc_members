@@ -54,78 +54,78 @@ def create_payment(member, timestamp, amount, payment_strategy, first_unpaid=Non
 
 
 def create_recurring_payments(recurring_records):
-        # group payments per payer and order them
-        grouped = {}
-        for record in recurring_records:
-            grouped.setdefault(record['payer_id'], []).append(record)
-        for records in grouped.values():
-            records.sort(key=itemgetter('timestamp'))
+    # group payments per payer and order them
+    grouped = {}
+    for record in recurring_records:
+        grouped.setdefault(record['payer_id'], []).append(record)
+    for records in grouped.values():
+        records.sort(key=itemgetter('timestamp'))
 
-        count_without_new_payments = 0
-        for payer, retrieved_payments in grouped.items():
-            logger.debug("Processing payments for payer %r: %d", payer, len(retrieved_payments))
+    count_without_new_payments = 0
+    for payer, retrieved_payments in grouped.items():
+        logger.debug("Processing payments for payer %r: %d", payer, len(retrieved_payments))
 
-            # get strategy for the payer
-            try:
-                strategy = PaymentStrategy.objects.get(
-                    platform=PaymentStrategy.MERCADO_PAGO, id_in_platform=payer)
-            except PaymentStrategy.DoesNotExist:
-                payment = retrieved_payments[0]
-                logger.error("PaymentStrategy not found for payer %r: %s", payer, payment)
-                continue
+        # get strategy for the payer
+        try:
+            strategy = PaymentStrategy.objects.get(
+                platform=PaymentStrategy.MERCADO_PAGO, id_in_platform=payer)
+        except PaymentStrategy.DoesNotExist:
+            payment = retrieved_payments[0]
+            logger.error("PaymentStrategy not found for payer %r: %s", payer, payment)
+            continue
 
-            # get latest payment done with this strategy
-            last_payment_recorded = Payment.objects.filter(strategy=strategy).last()
-            logger.debug("Last payment recorded: %s", last_payment_recorded)
+        # get latest payment done with this strategy
+        last_payment_recorded = Payment.objects.filter(strategy=strategy).last()
+        logger.debug("Last payment recorded: %s", last_payment_recorded)
 
-            if last_payment_recorded is None:
-                # no payments found, need to record all the retrieved payments
-                remaining_payments = retrieved_payments
-            else:
-                # detect which is last one recorded
-                for pos, retrieved_payment in enumerate(retrieved_payments):
-                    logger.debug("Comparing retrieved: %d: %s", pos, retrieved_payment)
-                    if retrieved_payment['timestamp'] == last_payment_recorded.timestamp:
-                        # found! need to record the remaining ones
-                        remaining_payments = retrieved_payments[pos + 1:]
-                        logger.debug(
-                            "Found payment limit (remaining: %d)", len(remaining_payments))
-                        break
-                    if retrieved_payment['timestamp'] > last_payment_recorded.timestamp:
-                        # found a newer one without finding first the exact one! this is Mercadago
-                        # returning bullshit
-                        remaining_payments = retrieved_payments[pos:]
-                        logger.warning(
-                            "Found exceeding payment limit! last recorded: %s (remaining: %d)",
-                            last_payment_recorded, len(remaining_payments))
-                        break
-                else:
-                    # no payment match found! all informed are old (it's just Mercadopago
-                    # failing) otherwise it would have been logged with warning above
+        if last_payment_recorded is None:
+            # no payments found, need to record all the retrieved payments
+            remaining_payments = retrieved_payments
+        else:
+            # detect which is last one recorded
+            for pos, retrieved_payment in enumerate(retrieved_payments):
+                logger.debug("Comparing retrieved: %d: %s", pos, retrieved_payment)
+                if retrieved_payment['timestamp'] == last_payment_recorded.timestamp:
+                    # found! need to record the remaining ones
+                    remaining_payments = retrieved_payments[pos + 1:]
                     logger.debug(
-                        "Payment not found to match %s: %s",
-                        last_payment_recorded, retrieved_payments)
-                    continue
-
-            # get the member from the patron
-            try:
-                member = Member.objects.get(patron=strategy.patron)
-            except Member.MultipleObjectsReturned:
-                # for recurring payments we still do not support having
-                # more than one member for the given patron
-                logger.error("Found more than one member for Patron: %s", strategy.patron)
+                        "Found payment limit (remaining: %d)", len(remaining_payments))
+                    break
+                if retrieved_payment['timestamp'] > last_payment_recorded.timestamp:
+                    # found a newer one without finding first the exact one! this is Mercadago
+                    # returning bullshit
+                    remaining_payments = retrieved_payments[pos:]
+                    logger.warning(
+                        "Found exceeding payment limit! last recorded: %s (remaining: %d)",
+                        last_payment_recorded, len(remaining_payments))
+                    break
+            else:
+                # no payment match found! all informed are old (it's just Mercadopago
+                # failing) otherwise it would have been logged with warning above
+                logger.debug(
+                    "Payment not found to match %s: %s",
+                    last_payment_recorded, retrieved_payments)
                 continue
 
-            if remaining_payments:
-                logger.info(
-                    "Creating recurring payments from payer=%s to member=%s: %s",
-                    payer, member, remaining_payments)
-            else:
-                count_without_new_payments += 1
-            for payment_info in remaining_payments:
-                create_payment(member, payment_info['timestamp'], payment_info['amount'], strategy)
+        # get the member from the patron
+        try:
+            member = Member.objects.get(patron=strategy.patron)
+        except Member.MultipleObjectsReturned:
+            # for recurring payments we still do not support having
+            # more than one member for the given patron
+            logger.error("Found more than one member for Patron: %s", strategy.patron)
+            continue
 
-        logger.info("Processed %d payers without new payments", count_without_new_payments)
+        if remaining_payments:
+            logger.info(
+                "Creating recurring payments from payer=%s to member=%s: %s",
+                payer, member, remaining_payments)
+        else:
+            count_without_new_payments += 1
+        for payment_info in remaining_payments:
+            create_payment(member, payment_info['timestamp'], payment_info['amount'], strategy)
+
+    logger.info("Processed %d payers without new payments", count_without_new_payments)
 
 
 def get_debt_state(member, limit_year, limit_month):

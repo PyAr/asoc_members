@@ -508,7 +508,8 @@ class CreateRecurringPaymentTestCase(TestCase):
         # check we have no more payments created and proper error log (including the last
         # recorded and two new retrieved)
         self.assertEqual(len(Quota.objects.all()), 5)
-        self.assertLoggedWarning("Found exceeding payment limit", str(tstamp2), f'remaining: {len(records)}')
+        self.assertLoggedWarning(
+            "Found exceeding payment limit", str(tstamp2), f'remaining: {len(records)}')
 
 
 class GetDebtStateTestCase(TestCase):

@@ -6,7 +6,6 @@ from django.utils.timezone import now
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, Row
 
-
 from members.models import Person, Organization, Category, Member, Patron
 
 
@@ -15,7 +14,8 @@ class SignupPersonForm(forms.ModelForm):
         label=_('Categoría'), queryset=Category.objects.order_by('-fee'),
         required=True, widget=forms.RadioSelect())
 
-    birth_date = forms.DateField(label=_('Fecha de nacimiento'),
+    birth_date = forms.DateField(
+        label=_('Fecha de nacimiento'),
         input_formats=settings.DATE_INPUT_FORMATS, help_text=_('Formato: DD/MM/AAAA'))
 
     class Meta:
@@ -30,7 +30,7 @@ class SignupPersonForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(SignupPersonForm, self).__init__(*args, **kwargs)
         # make all fields required
-        fields = [field for field in self.fields if not field in ['picture', 'nickname']]
+        fields = [field for field in self.fields if field not in ('picture', 'nickname')]
         for field in fields:
             self.fields[field].required = True
         self.fields['category'].empty_label = None
