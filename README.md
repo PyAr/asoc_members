@@ -20,28 +20,9 @@ Superuser created successfully.
 ```
 
 
-## Producción (con Docker)
+## Producción
 
-```bash
-# Actualizar el .env (copiado a partir del .env.dist)
-export $(grep -v '^#' .env)
-make build-prod
-make up-prod
-make migrate
-make collectstatic
-```
-
-If you need to create a Django's superuser:
-
-```bash
-$ make createsuperuser
-Username (leave blank to use 'root'): admin
-Email address: admin@example.com
-Password:
-Password (again):
-Superuser created successfully.
-```
-
+Chequear documentación en https://github.com/PyAr/pyar_infra/
 
 ## Contribuyendo con Asoc Members
 
