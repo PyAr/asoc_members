@@ -8,7 +8,7 @@ from reversion_compare.admin import CompareVersionAdmin
 
 class EventOrganizerInline(admin.TabularInline):
     model = EventOrganizer
-    exclude = ('created_by','changed_by',)
+    exclude = ('created_by', 'changed_by',)
     extra = 1
 
 
@@ -24,8 +24,9 @@ class EventAdmin(CompareVersionAdmin):
         event_instance = form.save(commit=False)
         notify_organizers = []
         for instance in instances:
-            if type(instance)==EventOrganizer:
-                exists_organizer = EventOrganizer.objects.filter(event=instance.event, organizer=instance.organizer).exists()            
+            if type(instance) == EventOrganizer:
+                exists_organizer = EventOrganizer.objects.filter(
+                    event=instance.event, organizer=instance.organizer).exists()
                 if not exists_organizer:
                     notify_organizers.append(instance.organizer)
 

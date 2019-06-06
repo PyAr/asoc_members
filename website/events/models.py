@@ -9,7 +9,6 @@ from events.constants import (
     CUIT_REGEX,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
-    CAN_VIEW_SPONSORS_CODENAME
 )
 
 from members.models import DEFAULT_MAX_LEN
@@ -72,8 +71,8 @@ class Organizer(SaveReversionMixin, AudithUserTime):
 
     account_data = models.ForeignKey(
         'BankAccountData',
-        verbose_name=_('datos cuenta bancaria'), 
-        on_delete=models.CASCADE, 
+        verbose_name=_('datos cuenta bancaria'),
+        on_delete=models.CASCADE,
         null=True
     )
 
@@ -137,7 +136,7 @@ class Event(SaveReversionMixin, AudithUserTime):
         permissions = (
             (CAN_VIEW_EVENT_ORGANIZERS_CODENAME, _('puede ver organizadores del evento')),
         )
-        ordering = ['-start_date'] 
+        ordering = ['-start_date']
 
 
 @reversion.register

@@ -46,7 +46,7 @@ def split_address(complete):
     else:
         streetadd, city_pc, prov, country = ("", "", "", "")
 
-    m = re.match("(.*) \((.*)\)", city_pc)
+    m = re.match(r"(.*) \((.*)\)", city_pc)
     if m:
         city, postcode = m.groups()
     else:

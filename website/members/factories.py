@@ -1,16 +1,22 @@
-from datetime import date, timedelta
-from random import choice
 import math
 import pytz
+from random import choice
 
 import factory
 import factory.fuzzy
 from factory.django import DjangoModelFactory
 from faker import Faker
 
-from members.models import (Category, Patron, Member, Organization, Person, PaymentStrategy,
-                            Payment, Quota)
-
+from members.models import (
+    Category,
+    Member,
+    Organization,
+    Patron,
+    Payment,
+    PaymentStrategy,
+    Person,
+    Quota,
+)
 
 fake = Faker("es_MX")
 
