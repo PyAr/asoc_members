@@ -1,4 +1,3 @@
-import os
 import re
 import logging
 
@@ -52,7 +51,8 @@ def sendmail_missing_info(member):
     """
     Generate email with application letter and sent it.
     """
-    EMAIL_SUBJECT = "Continuación del trámite de inscripción a la Asociación Civil Python Argentina"
+    EMAIL_SUBJECT = "Continuación del trámite de inscripción a la " \
+        "Asociación Civil Python Argentina"
 
     missing_info = member._analyze()
     text = render_to_string('members/mail_missing.txt', missing_info)

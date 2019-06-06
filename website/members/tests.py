@@ -100,7 +100,9 @@ class SignupPagesTests(TestCase):
         response = self.client.post(reverse('signup_person'), data=data)
         self.assertEqual(response.status_code, 302)
         person = Person.objects.get(nickname='pepepin')
-        self.assertEqual(response.url, reverse('signup_person_thankyou', args=[person.membership_id]))
+        self.assertEqual(
+            response.url,
+            reverse('signup_person_thankyou', args=[person.membership_id]))
         self.assertEqual(person.first_name, 'Pepe')
         self.assertEqual(person.email, 'pepe@pomp.in')
         self.assertEqual(person.birth_date, datetime.date(1999, 12, 11))
@@ -132,7 +134,9 @@ class SignupPagesTests(TestCase):
         response = self.client.post(reverse('signup_person'), data=data)
         self.assertEqual(response.status_code, 302)
         person = Person.objects.get(document_number='124354656')
-        self.assertEqual(response.url, reverse('signup_person_thankyou', args=[person.membership_id]))
+        self.assertEqual(
+            response.url,
+            reverse('signup_person_thankyou', args=[person.membership_id]))
         self.assertEqual(person.first_name, 'Pepe')
         self.assertEqual(person.email, 'pepe@pomp.in')
         self.assertEqual(person.birth_date, datetime.date(1999, 12, 11))

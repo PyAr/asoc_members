@@ -1,32 +1,24 @@
 import datetime
 import logging
-import re
-import os
 import time
 import uuid
 from urllib import parse
 
-import certg
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q, Sum
-from django.http import HttpResponse
 from django.shortcuts import render
-from django.template.loader import render_to_string
 from django.urls import reverse_lazy
-from django.utils.timezone import now
 from django.utils.translation import ugettext as _
 from django.views import View
 from django.views.generic import TemplateView, CreateView, DetailView
 
-import members
 from members import logic
 from members.forms import SignupPersonForm, SignupOrganizationForm
 from members.models import Person, Organization, Category, Member, Quota, Payment
 from members.utils import (
-    sendmail_missing_info, sendmail_about_debts, build_debt_string,
-    clean_double_empty_lines, get_yearmonth)
+    sendmail_missing_info, sendmail_about_debts,
+    build_debt_string, get_yearmonth)
 
 
 logger = logging.getLogger(__name__)
@@ -127,7 +119,6 @@ class ReportDebts(OnlyAdminsViewMixin, View):
             'deltamsec': int(deltat * 1000),
         }
         return render(request, 'members/mail_sent.html', context)
-
 
     def get(self, request):
         """Produce the report with the given year/month limits."""
