@@ -1,0 +1,48 @@
+{% extends "events_base.html" %}
+{% load static %}
+{% block content %}
+<div class="container">
+
+    <div class="route-navigator" >
+            <ol class="breadcrumb">
+                <li><a href="{% url 'events_home' %}">Inicio</a></li>
+                <li><a href="{% url 'event_list' %}">Eventos</a></li>
+                <li><a href="{% url 'event_detail' pk=event.pk %}">{{event.name}}</a></li>
+                <li><a href="{% url 'sponsoring_list' event_pk=event.pk%}">Patrocinios</a></li>
+                <li class="active"><a href="{% url 'sponsoring_detail' pk=sponsoring.pk%}">
+                        {{sponsoring.sponsor.organization_name}} ({{sponsoring.sponsorcategory.name}})
+                </a></li>
+            </ol>
+    </div>
+    <h1>Patrocinio ({{sponsoring.sponsorcategory.name}})</h1>
+    <div class="row sponsoring-detail">
+        <div class="col-md-6">
+            <h3>Datos Evento</h3>
+            {% include "events/event_describe_table.html" with event=event %}
+        </div>
+        <div class="col-md-6">
+            <h3>Datos Patrocinador </h3>
+            {% include "sponsors/sponsor_describe_table.html" with sponsor=sponsoring.sponsor %}
+        </div>
+        
+    </div>
+
+    <div class="row">
+            <div class="col-md-12 text-right">
+                <strong>Estado: <span class="text-capitalize">{{sponsoring.state}}</span></strong>
+                {% if sponsoring.state == "no facturado" %}
+                    <a class="btn btn-primary" href="{% url 'sponsoring_list' event_pk=event.pk %}">Facturar</a>
+                {% endif %}
+            </div>
+            <div class="row">
+                Facturas y afeactaciones
+            </div>
+    </div>   
+</div>
+<div id="popup" class="modal fade" role="dialog">
+</div>       
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/modal_form.js' %}"></script>
+{% endblock %}
