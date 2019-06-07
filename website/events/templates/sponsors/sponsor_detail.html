@@ -14,51 +14,9 @@
     <div class="row sponsor-detail">
         <div class="col-md-8">
             <h3>Datos del patrocinador </h3>
-            <table class="table table-striped">
-                <tbody>
-                    <tr>
-                        <th scope="row">Razón social</th>
-                        <td>{{ sponsor.organization_name }}</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">CUIT</th>
-                        <td>{{ sponsor.document_number }}</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Condición frente al IVA</th>
-                        <td>{{ sponsor.get_vat_condition_display }}</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Dirección</th>
-                        <td>{{ sponsor.address }}</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Información de contacto</th>
-                        <td>{{ sponsor.contact_info }}</td>
-                    </tr>
-                    <tr>
-                        <th scope="row">Estado</th>
-                        <td>
-                            {% if sponsor.enabled %}
-                            <span class="text-success"><strong>Habilitado</strong></span>
-                            {% else %}
-                                {% if perms.events.set_sponsors_enabled %}
-                                <form action="{% url 'sponsor_set_enabled' sponsor.pk %}" method="post">
-                                    {% csrf_token %}
-                                    <span class="text-danger"><strong>Sin habilitar</strong></span>
-                                    <span class="text-right">
-                                        <input type="submit" class="btn btn-success" value="Habilitar"/>
-                                    </span>
-                                </form>
-                                {% else %}
-                                    <span class="text-danger"><strong>Sin habilitar</strong></span>
-                                {% endif %}
-                            
-                            {% endif %}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            
+            {% include "sponsors/sponsor_describe_table.html" with sponsor=sponsor show_enabled=True %}
+            
             {% if perms.events.change_sponsor %}
             <a class="btn btn-primary btn-block text-uppercase" href="{% url 'sponsor_change' sponsor.pk %}">Editar</a>
             {% endif %}

@@ -220,6 +220,9 @@ class Sponsoring(SaveReversionMixin, AudithUserTime):
             f"({self.sponsorcategory.name})"
         )
 
+    def get_absolute_url(self):
+        return reverse('sponsoring_detail', args=[str(self.pk)])
+
     @property
     def state(self):
         # TODO: to not use so many "if" can write a decision matriz.

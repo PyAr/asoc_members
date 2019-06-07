@@ -17,10 +17,10 @@
         {% csrf_token %}
         {% crispy form %}
         {% if form.instance.pk %}
-        <a class="btn btn-default" href="{% url 'sponsor_detail' form.instance.pk %}">Volver</a>
+        <a class="btn btn-default" href="{% url 'sponsoring_detail' form.instance.pk %}">Volver</a>
         <input type="submit" class="btn btn-success" value="Actualizar!">
         {% else %}
-        <a class="btn btn-default" href="{% url 'sponsor_list' %}">Volver</a>
+        <a class="btn btn-default" href="{% url 'sponsoring_list' event_pk=event.pk %}">Volver</a>
         <input type="submit" class="btn btn-success" value="Crear">
         {% endif %}
     </form>

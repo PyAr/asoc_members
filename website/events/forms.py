@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from events.models import (
     BankAccountData,
     Event,
+    Invoice,
     Organizer,
     Sponsor,
     SponsorCategory,
@@ -146,4 +147,20 @@ class SponsoringForm(forms.ModelForm):
             'sponsorcategory',
             'sponsor',
             'comments',
+        ]
+
+
+class InvoiceForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(InvoiceForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+    class Meta:
+        model = Invoice
+        fields = [
+            'amount',
+            'observations',
+            'document',
         ]

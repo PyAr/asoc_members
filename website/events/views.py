@@ -26,6 +26,7 @@ from events.constants import (
 from events.forms import (
     BankAccountDataForm,
     EventUpdateForm,
+    InvoiceForm,
     OrganizerUpdateForm,
     OrganizerUserSignupForm,
     SponsorForm,
@@ -38,6 +39,7 @@ from events.helpers.permissions import is_event_organizer, ORGANIZER_GROUP_NAME
 from events.models import (
     BankAccountData,
     Event,
+    Invoice,
     Organizer,
     Sponsor,
     SponsorCategory,
@@ -427,6 +429,38 @@ class SponsorSetEnabled(PermissionRequiredMixin, View):
         return redirect('sponsor_detail', pk=kwargs['pk'])
 
 
+class SponsoringDetailView(PermissionRequiredMixin, generic.DetailView):
+    model = Sponsoring
+    template_name = 'events/sponsoring_detail.html'
+    permission_required = 'events.change_event'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context.
+        context = super(SponsoringDetailView, self).get_context_data(**kwargs)
+        event = self._get_event()
+        context['event'] = event
+        return context
+
+    def has_permission(self):
+        ret = super(SponsoringDetailView, self).has_permission()
+        # Must be event organizer.
+        event = self._get_event()
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
+        return ret
+
+    def _get_event(self):
+        return self.get_object().sponsorcategory.event
+
+    def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+            return redirect('event_list')
+        else:
+            return super(SponsoringDetailView, self).handle_no_permission()
+
+
 class SponsoringCreateView(PermissionRequiredMixin, generic.edit.CreateView):
     model = Sponsoring
     form_class = SponsoringForm
@@ -468,10 +502,6 @@ class SponsoringCreateView(PermissionRequiredMixin, generic.edit.CreateView):
 
         return super(SponsoringCreateView, self).get(request, *args, **kwargs)
 
-    def get_success_url(self):
-        # TODO: redirect to sponsoring list
-        return self._get_event().get_absolute_url()
-
     def _get_event(self):
         return get_object_or_404(Event, pk=self.kwargs['event_pk'])
 
@@ -484,12 +514,19 @@ class SponsoringCreateView(PermissionRequiredMixin, generic.edit.CreateView):
             return False
         return ret
 
+    def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+            return redirect('event_list')
+        else:
+            return super(SponsoringCreateView, self).handle_no_permission()
+
 
 class SponsoringListView(PermissionRequiredMixin, generic.ListView):
     model = Sponsoring
     context_object_name = 'sponsoring_list'
     template_name = 'events/sponsoring_list.html'
-    permission_required = 'events.add_sponsoring'
+    permission_required = 'events.change_event'
     paginate_by = 10
 
     def get_queryset(self):
@@ -517,6 +554,54 @@ class SponsoringListView(PermissionRequiredMixin, generic.ListView):
         return ret
 
 
+class InvoiceCreateView(PermissionRequiredMixin, generic.edit.CreateView):
+    model = Invoice
+    form_class = InvoiceForm
+    template_name = 'events/sponsoring_invoice_form.html'
+    permission_required = 'events.add_invoice'
+
+    def form_valid(self, form):
+        form.instance.sponsoring = self._get_sponsoring()
+        return super(InvoiceCreateView, self).form_valid(form)
+
+    def get_success_url(self):
+        return self._get_sponsoring().get_absolute_url()
+
+    def _get_sponsoring(self):
+        return get_object_or_404(Sponsoring, pk=self.kwargs['pk'])
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(InvoiceCreateView, self).get_context_data(**kwargs)
+        context['sponsoring'] = self._get_sponsoring()
+        context['event'] = self._get_sponsoring().sponsorcategory.event
+        return context
+
+    def post(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                return super().post(request, *args, **kwargs)
+        except IntegrityError:
+            messages.add_message(request, messages.ERROR, DUPLICATED_SPONSOR_CATEGORY_MESSAGE)
+            return redirect('sponsoring_detail', pk=self._get_sponsoring().pk)
+
+    def has_permission(self):
+        event = self._get_sponsoring().sponsorcategory.event
+        ret = super(InvoiceCreateView, self).has_permission()
+        # Must be event organizer.
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
+        return ret
+
+    def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+            return redirect('sponsoring_detail', pk=self._get_sponsoring().pk)
+        else:
+            return super(InvoiceCreateView, self).handle_no_permission()
+
+
 events_list = EventsListView.as_view()
 event_detail = EventDetailView.as_view()
 event_change = EventChangeView.as_view()
@@ -536,3 +621,6 @@ sponsor_set_enabled = SponsorSetEnabled.as_view()
 
 sponsoring_list = SponsoringListView.as_view()
 sponsoring_create = SponsoringCreateView.as_view()
+sponsoring_detail = SponsoringDetailView.as_view()
+
+sponsoring_invoice_create = InvoiceCreateView.as_view()

@@ -32,7 +32,7 @@
                 <tbody>
                 {% for sponsoring in sponsoring_list %}
                 
-                    <tr onclick="window.location='{% url 'sponsor_detail' pk=sponsoring.sponsor.pk %}';" class="clikeable">
+                    <tr onclick="window.location='{% url 'sponsoring_detail' pk=sponsoring.pk %}';" class="clikeable">
                         
                         <td >{{ sponsoring.sponsor.organization_name }}</td>
                         <td>{{ sponsoring.sponsorcategory.name }}</td>

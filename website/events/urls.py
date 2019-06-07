@@ -22,6 +22,16 @@ urlpatterns = [
         views.sponsoring_create,
         name='sponsoring_create'
     ),
+    path(
+        'eventos/patrocinios/<pk>/',
+        views.sponsoring_detail,
+        name='sponsoring_detail'
+    ),
+    path(
+        'eventos/patrocinios/<pk>/factura/crear/',
+        views.sponsoring_invoice_create,
+        name='sponsoring_invoice_create'
+    ),
 
     # Organizers urls.
     path('registrar-organizador/', views.organizer_signup, name='organizer_signup'),
