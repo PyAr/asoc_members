@@ -464,7 +464,7 @@ class SponsoringCreateView(PermissionRequiredMixin, generic.edit.CreateView):
             )
 
         if not exists_category or not exists_sponsors:
-            return redirect('event_detail', pk=event.pk)
+            return redirect('sponsoring_list', event_pk=event.pk)
 
         return super(SponsoringCreateView, self).get(request, *args, **kwargs)
 
