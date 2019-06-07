@@ -44,7 +44,6 @@ class SaveReversionMixin:
             super(SaveReversionMixin, self).save(*args, **kwargs)
 
 
-
 class ActiveManager(models.Manager):
     '''Manager to show only active instances.'''
     def get_queryset(self):

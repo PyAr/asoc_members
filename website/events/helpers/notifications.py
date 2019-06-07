@@ -70,7 +70,7 @@ class EmailNotification():
     def _get_superusers_emails(self):
         recipients = []
         users = User.objects.filter(is_superuser=True).exclude(email__exact='')
-        for user in users.all():    
+        for user in users.all():
             recipients.append(user.email)
         return recipients
 

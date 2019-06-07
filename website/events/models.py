@@ -11,11 +11,10 @@ from events.constants import (
     CAN_SET_SPONSORS_ENABLED_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
-    CAN_VIEW_SPONSORS_CODENAME
+    CAN_VIEW_SPONSORS_CODENAME,
 )
 
 from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
-import os
 import reversion
 
 User = get_user_model()
@@ -75,8 +74,8 @@ class Organizer(SaveReversionMixin, AudithUserTime):
 
     account_data = models.ForeignKey(
         'BankAccountData',
-        verbose_name=_('datos cuenta bancaria'), 
-        on_delete=models.CASCADE, 
+        verbose_name=_('datos cuenta bancaria'),
+        on_delete=models.CASCADE,
         null=True
     )
 
@@ -140,7 +139,7 @@ class Event(SaveReversionMixin, AudithUserTime):
         permissions = (
             (CAN_VIEW_EVENT_ORGANIZERS_CODENAME, _('puede ver organizadores del evento')),
         )
-        ordering = ['-start_date'] 
+        ordering = ['-start_date']
 
 
 @reversion.register
@@ -301,8 +300,8 @@ class Invoice(SaveReversionMixin, AudithUserTime):
     def clean(self):
         if self.partial_payment and self.complete_payment:
             raise ValidationError(
-                _('los atributos partial_payment (pago parcial) y complete_payment (pago completo) '+
-                'no pueden estar ambos seteados en Verdadero')
+                _('los atributos partial_payment (pago parcial) y complete_payment '
+                  '(pago completo) no pueden estar ambos seteados en Verdadero')
             )
 
 

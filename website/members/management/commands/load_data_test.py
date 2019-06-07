@@ -20,7 +20,7 @@ class Command(BaseCommand):
         person_count = Person.objects.count()
         organization_count = Organization.objects.count()
         payment_count = Payment.objects.count()
-        payment_strategy_count = PaymentStrategy.objects.count( )
+        payment_strategy_count = PaymentStrategy.objects.count()
         quota_count = Quota.objects.count()
 
         q = options["count"]
@@ -63,5 +63,5 @@ class Command(BaseCommand):
             )
         )
         self.stdout.write(
-            self.style.SUCCESS( "Successfully created Quota instances (count %d)" % quota_count)
+            self.style.SUCCESS("Successfully created Quota instances (count %d)" % quota_count)
         )
