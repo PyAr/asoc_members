@@ -19,6 +19,16 @@ Password (again):
 Superuser created successfully.
 ```
 
+## Deploy a staging (PENDING TO CONFIGURE)
+
+Cada merge a master genera una imagen actualizada en docker hub con el tag `latest` y automaticamente se actualiza el deploy.
+
+## Deploy a producción.
+
+Si se crea un tag con el formato x.y.z automaticamente se va a generar una imagen de Docker en docker hub con el tag `stable` y `prod-x.y.z` y una vez generada la imagen se va a deployar automaticamente. 
+
+
+
 
 ## Producción
 
