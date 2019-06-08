@@ -1,0 +1,15 @@
+{% autoescape off %}
+
+El usuario "{{ user.username }}" ha creado un nuevo sponsor con la siguiente información:
+
+Razón social: {{ sponsor.organization_name }}
+CUIT: {{ sponsor.document_number }}
+Condición frente al IVA: {{ sponsor.get_vat_condition_display }}
+Dirección: {{ sponsor.address }}
+Información de contacto: {{ sponsor.contact_info }}
+
+Por favor ingrese al mismo para configurar la información faltante.
+{{ protocol }}://{{ domain }}{% url 'sponsor_detail' pk=sponsor.pk %}
+
+
+{% endautoescape %}

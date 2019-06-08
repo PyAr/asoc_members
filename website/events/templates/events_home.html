@@ -42,6 +42,7 @@
             {% endif %}
 
             <!--Sponsors-->
+            {% if perms.events.view_sponsors %}
             <div class="col-sm-6 col-md-2">
                 <div class="thumbnail">
                     <img src="{% static 'images/sponsors.png' %}" alt="Imagen que represente sponsors">
@@ -49,11 +50,12 @@
                         <!--h5 class="text-center">Sponsors</h5-->
                         <!--<p class="card-text">Lista de eventos asociados a su usuario, para poder administrar, según sus permisos.</p>-->
                         <div class="dashborard-element-actions">
-                            <a href="#" class="btn btn-primary card-btn"< role="button">Sponsors</a>
+                            <a href="{% url 'sponsor_list' %}" class="btn btn-primary card-btn" role="button">Sponsors</a>
                         </div>
                     </div>
                 </div>
             </div>
+            {% endif %}
 
             <!--Reports-->
             {% if perms.events.view_reports %}

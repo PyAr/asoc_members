@@ -2,6 +2,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.models import Group
+from django.contrib.sites.shortcuts import get_current_site
 
 from django.db import IntegrityError, transaction
 from django.http import HttpResponseRedirect
@@ -9,7 +11,8 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 
 from django.utils.crypto import get_random_string
-from django.views import generic
+from django.utils.translation import gettext_lazy as _
+from django.views import generic, View
 
 from events.constants import (
     CANT_CHANGE_CLOSE_EVENT_MESSAGE,
@@ -25,10 +28,19 @@ from events.forms import (
     EventUpdateForm,
     OrganizerUpdateForm,
     OrganizerUserSignupForm,
+    SponsorForm,
     SponsorCategoryForm
 )
+from events.helpers.notifications import email_notifier
 from events.helpers.views import seach_filterd_queryset
-from events.models import BankAccountData, Event, Organizer, SponsorCategory
+from events.helpers.permissions import ORGANIZER_GROUP_NAME
+from events.models import (
+    BankAccountData,
+    Event,
+    Organizer,
+    Sponsor,
+    SponsorCategory
+)
 from pyar_auth.forms import PasswordResetForm
 
 
@@ -43,11 +55,16 @@ def organizer_signup(request):
         # Create user with random password and send custom reset password form.
         form = OrganizerUserSignupForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            user.set_password(get_random_string())
-            user.save()
-            # TODO: call a helper function to create de organizer with the correct group.
-            Organizer.objects.create(user=user)
+            with transaction.atomic():
+                # Ensure that user, organizer, and group association is atomic.
+                user = form.save(commit=False)
+                user.set_password(get_random_string())
+                user.save()
+                group = Group.objects.get(name=ORGANIZER_GROUP_NAME)
+                user.groups.add(group)
+                # TODO: call a helper function to create de organizer with the correct group.
+                Organizer.objects.create(user=user)
+
             reset_form = PasswordResetForm({'email': user.email})
             assert reset_form.is_valid()
             reset_form.save(
@@ -357,6 +374,75 @@ class OrganizerChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
         return self.request.user == self.get_object().user
 
 
+class SponsorsListView(LoginRequiredMixin, generic.ListView):
+    model = Sponsor
+    context_object_name = 'sponsor_list'
+    template_name = 'sponsors/sponsors_list.html'
+    paginate_by = 5
+    search_fields = {
+        'organization_name': 'icontains',
+        'document_number': 'icontains'
+    }
+
+    def get_queryset(self):
+        queryset = super(SponsorsListView, self).get_queryset()
+        # queryset = Sponsor.objects.all()
+        search_value = self.request.GET.get('search', None)
+        if search_value and search_value != '':
+            queryset = seach_filterd_queryset(queryset, self.search_fields, search_value)
+        return queryset
+
+
+class SponsorCreateView(PermissionRequiredMixin, generic.edit.CreateView):
+    model = Sponsor
+    form_class = SponsorForm
+    template_name = 'sponsors/sponsor_form.html'
+    permission_required = 'events.add_sponsor'
+
+    def form_valid(self, form):
+        ret = super(SponsorCreateView, self).form_valid(form)
+        current_site = get_current_site(self.request)
+        context = {
+            'domain': current_site.domain,
+            'protocol': 'https' if self.request.is_secure() else 'http'
+        }
+        sponsor = form.instance
+        user = self.request.user
+        email_notifier.send_new_sponsor_created(
+            sponsor,
+            user,
+            context
+        )
+        return ret
+
+
+class SponsorChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
+    model = Sponsor
+    form_class = SponsorForm
+    template_name = 'sponsors/sponsor_form.html'
+    permission_required = 'events.change_sponsor'
+
+
+class SponsorDetailView(LoginRequiredMixin, generic.DetailView):
+    model = Sponsor
+    template_name = 'sponsors/sponsor_detail.html'
+
+
+class SponsorSetEnabled(PermissionRequiredMixin, View):
+    permission_required = 'events.set_sponsors_enabled'
+
+    def post(self, request, *args, **kwargs):
+        sponsor = get_object_or_404(Sponsor, pk=kwargs['pk'])
+        sponsor.enabled = True
+        sponsor.save()
+        messages.add_message(
+            request,
+            messages.SUCCESS,
+            _('Patrocinador habilitado exitosamente ')
+        )
+        return redirect('sponsor_detail', pk=kwargs['pk'])
+
+
 events_list = EventsListView.as_view()
 event_detail = EventDetailView.as_view()
 event_change = EventChangeView.as_view()
@@ -367,3 +453,9 @@ organizer_detail = OrganizerDetailView.as_view()
 organizer_change = OrganizerChangeView.as_view()
 organizer_create_bank_account_data = BankOrganizerAccountDataCreateView.as_view()
 organizer_update_bank_account_data = BankOrganizerAccountDataUpdateView.as_view()
+
+sponsors_list = SponsorsListView.as_view()
+sponsor_detail = SponsorDetailView.as_view()
+sponsor_change = SponsorChangeView.as_view()
+sponsor_create = SponsorCreateView.as_view()
+sponsor_set_enabled = SponsorSetEnabled.as_view()

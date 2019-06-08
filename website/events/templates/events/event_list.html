@@ -13,35 +13,46 @@
 {%endblock%}    
 
 {% block list_content %}
-    <table class="table table-striped row-clickeable-table">
-        <thead>
-            <tr>
-                <th scope="row">Nombre</th>
-                <th scope="row">Tipo</th>
-                <th scope="row">Comision</th>
-                <th scope="row">Fecha</th>
-                <th scope="row">Lugar</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for event in event_list %}
-        
-            <tr onclick="window.location='{% url 'event_detail' pk=event.pk %}';" class="clikeable">
-                
-                <td >{{ event.name }}</td>
-                <td>{{ event.get_category_display }}</td>
-                <td>{{ event.commission }}</td>
-                <td>{% if event.start_date %}{{ event.start_date }}{% endif %}</td>
-                <td>{{ event.place }}</td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="100%" class="empty-list">
-                    <strong>No hay eventos asociados a su usuario.</strong>
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+<div class="row events-list">
+    <div class="col-md-12">
+        <table class="table table-striped row-clickeable-table">
+            <thead>
+                <tr>
+                    <th scope="row">Nombre</th>
+                    <th scope="row">Tipo</th>
+                    <th scope="row">Comision</th>
+                    <th scope="row">Fecha</th>
+                    <th scope="row">Lugar</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for event in event_list %}
+            
+                <tr onclick="window.location='{% url 'event_detail' pk=event.pk %}';" class="clikeable">
+                    
+                    <td >{{ event.name }}</td>
+                    <td>{{ event.get_category_display }}</td>
+                    <td>{{ event.commission }}</td>
+                    <td>{% if event.start_date %}{{ event.start_date }}{% endif %}</td>
+                    <td>{{ event.place }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="100%" class="empty-list">
+                        <strong>No hay eventos asociados a su usuario.</strong>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="row organizers-list-actions">
+    <div class="col-md-12 text-right">
+        {% if perms.events.add_event %}
+        <a class="btn btn-primary" href="{% url 'admin:events_event_add' %}">Crear</a>
+        {% endif %}
+    </div>
+</div>
     
 {% endblock %}

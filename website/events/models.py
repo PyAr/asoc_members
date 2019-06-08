@@ -1,17 +1,20 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
-from events.helpers.models import AudithUserTime, SaveReversionMixin
+from events.helpers.models import AudithUserTime, SaveReversionMixin, ActiveManager
 from events.constants import (
     CUIT_REGEX,
+    CAN_SET_SPONSORS_ENABLED_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
+    CAN_VIEW_SPONSORS_CODENAME,
 )
 
-from members.models import DEFAULT_MAX_LEN
+from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
 import reversion
 
 User = get_user_model()
@@ -165,5 +168,164 @@ class SponsorCategory(SaveReversionMixin, AudithUserTime):
         related_name='sponsors_categories'
     )
 
+    sponsors = models.ManyToManyField(
+        'Sponsor',
+        through='Sponsoring',
+        verbose_name=_('patrocinios'),
+        related_name='sponsor_categories'
+    )
+
+    def __str__(self):
+        return f"{self.event.name} ( {self.name} )"
+
     class Meta:
         unique_together = ('event', 'name')
+
+
+@reversion.register
+class Sponsoring(SaveReversionMixin, AudithUserTime):
+    """
+    Sponsoring:
+    Represents the many to many relationship between SponsorCategory and Sponsors. Is important
+    had this relation as model to payment fks, etc."""
+    sponsorcategory = models.ForeignKey(
+        'SponsorCategory',
+        related_name='sponsor_by',
+        on_delete=models.CASCADE
+    )
+    sponsor = models.ForeignKey(
+        'Sponsor',
+        related_name='sponsoring',
+        on_delete=models.CASCADE
+    )
+    comments = models.TextField(_('comentarios'), blank=True)
+
+    def __str__(self):
+        return (
+            f"{self.sponsor.organization_name} "
+            f"- {self.sponsorcategory.event.name} "
+            f"({self.sponsorcategory.name})"
+        )
+
+
+@reversion.register
+class Sponsor(SaveReversionMixin, AudithUserTime):
+    """Represents a sponsor. The active atributte is like a soft deletion."""
+
+    RESPONSABLE_INSCRIPTO = 'responsable inscripto'
+    MONOTRIBUTO = 'monotributo'
+    EXTERIOR = 'exterior'
+    OTRO = 'otro'
+
+    VAT_CONDITIONS_CHOICES = (
+        (RESPONSABLE_INSCRIPTO, 'Responsable Inscripto'),
+        (MONOTRIBUTO, 'Monotributo'),
+        (EXTERIOR, 'Exterior'),
+        (OTRO, 'Otro'),
+    )
+
+    enabled = models.BooleanField(_('habilitado'), default=False)
+    active = models.BooleanField(_('activo'), default=True)
+
+    organization_name = models.CharField(
+        _('razón social'),
+        max_length=DEFAULT_MAX_LEN,
+        help_text=_('Razón social.')
+    )
+    document_number = models.CharField(
+        _('CUIT'),
+        max_length=13,
+        help_text=_('CUIT, formato ##-########-#'),
+        validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto.'))],
+        unique=True
+    )
+
+    contact_info = models.TextField(_('información de contacto'), blank=True)
+
+    address = models.CharField(
+        _('direccion'),
+        max_length=LONG_MAX_LEN,
+        help_text=_('Dirección'),
+        blank=True
+    )
+
+    vat_condition = models.CharField(
+        _('condición frente al iva'),
+        max_length=DEFAULT_MAX_LEN,
+        choices=VAT_CONDITIONS_CHOICES
+    )
+
+    other_vat_condition_text = models.CharField(
+        _('otra condicion frente al iva'),
+        max_length=DEFAULT_MAX_LEN,
+        blank=True,
+        default='',
+        help_text=_('Especifica otra condición frente al iva'),
+    )
+    # Overrinding objects to explicit when need to show inactive objects.
+    objects = ActiveManager()
+    all_objects = models.Manager()
+
+    class Meta:
+        permissions = (
+            (CAN_SET_SPONSORS_ENABLED_CODENAME, _('puede habilitar patrocinadores')),
+            (CAN_VIEW_SPONSORS_CODENAME, _('puede ver patrocinadores')),
+        )
+        ordering = ['-created']
+
+    def __str__(self):
+        return f"{self.organization_name} - {self.document_number}"
+
+    def get_absolute_url(self):
+        return reverse('sponsor_detail', args=[str(self.pk)])
+
+
+@reversion.register
+class Invoice(SaveReversionMixin, AudithUserTime):
+    amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
+    partial_payment = models.BooleanField(_('pago parcial'), default=False)
+    complete_payment = models.BooleanField(_('pago completo'), default=False)
+    close = models.BooleanField(_('cerrado'), default=False)
+    observations = models.CharField(_('observaciones'), max_length=LONG_MAX_LEN, blank=True)
+    document = models.FileField(_('archivo'), upload_to='invoices/documments/', blank=True)
+    invoice_ok = models.BooleanField(_('Factura generada OK'), default=False)
+    sponsoring = models.ForeignKey(
+        'Sponsoring',
+        related_name='invoices',
+        verbose_name=_('patrocinio'),
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
+    def clean(self):
+        if self.partial_payment and self.complete_payment:
+            raise ValidationError(
+                _('los atributos partial_payment (pago parcial) y complete_payment '
+                  '(pago completo) no pueden estar ambos seteados en Verdadero')
+            )
+
+
+@reversion.register
+class InvoiceAffect(SaveReversionMixin, AudithUserTime):
+    PAYMENT = 'Pay'
+    WITHHOLD = 'Hold'
+    OTHER = 'Oth'
+    TYPE_CHOICES = (
+        (PAYMENT, 'Pago'),
+        (WITHHOLD, 'Retencion'),
+        (OTHER, 'Otros')
+    )
+
+    amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
+    observations = models.CharField(_('observaciones'), max_length=LONG_MAX_LEN, blank=True)
+    invoice = models.ForeignKey(
+        'Invoice',
+        verbose_name=_('factura'),
+        on_delete=models.CASCADE
+    )
+
+    document = models.FileField(_('archivo'), upload_to='invoice_affects/documments/', blank=True)
+
+    category = models.CharField(
+        _('tipo'), max_length=5, choices=TYPE_CHOICES
+    )

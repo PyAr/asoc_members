@@ -1,0 +1,65 @@
+{% extends "events_base_paginated_list.html" %}
+
+{% block route-navigator %}
+<div class="route-navigator" >
+        <ol class="breadcrumb">
+            <li><a href="{% url 'events_home' %}">Inicio</a></li>
+            <li class="active"><a href="{% url 'sponsor_list' %}">Patrocinadores</a></li>
+        </ol>
+</div>
+{% endblock %}
+{% block list_title %}
+<h1>Patrocinadores</h1>
+{%endblock%}
+
+{% block list_content %}
+    <div class="row sponsors-list">
+        <div class="col-md-12">
+            <table class="table table-striped row-clickeable-table">
+                <thead>
+                    <tr>
+                        <th scope="row">Razón social</th>
+                        <th scope="row">CUIT</th>
+                        <th scope="row">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for sponsor in sponsor_list %}
+                
+                    <tr onclick="window.location='{% url 'sponsor_detail' pk=sponsor.pk %}';" class="clikeable">
+                        
+                        <td >{{ sponsor.organization_name }}</td>
+                        <td>{{ sponsor.document_number }}</td>
+                        <td>
+                            {% if sponsor.enabled %}
+                            <span class="text-success"><strong>Habilitado</strong></span>
+                            {% else %}
+                            <span class="text-danger"><strong>Sin habilitar</strong></span>
+                            {% endif %}
+                            
+                        </td>
+                    </tr>
+                
+                {% empty %}
+                    <tr>
+                        <td colspan="100%" class="empty-list">
+                            <strong>No hay patrocinadores activos.</strong>
+                        </td>
+                    </tr>
+                {% endfor %}
+                
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row sponsors-list-actions">
+        <div class="col-md-12 text-right">
+            {% if perms.events.add_sponsor %}
+            <a class="btn btn-primary" href="{% url 'sponsor_create' %}">Crear</a>
+            {% endif %}
+        </div>
+    </div>
+    
+
+
+{% endblock %}

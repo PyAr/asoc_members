@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-
+from django.contrib.auth.models import Group
 from django.core import mail
 from django.template.loader import render_to_string
 from django.test import TestCase
@@ -14,14 +14,22 @@ from events.constants import (
     ORGANIZER_MAIL_NOTOFICATION_MESSAGE
 )
 from events.helpers.notifications import email_notifier
-from events.helpers.tests import (
+from events.helpers.permissions import (
     associate_users_permissions,
-    CustomAssertMethods,
+    ORGANIZER_GROUP_NAME,
     organizer_permissions,
     super_organizer_permissions
 )
+from events.helpers.tests import CustomAssertMethods
 from events.middleware import set_current_user
-from events.models import Event, Organizer, EventOrganizer, SponsorCategory, BankAccountData
+from events.models import (
+    BankAccountData,
+    Event,
+    EventOrganizer,
+    Organizer,
+    Sponsor,
+    SponsorCategory,
+)
 from unittest.mock import patch
 
 User = get_user_model()
@@ -118,6 +126,25 @@ class EmailTest(TestCase, CustomAssertMethods):
         user = User.objects.first()
         create_event_set(user)
 
+    def test_send_email_after_create_sponsor(self):
+        self.client.login(username='organizer01', password='organizer01')
+
+        # Send request
+        sposor_data = {
+            'organization_name': 'te patrocino',
+            'document_number': '20-26456987-7',
+            'vat_condition': 'monotributo',
+            'contact_info': '',
+            'address': ''
+        }
+
+        response = self.client.post(reverse('sponsor_create'), data=sposor_data)
+        self.assertEqual(response.status_code, 302)
+        count = User.objects.filter(is_superuser=True).exclude(email__exact='').count()
+        self.assertEqual(len(mail.outbox), count)
+        self.assertEqual(mail.outbox[0].subject,
+                         render_to_string('mails/sponsor_just_created_subject.txt'))
+
     def test_send_email_after_register_organizer(self):
         # Login client with super user
         self.client.login(username='administrator', password='administrator')
@@ -197,6 +224,26 @@ class SingnupOrginizerTest(TestCase):
         self.assertTrue(
             Organizer.objects.filter(user=User.objects.get(username='organizador_test')).exists()
         )
+
+    def test_created_organizer_associates_with_group(self):
+        self.client.login(username='superOrganizer01', password='superOrganizer01')
+        url = reverse('organizer_signup')
+        data = {
+            'email': 'test@mail.com',
+            'username': 'organizador_test'
+        }
+        self.client.post(url, data=data)
+
+        user = User.objects.get(username='organizador_test')
+        group = Group.objects.get(name=ORGANIZER_GROUP_NAME)
+        self.assertIn(group, user.groups.all())
+
+    def test_organizer_group_has_perms(self):
+        group = Group.objects.get(name=ORGANIZER_GROUP_NAME)
+        organizer_perms = organizer_permissions()
+        group_permissions = group.permissions.all()
+        for perm in organizer_perms:
+            self.assertIn(perm, group_permissions)
 
 
 class EventAdminTest(TestCase):
@@ -401,3 +448,30 @@ class EventViewsTest(TestCase, CustomAssertMethods):
         self.assertEqual(event.name, old_name)
         self.assertEqual(event.commission, old_commission)
         self.assertEqual(event.place, 'Villa adelina')
+
+
+class SponsorViewsTest(TestCase, CustomAssertMethods):
+    def setUp(self):
+        create_user_set()
+        # user = User.objects.first()
+        # create_event_set(user)
+
+        Organizer.objects.bulk_create([
+            Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
+            Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
+        ])
+
+    def test_organizer_cant_set_sponsors_enabled(self):
+        sponsor_data = {
+            'organization_name': 'te patrocino',
+            'document_number': '20-26456987-7',
+            'vat_condition': 'IVA Responsable Inscripto',
+            'contact_info': '',
+            'address': ''
+        }
+        sponsor = Sponsor.objects.create(**sponsor_data)
+        url = reverse('sponsor_set_enabled', kwargs={'pk': sponsor.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url)
+        redirect_to_login_url = reverse('login') + '?next=' + url
+        self.assertRedirects(response, redirect_to_login_url)

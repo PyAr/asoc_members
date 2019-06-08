@@ -42,3 +42,9 @@ class SaveReversionMixin:
     def save(self, *args, **kwargs):
         with reversion.create_revision():
             super(SaveReversionMixin, self).save(*args, **kwargs)
+
+
+class ActiveManager(models.Manager):
+    '''Manager to show only active instances.'''
+    def get_queryset(self):
+        return super().get_queryset().filter(active=True)

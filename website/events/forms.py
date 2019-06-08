@@ -6,7 +6,13 @@ from crispy_forms.layout import Layout
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 
-from events.models import Event, Organizer, SponsorCategory, BankAccountData
+from events.models import (
+    BankAccountData,
+    Event,
+    Organizer,
+    Sponsor,
+    SponsorCategory
+)
 
 
 class OrganizerUserSignupForm(UserCreationForm):
@@ -101,4 +107,23 @@ class BankAccountDataForm(forms.ModelForm):
         fields = [
             'organization_name', 'document_number', 'bank_entity',
             'account_type', 'account_number', 'cbu'
+            ]
+
+
+class SponsorForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(SponsorForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+    class Meta:
+        model = Sponsor
+        fields = [
+            'organization_name',
+            'document_number',
+            'vat_condition',
+            'other_vat_condition_text',
+            'address',
+            'contact_info',
         ]
