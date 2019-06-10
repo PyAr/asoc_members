@@ -22,6 +22,7 @@ from events.constants import (
 )
 
 from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
+import os
 import reversion
 
 User = get_user_model()
@@ -340,7 +341,7 @@ def invoice_upload_path(instance, filename):
     sponsor_categoty_name = lower_non_spaces(instance.sponsoring.sponsorcategory.name)
 
     return (
-        f"events/invoices/"
+        f"media/events/invoices/"
         f"{event_name}_{sponsor_name}_{sponsor_categoty_name}.{ext}"
     )
 
@@ -361,6 +362,10 @@ class Invoice(SaveReversionMixin, AudithUserTime):
         null=True
     )
 
+    def extension(self):
+        name, extension = os.path.splitext(self.document.name)
+        return extension
+
     def clean(self):
         if self.partial_payment and self.complete_payment:
             raise ValidationError(
@@ -380,7 +385,7 @@ def affect_upload_path(instance, filename):
     sponsor_categoty_name = lower_non_spaces(instance.invoice.sponsoring.sponsorcategory.name)
 
     return (
-        f"events/invoices_affect/"
+        f"media/events/invoices_affect/"
         f"{event_name}_{sponsor_name}_{sponsor_categoty_name}"
         f"_{instance.category}{instance.pk}.{ext}"
     )
@@ -410,3 +415,7 @@ class InvoiceAffect(SaveReversionMixin, AudithUserTime):
     category = models.CharField(
         _('tipo'), max_length=5, choices=TYPE_CHOICES
     )
+
+    def extension(self):
+        name, extension = os.path.splitext(self.document.name)
+        return extension

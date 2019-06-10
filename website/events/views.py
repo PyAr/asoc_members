@@ -560,6 +560,12 @@ class InvoiceCreateView(PermissionRequiredMixin, generic.edit.CreateView):
     template_name = 'events/sponsoring_invoice_form.html'
     permission_required = 'events.add_invoice'
 
+    def get_form(self, form_class=None):
+        sponsoring = self._get_sponsoring()
+        form = super(InvoiceCreateView, self).get_form(form_class)
+        form.base_fields['amount'].initial = sponsoring.sponsorcategory.amount
+        return form
+
     def form_valid(self, form):
         form.instance.sponsoring = self._get_sponsoring()
         return super(InvoiceCreateView, self).form_valid(form)

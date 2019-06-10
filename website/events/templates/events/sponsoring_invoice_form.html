@@ -13,6 +13,6 @@
                 {% crispy form %}
 {% endblock %} 
 {% block modal_footer %}
-<a class="btn btn-default" href="{% url 'sponsoring_list' event.pk %}">Cancelar</a>
+<a class="btn btn-default" href="{% url 'sponsoring_detail' sponsoring.pk %}">Cancelar</a>
 <input type="submit" class="btn btn-primary" value="Crear">
 {% endblock %} 

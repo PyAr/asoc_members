@@ -30,12 +30,47 @@
     <div class="row">
             <div class="col-md-12 text-right">
                 <strong>Estado: <span class="text-capitalize">{{sponsoring.state}}</span></strong>
-                {% if sponsoring.state == "no facturado" %}
-                    <a class="btn btn-primary" href="{% url 'sponsoring_list' event_pk=event.pk %}">Facturar</a>
+                {% if sponsoring.state == "no facturado" and perms.events.add_invoice %}
+                    <a class="btn btn-primary"
+                    onclick="return open_modal('{% url 'sponsoring_invoice_create' sponsoring.pk %}')"
+                     >Facturar</a>
                 {% endif %}
             </div>
             <div class="row">
-                Facturas y afeactaciones
+                <div class="col-md-8">
+                    Fatura Monto: {{sponsoring.invoice.amount}}<br/>
+                    {% if sponsoring.invoice.extension == ".pdf" %}
+                    <button id="upload-button">Select PDF</button> 
+                    <input type="file" id="file-to-upload" accept="application/pdf" />
+                    
+                    <div id="pdf-main-container">
+                        <div id="pdf-loader">Loading document ...</div>
+                        <div id="pdf-contents">
+                            <div id="pdf-meta">
+                                <div id="pdf-buttons">
+                                    <button id="pdf-prev">Previous</button>
+                                    <button id="pdf-next">Next</button>
+                                </div>
+                                <div id="page-count-container">Page <div id="pdf-current-page"></div> of <div id="pdf-total-pages"></div></div>
+                            </div>
+                            <canvas id="pdf-canvas" width="400"></canvas>
+                            <div id="page-loader">Loading page ...</div>
+                        </div>
+                    </div>
+
+                    <div id="invoice-pdf-div" class="col-md-12" invoice-url={{sponsoring.invoice.document.url}}>
+                        {{sponsoring.invoice.extension}}    
+                    </div>
+                    {% endif %}
+                    
+                </div>
+                <div class="col-md-4">
+                    Afectaciones:
+                    
+                    
+                    
+                </div>
+                
             </div>
     </div>   
 </div>
@@ -44,5 +79,8 @@
 {% endblock %}
 
 {% block extra_js %}
+    <script src="{% static 'js/pdf.js' %}"></script>
+    <script src="{% static 'js/pdf.worker.js' %}"></script>
     <script src="{% static 'js/modal_form.js' %}"></script>
+    <script src="{% static 'js/load_pdf_files.js' %}"></script>
 {% endblock %}
