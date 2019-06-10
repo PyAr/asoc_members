@@ -8,6 +8,7 @@ from django.utils.translation import ugettext_lazy as _
 from events.helpers.models import AudithUserTime, SaveReversionMixin, ActiveManager
 from events.constants import (
     CUIT_REGEX,
+    CAN_CLOSE_SPONSORING_CODENAME,
     CAN_SET_SPONSORS_ENABLED_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
@@ -24,6 +25,10 @@ from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
 import reversion
 
 User = get_user_model()
+
+
+def lower_non_spaces(text):
+    return text.lower().replace(' ', '')
 
 
 @reversion.register
@@ -212,6 +217,7 @@ class Sponsoring(SaveReversionMixin, AudithUserTime):
         on_delete=models.CASCADE
     )
     comments = models.TextField(_('comentarios'), blank=True)
+    close = models.BooleanField(_('cerrado'), default=False)
 
     def __str__(self):
         return (
@@ -227,6 +233,9 @@ class Sponsoring(SaveReversionMixin, AudithUserTime):
     def state(self):
         # TODO: to not use so many "if" can write a decision matriz.
         current_state = SPONSOR_STATE_UNBILLED
+        if self.close:
+            return SPONSOR_STATE_CLOSED
+
         if hasattr(self, 'invoice'):
             invoice = self.invoice
             current_state = SPONSOR_STATE_INVOICED
@@ -236,10 +245,14 @@ class Sponsoring(SaveReversionMixin, AudithUserTime):
                     current_state = SPONSOR_STATE_PARTIALLY_PAID
                 if invoice.complete_payment:
                     current_state = SPONSOR_STATE_COMPLETELY_PAID
-                if invoice.close:
-                    current_state = SPONSOR_STATE_CLOSED
 
         return current_state
+
+    class Meta:
+        unique_together = ('sponsorcategory', 'sponsor')
+        permissions = (
+            (CAN_CLOSE_SPONSORING_CODENAME, _('puede cerrar patrocinio')),
+        )
 
 
 @reversion.register
@@ -248,12 +261,14 @@ class Sponsor(SaveReversionMixin, AudithUserTime):
 
     RESPONSABLE_INSCRIPTO = 'responsable inscripto'
     MONOTRIBUTO = 'monotributo'
+    CONSUMIDOR_FINAL = 'consumidor_final'
     EXTERIOR = 'exterior'
     OTRO = 'otro'
 
     VAT_CONDITIONS_CHOICES = (
         (RESPONSABLE_INSCRIPTO, 'Responsable Inscripto'),
         (MONOTRIBUTO, 'Monotributo'),
+        (CONSUMIDOR_FINAL, 'Consumidor Final'),
         (EXTERIOR, 'Exterior'),
         (OTRO, 'Otro'),
     )
@@ -314,14 +329,29 @@ class Sponsor(SaveReversionMixin, AudithUserTime):
         return reverse('sponsor_detail', args=[str(self.pk)])
 
 
+def invoice_upload_path(instance, filename):
+    """
+    Customize the incoice's upload path to
+    MEDIA_ROOT/events/invoices/event_sponsor_category_document.ext.
+    """
+    ext = filename.split('.')[-1]
+    sponsor_name = lower_non_spaces(instance.sponsoring.sponsor.organization_name)
+    event_name = lower_non_spaces(instance.sponsoring.sponsorcategory.event.name)
+    sponsor_categoty_name = lower_non_spaces(instance.sponsoring.sponsorcategory.name)
+
+    return (
+        f"events/invoices/"
+        f"{event_name}_{sponsor_name}_{sponsor_categoty_name}.{ext}"
+    )
+
+
 @reversion.register
 class Invoice(SaveReversionMixin, AudithUserTime):
     amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
     partial_payment = models.BooleanField(_('pago parcial'), default=False)
     complete_payment = models.BooleanField(_('pago completo'), default=False)
-    close = models.BooleanField(_('cerrado'), default=False)
     observations = models.CharField(_('observaciones'), max_length=LONG_MAX_LEN, blank=True)
-    document = models.FileField(_('archivo'), upload_to='invoices/documments/', blank=True)
+    document = models.FileField(_('archivo'), upload_to=invoice_upload_path)
     invoice_ok = models.BooleanField(_('Factura generada OK'), default=False)
     sponsoring = models.OneToOneField(
         'Sponsoring',
@@ -337,6 +367,23 @@ class Invoice(SaveReversionMixin, AudithUserTime):
                 _('los atributos partial_payment (pago parcial) y complete_payment '
                   '(pago completo) no pueden estar ambos seteados en Verdadero')
             )
+
+
+def affect_upload_path(instance, filename):
+    """
+    Customize the invoice affect's upload path to
+    MEDIA_ROOT/events/invoices_affect/event_sponsor_category_document_affectcategory_pk.ext.
+    """
+    ext = filename.split('.')[-1]
+    sponsor_name = lower_non_spaces(instance.invoice.sponsoring.sponsor.organization_name)
+    event_name = lower_non_spaces(instance.invoice.sponsoring.sponsorcategory.event.name)
+    sponsor_categoty_name = lower_non_spaces(instance.invoice.sponsoring.sponsorcategory.name)
+
+    return (
+        f"events/invoices_affect/"
+        f"{event_name}_{sponsor_name}_{sponsor_categoty_name}"
+        f"_{instance.category}{instance.pk}.{ext}"
+    )
 
 
 @reversion.register
@@ -358,7 +405,7 @@ class InvoiceAffect(SaveReversionMixin, AudithUserTime):
         on_delete=models.CASCADE
     )
 
-    document = models.FileField(_('archivo'), upload_to='invoice_affects/documments/', blank=True)
+    document = models.FileField(_('archivo'), upload_to=affect_upload_path)
 
     category = models.CharField(
         _('tipo'), max_length=5, choices=TYPE_CHOICES

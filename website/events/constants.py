@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 CUIT_REGEX = r'^(20|23|24|27|30|33|34)-[0-9]{8}-[0-9]$'
 
 # Permissions codenames to create groups, asign, and test.
+CAN_CLOSE_SPONSORING_CODENAME = 'close_sponsoring'
 CAN_VIEW_EVENT_ORGANIZERS_CODENAME = 'view_event_organizers'
 CAN_VIEW_ORGANIZERS_CODENAME = 'view_organizers'
 CAN_VIEW_EVENTS_CODENAME = 'view_events'
@@ -42,7 +43,7 @@ DUPLICATED_SPONSOR_CATEGORY_MESSAGE = _(
 # Sponsoring/invoice states
 SPONSOR_STATE_UNBILLED = _('no facturado')
 SPONSOR_STATE_INVOICED = _('facturado')
-SPONSOR_STATE_CHECKED = _('facturado chequeado')
+SPONSOR_STATE_CHECKED = _('pendiente de pago')
 SPONSOR_STATE_PARTIALLY_PAID = _('pago parcial')
 SPONSOR_STATE_COMPLETELY_PAID = _('pago completo')
 SPONSOR_STATE_CLOSED = _('cerrado')

@@ -1,5 +1,6 @@
 from django.apps import apps
 from events.constants import (
+    CAN_CLOSE_SPONSORING_CODENAME,
     CAN_SET_SPONSORS_ENABLED_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
@@ -37,7 +38,8 @@ SUPER_ORGANIZER_PERMISSIONS_CODENAMES = [
     'add_eventorganizer',
     'change_eventorganizer',
     'delete_eventorganizer',
-    CAN_SET_SPONSORS_ENABLED_CODENAME
+    CAN_SET_SPONSORS_ENABLED_CODENAME,
+    CAN_CLOSE_SPONSORING_CODENAME
 ]
 
 

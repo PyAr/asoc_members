@@ -143,7 +143,7 @@ class Base(Configuration):
     CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
     MEDIA_URL = '/media/'
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+    MEDIA_ROOT = BASE_DIR
 
     LOGIN_URL = '/cuentas/login/'
 
