@@ -60,7 +60,7 @@ def organizer_signup(request):
         form = OrganizerUserSignupForm(request.POST)
         if form.is_valid():
             with transaction.atomic():
-                # ensure that user, organizer and group association is atomic
+                # Ensure that user, organizer, and group association is atomic.
                 user = form.save(commit=False)
                 user.set_password(get_random_string())
                 user.save()

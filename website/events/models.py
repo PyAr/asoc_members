@@ -1,5 +1,5 @@
-from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.urls import reverse
@@ -334,7 +334,7 @@ class Invoice(SaveReversionMixin, AudithUserTime):
     def clean(self):
         if self.partial_payment and self.complete_payment:
             raise ValidationError(
-                _('los atributos partial_payment (pago parcial) y complete_payment ' +
+                _('los atributos partial_payment (pago parcial) y complete_payment '
                   '(pago completo) no pueden estar ambos seteados en Verdadero')
             )
 
