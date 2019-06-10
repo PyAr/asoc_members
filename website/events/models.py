@@ -261,7 +261,7 @@ class Sponsor(SaveReversionMixin, AudithUserTime):
 
     RESPONSABLE_INSCRIPTO = 'responsable inscripto'
     MONOTRIBUTO = 'monotributo'
-    CONSUMIDOR_FINAL = 'consumidor_final'
+    CONSUMIDOR_FINAL = 'consumidor final'
     EXTERIOR = 'exterior'
     OTRO = 'otro'
 
