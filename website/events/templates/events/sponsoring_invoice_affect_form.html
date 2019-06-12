@@ -1,0 +1,18 @@
+{% extends "base_bootstrap_modal_form.html" %}
+{% load crispy_forms_tags %}
+{% block modal_title %}
+<h3>Agregar afectaciòn de factura</h3> 
+{% endblock %} 
+
+{% block form_action %}
+<form role="form" action="{% url 'sponsoring_invoice_affect_create' invoice.pk %}" method="post" enctype="multipart/form-data">
+{% endblock %}
+
+{% block modal_content %}
+                {% csrf_token %}
+                {% crispy form %}
+{% endblock %} 
+{% block modal_footer %}
+<a class="btn btn-default" href="{% url 'sponsoring_detail' invoice.sponsoring.pk %}">Cancelar</a>
+<input type="submit" class="btn btn-primary" value="Crear">
+{% endblock %} 

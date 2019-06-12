@@ -19,6 +19,7 @@ from events.constants import (
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     DUPLICATED_SPONSOR_CATEGORY_MESSAGE,
     MUST_BE_ACCOUNT_OWNER_MESSAGE,
+    MUST_BE_APPROVED_INVOICE_MESSAGE,
     MUST_BE_EVENT_ORGANIZAER_MESSAGE,
     MUST_BE_ORGANIZER_MESSAGE,
     ORGANIZER_MAIL_NOTOFICATION_MESSAGE
@@ -27,6 +28,7 @@ from events.forms import (
     BankAccountDataForm,
     EventUpdateForm,
     InvoiceForm,
+    InvoiceAffectForm,
     OrganizerUpdateForm,
     OrganizerUserSignupForm,
     SponsorForm,
@@ -40,6 +42,7 @@ from events.models import (
     BankAccountData,
     Event,
     Invoice,
+    InvoiceAffect,
     Organizer,
     Sponsor,
     SponsorCategory,
@@ -607,6 +610,53 @@ class InvoiceCreateView(PermissionRequiredMixin, generic.edit.CreateView):
             return super(InvoiceCreateView, self).handle_no_permission()
 
 
+class InvoiceAffectCreateView(PermissionRequiredMixin, generic.edit.CreateView):
+    model = InvoiceAffect
+    form_class = InvoiceAffectForm
+    template_name = 'events/sponsoring_invoice_affect_form.html'
+    permission_required = 'events.add_invoiceaffect'
+
+    def form_valid(self, form):
+        form.instance.invoice = self._get_invoice()
+        return super(InvoiceAffectCreateView, self).form_valid(form)
+
+    def _get_invoice(self):
+        return get_object_or_404(Invoice, pk=self.kwargs['pk'])
+
+    def _get_sponsoring(self):
+        return self._get_invoice().sponsoring
+
+    def get_success_url(self):
+        return self._get_sponsoring().get_absolute_url()
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(InvoiceAffectCreateView, self).get_context_data(**kwargs)
+        context['invoice'] = self._get_invoice()
+        return context
+
+    def has_permission(self):
+        event = self._get_sponsoring().sponsorcategory.event
+        ret = super(InvoiceAffectCreateView, self).has_permission()
+        # Must be event organizer.
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
+        if ret and not self._get_invoice().invoice_ok:
+            self.permission_denied_message = MUST_BE_APPROVED_INVOICE_MESSAGE
+            return False
+
+        return ret
+
+    def handle_no_permission(self):
+        message = self.get_permission_denied_message()
+        if message in [MUST_BE_EVENT_ORGANIZAER_MESSAGE, MUST_BE_APPROVED_INVOICE_MESSAGE]:
+            messages.add_message(self.request, messages.WARNING, message)
+            return redirect('sponsoring_detail', pk=self._get_sponsoring().pk)
+        else:
+            return super(InvoiceAffectCreateView, self).handle_no_permission()
+
+
 events_list = EventsListView.as_view()
 event_detail = EventDetailView.as_view()
 event_change = EventChangeView.as_view()
@@ -629,3 +679,4 @@ sponsoring_create = SponsoringCreateView.as_view()
 sponsoring_detail = SponsoringDetailView.as_view()
 
 sponsoring_invoice_create = InvoiceCreateView.as_view()
+sponsoring_invoice_affect_create = InvoiceAffectCreateView.as_view()

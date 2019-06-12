@@ -33,6 +33,12 @@ urlpatterns = [
         name='sponsoring_invoice_create'
     ),
 
+    path(
+        'eventos/factura/<pk>/afectacion/crear/',
+        views.sponsoring_invoice_affect_create,
+        name='sponsoring_invoice_affect_create'
+    ),
+
     # Organizers urls.
     path('registrar-organizador/', views.organizer_signup, name='organizer_signup'),
     path('organizadores/', views.organizers_list, name='organizer_list'),

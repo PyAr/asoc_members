@@ -10,6 +10,7 @@ from events.models import (
     BankAccountData,
     Event,
     Invoice,
+    InvoiceAffect,
     Organizer,
     Sponsor,
     SponsorCategory,
@@ -160,6 +161,23 @@ class InvoiceForm(forms.ModelForm):
     class Meta:
         model = Invoice
         fields = [
+            'amount',
+            'observations',
+            'document',
+        ]
+
+
+class InvoiceAffectForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(InvoiceAffectForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+    class Meta:
+        model = InvoiceAffect
+        fields = [
+            'category',
             'amount',
             'observations',
             'document',

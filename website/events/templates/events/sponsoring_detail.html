@@ -14,14 +14,14 @@
                 </a></li>
             </ol>
     </div>
-    <h1>Patrocinio {{sponsoring.sponsorcategory.name}} ({{sponsoring.state}})</h1>
+    <h2>Patrocinio {{sponsoring.sponsorcategory.name}} ({{sponsoring.state}})</h2>
     <div class="row sponsoring-detail">
         <div class="col-md-6">
-            <h3>Datos Evento</h3>
+            <h4>Datos Evento</h4>
             {% include "events/event_describe_table.html" with event=event %}
         </div>
         <div class="col-md-6">
-            <h3>Datos Patrocinador </h3>
+            <h4>Datos Patrocinador </h4>
             {% include "sponsors/sponsor_describe_table.html" with sponsor=sponsoring.sponsor %}
         </div>
         
@@ -35,38 +35,87 @@
 
     <div class="row">
         {% if sponsoring.invoice %}
-        <div class="col-md-8">
-            Fatura Monto: {{sponsoring.invoice.amount}}<br/>
-            {% if sponsoring.invoice.extension == ".pdf" %}
-            <!--button id="upload-button">Select PDF</button> 
-            <input type="file" id="file-to-upload" accept="application/pdf" />
-            
-            <div id="pdf-main-container">
-                <div id="pdf-loader">Loading document ...</div>
-                <div id="pdf-contents">
-                    <div id="pdf-meta">
-                        <div id="pdf-buttons">
-                            <button id="pdf-prev">Previous</button>
-                            <button id="pdf-next">Next</button>
-                        </div>
-                        <div id="page-count-container">Page <div id="pdf-current-page"></div> of <div id="pdf-total-pages"></div></div>
-                    </div>
-                    <canvas id="pdf-canvas" width="400"></canvas>
-                    <div id="page-loader">Loading page ...</div>
-                </div>
-            </div-->
-
-            <div id="invoice-pdf-div" class="col-md-12" invoice-url={{sponsoring.invoice.document.url}} worker-url="{% static 'js/pdf.worker.js' %}">
-                {{sponsoring.invoice.extension}}   
-                <canvas id="pdf-canvas"></canvas> 
+        <div class="col-md-6">
+            <div class="row">
+                <h4>Factura</h4>
+                <strong>Monto:</strong> ${{sponsoring.invoice.amount}}<br/>
+                <strong>Documento:</strong> <a href="{{sponsoring.invoice.document.url}}" target="_blank"> descargar <i class="fa fa-download"></i></a>
             </div>
-            {% endif %}
+            <div class="row">
+                {% if sponsoring.invoice.extension == ".pdf" %}
+                <div id="invoice-pdf-div" class="col-md-12 text-left" invoice-url={{sponsoring.invoice.document.url}}>   
+                    <canvas id="pdf-canvas"></canvas> 
+                </div>
+                {% elif sponsoring.invoice.is_image_document %}
+                <div class="col-md-12">
+                    <img src="{{sponsoring.invoice.document.url}}" style="width: 400px;">
+                </div>
+                {% else %}
+                <div class="col-md-12">
+                    <img src="{% static 'images/not_document.svg' %}" style="width: 400px;">
+                </div>
+                {% endif %}
+            </div>
             
         </div>
-        <div class="col-md-4">
-            Afectaciones:
+        <div class="col-md-6">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Afectaciones</h4> 
+                </div> 
+                {% if sponsoring.invoice.invoice_ok and perms.events.add_invoiceaffect %}
+                <div class="col-md-6 text-left" style="padding: 10px">
+                    <a class="btn btn-primary" onclick="return open_modal('{% url 'sponsoring_invoice_affect_create' sponsoring.invoice.pk %}')"><i class="fa fa-plus"> Agregar</i></a>
+                </div>
+                {% endif %}
+            </div>
+            {% for affect in sponsoring.invoice.invoice_affects.all %}
+                <div class="row">
+                    {% if affect.extension == ".pdf" %}
+                    <div class="col-md-5 pdf-affect" affect-url={{affect.document.url}}>
+                        <canvas></canvas>
+                    </div>
+                    {% elif affect.is_image_document %}
+                    <div class="col-md-5 img-affect" affect-url={{affect.document.url}}>
+                            <img src="{{affect.document.url}}" style="width: 200px;">
+                    </div>
+                    {% else %}
+                    <div class="col-md-5" affect-url={{affect.document.url}}>
+                        <img src="{% static 'images/not_document.svg' %}" style="width: 200px;">
+                    </div>
+                    {% endif %}
+                    <div class="col-md-7 affect-description align-middle">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">Tipo</th>
+                                    <td>{{ affect.get_category_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Monto</th>
+                                    <td>{{ affect.amount }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Observaciones</th>
+                                    <td>{{ affect.observations }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Documento</th>
+                                    <td><a href="{{affect.document.url}}" target="_blank"> descargar <i class="fa fa-download"></i></a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <hr>
+                </div>
+            {% empty %}
+                <div class="alert alert-info" role="alert">
+                    No se cargaron afectaciones a la factura actual.
+                </div>
+            {% endfor %}
         </div>
         {% else %}
+
         <div class="col-md-12">
             <div class="alert alert-info" role="alert">
                 Patrocinio sin datos de facturación
@@ -86,12 +135,17 @@
 
 </div>
 <div id="popup" class="modal fade" role="dialog">
+</div>
+<div id="pdf-dialog" class="modal fade" role="dialog">
+    <canvas id="canvas-dialog"></canvas>
+</div>
+<div id="img-dialog" class="modal fade" role="dialog">
+        <img id="img-dialog">
 </div>       
 {% endblock %}
 
 {% block extra_js %}
     <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
-    
     <script src="{% static 'js/modal_form.js' %}"></script>
     <script src="{% static 'js/load_pdf_files.js' %}"></script>
 {% endblock %}

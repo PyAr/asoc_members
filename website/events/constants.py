@@ -39,6 +39,9 @@ DUPLICATED_SPONSOR_CATEGORY_MESSAGE = _(
     'Las categorias de sponsor para un evento deben ser únicas.'
 )
 
+MUST_BE_APPROVED_INVOICE_MESSAGE = _(
+    'La factura debe estar aprobada para poder realizar la acción seleccionada'
+)
 
 # Sponsoring/invoice states
 SPONSOR_STATE_UNBILLED = _('no facturado')
@@ -47,3 +50,6 @@ SPONSOR_STATE_CHECKED = _('pendiente de pago')
 SPONSOR_STATE_PARTIALLY_PAID = _('pago parcial')
 SPONSOR_STATE_COMPLETELY_PAID = _('pago completo')
 SPONSOR_STATE_CLOSED = _('cerrado')
+
+# The idea is have formats supported by img tag
+IMAGE_FORMATS = ['.jpeg', '.jpg', '.gif', '.png', '.svg', '.bmp']

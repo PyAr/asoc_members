@@ -13,6 +13,7 @@ from events.constants import (
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
     CAN_VIEW_SPONSORS_CODENAME,
+    IMAGE_FORMATS,
     SPONSOR_STATE_CHECKED,
     SPONSOR_STATE_CLOSED,
     SPONSOR_STATE_COMPLETELY_PAID,
@@ -373,6 +374,9 @@ class Invoice(SaveReversionMixin, AudithUserTime):
                   '(pago completo) no pueden estar ambos seteados en Verdadero')
             )
 
+    def is_image_document(self):
+        return self.extension() in IMAGE_FORMATS
+
 
 def affect_upload_path(instance, filename):
     """
@@ -407,7 +411,8 @@ class InvoiceAffect(SaveReversionMixin, AudithUserTime):
     invoice = models.ForeignKey(
         'Invoice',
         verbose_name=_('factura'),
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='invoice_affects'
     )
 
     document = models.FileField(_('archivo'), upload_to=affect_upload_path)
@@ -419,3 +424,6 @@ class InvoiceAffect(SaveReversionMixin, AudithUserTime):
     def extension(self):
         name, extension = os.path.splitext(self.document.name)
         return extension
+
+    def is_image_document(self):
+        return self.extension() in IMAGE_FORMATS

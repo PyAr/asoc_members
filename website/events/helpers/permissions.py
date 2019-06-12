@@ -26,6 +26,8 @@ ORGANIZER_PERMISSIONS_CODENAMES = [
     'delete_sponsoring',
     CAN_VIEW_SPONSORS_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
+    'add_invoiceaffect',
+    'delete_invoiceaffect',
 ]
 
 # Initial only superuser has these permissions. But each perm check on view is added here to test
@@ -39,7 +41,8 @@ SUPER_ORGANIZER_PERMISSIONS_CODENAMES = [
     'change_eventorganizer',
     'delete_eventorganizer',
     CAN_SET_SPONSORS_ENABLED_CODENAME,
-    CAN_CLOSE_SPONSORING_CODENAME
+    CAN_CLOSE_SPONSORING_CODENAME,
+    'add_invoice'
 ]
 
 
