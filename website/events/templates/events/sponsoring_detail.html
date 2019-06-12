@@ -14,7 +14,7 @@
                 </a></li>
             </ol>
     </div>
-    <h1>Patrocinio ({{sponsoring.sponsorcategory.name}})</h1>
+    <h1>Patrocinio {{sponsoring.sponsorcategory.name}} ({{sponsoring.state}})</h1>
     <div class="row sponsoring-detail">
         <div class="col-md-6">
             <h3>Datos Evento</h3>
@@ -28,59 +28,70 @@
     </div>
 
     <div class="row">
-            <div class="col-md-12 text-right">
-                <strong>Estado: <span class="text-capitalize">{{sponsoring.state}}</span></strong>
-                {% if sponsoring.state == "no facturado" and perms.events.add_invoice %}
-                    <a class="btn btn-primary"
-                    onclick="return open_modal('{% url 'sponsoring_invoice_create' sponsoring.pk %}')"
-                     >Facturar</a>
-                {% endif %}
-            </div>
-            <div class="row">
-                <div class="col-md-8">
-                    Fatura Monto: {{sponsoring.invoice.amount}}<br/>
-                    {% if sponsoring.invoice.extension == ".pdf" %}
-                    <button id="upload-button">Select PDF</button> 
-                    <input type="file" id="file-to-upload" accept="application/pdf" />
-                    
-                    <div id="pdf-main-container">
-                        <div id="pdf-loader">Loading document ...</div>
-                        <div id="pdf-contents">
-                            <div id="pdf-meta">
-                                <div id="pdf-buttons">
-                                    <button id="pdf-prev">Previous</button>
-                                    <button id="pdf-next">Next</button>
-                                </div>
-                                <div id="page-count-container">Page <div id="pdf-current-page"></div> of <div id="pdf-total-pages"></div></div>
-                            </div>
-                            <canvas id="pdf-canvas" width="400"></canvas>
-                            <div id="page-loader">Loading page ...</div>
-                        </div>
-                    </div>
+        <div class="col-md-12 text-right">
+            Acciones sobre el patrocinio
+        </div>
+    </div>
 
-                    <div id="invoice-pdf-div" class="col-md-12" invoice-url={{sponsoring.invoice.document.url}}>
-                        {{sponsoring.invoice.extension}}    
+    <div class="row">
+        {% if sponsoring.invoice %}
+        <div class="col-md-8">
+            Fatura Monto: {{sponsoring.invoice.amount}}<br/>
+            {% if sponsoring.invoice.extension == ".pdf" %}
+            <!--button id="upload-button">Select PDF</button> 
+            <input type="file" id="file-to-upload" accept="application/pdf" />
+            
+            <div id="pdf-main-container">
+                <div id="pdf-loader">Loading document ...</div>
+                <div id="pdf-contents">
+                    <div id="pdf-meta">
+                        <div id="pdf-buttons">
+                            <button id="pdf-prev">Previous</button>
+                            <button id="pdf-next">Next</button>
+                        </div>
+                        <div id="page-count-container">Page <div id="pdf-current-page"></div> of <div id="pdf-total-pages"></div></div>
                     </div>
-                    {% endif %}
-                    
+                    <canvas id="pdf-canvas" width="400"></canvas>
+                    <div id="page-loader">Loading page ...</div>
                 </div>
-                <div class="col-md-4">
-                    Afectaciones:
-                    
-                    
-                    
-                </div>
-                
+            </div-->
+
+            <div id="invoice-pdf-div" class="col-md-12" invoice-url={{sponsoring.invoice.document.url}} worker-url="{% static 'js/pdf.worker.js' %}">
+                {{sponsoring.invoice.extension}}   
+                <canvas id="pdf-canvas"></canvas> 
             </div>
-    </div>   
+            {% endif %}
+            
+        </div>
+        <div class="col-md-4">
+            Afectaciones:
+        </div>
+        {% else %}
+        <div class="col-md-12">
+            <div class="alert alert-info" role="alert">
+                Patrocinio sin datos de facturación
+            </div>
+            
+            <p class="text-right">
+            {% if sponsoring.state == "no facturado" and perms.events.add_invoice %}
+                <a class="btn btn-primary"
+                onclick="return open_modal('{% url 'sponsoring_invoice_create' sponsoring.pk %}')"
+                    >Facturar</a>
+            {% endif %}
+            </p>
+        </div>
+        {% endif %}
+        
+    </div>
+
 </div>
 <div id="popup" class="modal fade" role="dialog">
 </div>       
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'js/pdf.js' %}"></script>
-    <script src="{% static 'js/pdf.worker.js' %}"></script>
+    <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
+    
     <script src="{% static 'js/modal_form.js' %}"></script>
     <script src="{% static 'js/load_pdf_files.js' %}"></script>
 {% endblock %}

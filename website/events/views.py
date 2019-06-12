@@ -6,7 +6,7 @@ from django.contrib.auth.models import Group
 from django.contrib.sites.shortcuts import get_current_site
 
 from django.db import IntegrityError, transaction
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -250,9 +250,9 @@ class BankOrganizerAccountDataCreateView(PermissionRequiredMixin, generic.edit.C
         organizer.save()
         return HttpResponseRedirect(self.get_success_url())
 
-    def form_invalid(self, form):
+    """ def form_invalid(self, form):
         ret = super(BankOrganizerAccountDataCreateView, self).form_invalid(form)
-        return ret
+        return ret """
 
     def get_success_url(self):
         return self._get_organizer().get_absolute_url()
@@ -560,15 +560,22 @@ class InvoiceCreateView(PermissionRequiredMixin, generic.edit.CreateView):
     template_name = 'events/sponsoring_invoice_form.html'
     permission_required = 'events.add_invoice'
 
-    def get_form(self, form_class=None):
+    def get_initial(self, *args, **kwargs):
         sponsoring = self._get_sponsoring()
-        form = super(InvoiceCreateView, self).get_form(form_class)
-        form.base_fields['amount'].initial = sponsoring.sponsorcategory.amount
-        return form
+        initial = super(InvoiceCreateView, self).get_initial(**kwargs)
+        initial['amount'] = sponsoring.sponsorcategory.amount
+        return initial
 
     def form_valid(self, form):
         form.instance.sponsoring = self._get_sponsoring()
         return super(InvoiceCreateView, self).form_valid(form)
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        if self.request.is_ajax():
+            return JsonResponse(form.errors, status=400)
+        else:
+            return response
 
     def get_success_url(self):
         return self._get_sponsoring().get_absolute_url()
@@ -582,14 +589,6 @@ class InvoiceCreateView(PermissionRequiredMixin, generic.edit.CreateView):
         context['sponsoring'] = self._get_sponsoring()
         context['event'] = self._get_sponsoring().sponsorcategory.event
         return context
-
-    def post(self, request, *args, **kwargs):
-        try:
-            with transaction.atomic():
-                return super().post(request, *args, **kwargs)
-        except IntegrityError:
-            messages.add_message(request, messages.ERROR, DUPLICATED_SPONSOR_CATEGORY_MESSAGE)
-            return redirect('sponsoring_detail', pk=self._get_sponsoring().pk)
 
     def has_permission(self):
         event = self._get_sponsoring().sponsorcategory.event
