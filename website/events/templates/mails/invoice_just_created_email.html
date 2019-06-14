@@ -1,0 +1,8 @@
+{% autoescape off %}
+
+Se ha creado una nueva factura para el patrocinio {{invoice.sponsoring}} 
+
+Por favor ingrese al detalle del mismo para aprobar la misma.
+{{ protocol }}://{{ domain }}{% url 'sponsoring_detail' pk=invoice.sponsoring.pk %}
+
+{% endautoescape %}

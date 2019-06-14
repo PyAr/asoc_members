@@ -9,6 +9,9 @@ from events.helpers.models import AudithUserTime, SaveReversionMixin, ActiveMana
 from events.constants import (
     CUIT_REGEX,
     CAN_CLOSE_SPONSORING_CODENAME,
+    CAN_SET_APPROVED_INVOICE_CODENAME,
+    CAN_SET_COMPLETE_PAYMENT_CODENAME,
+    CAN_SET_PARTIAL_PAYMENT_CODENAME,
     CAN_SET_SPONSORS_ENABLED_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
@@ -376,6 +379,13 @@ class Invoice(SaveReversionMixin, AudithUserTime):
 
     def is_image_document(self):
         return self.extension() in IMAGE_FORMATS
+
+    class Meta:
+        permissions = (
+            (CAN_SET_APPROVED_INVOICE_CODENAME, _('puede aprobar factura')),
+            (CAN_SET_COMPLETE_PAYMENT_CODENAME, _('puede setear pago completo')),
+            (CAN_SET_PARTIAL_PAYMENT_CODENAME, _('puede setear pago parcial')),
+        )
 
 
 def affect_upload_path(instance, filename):

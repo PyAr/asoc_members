@@ -9,11 +9,13 @@ User = get_user_model()
 class EmailNotification():
     EMAIL_TEMPLATES = {
         'organizer_associated_to_event': 'mails/organizer_associated_to_event_email.html',
-        'sponsor_just_created': 'mails/sponsor_just_created_email.html'
+        'sponsor_just_created': 'mails/sponsor_just_created_email.html',
+        'invoice_just_created': 'mails/invoice_just_created_email.html'
     }
     EMAIL_SUBJECTS = {
         'organizer_associated_to_event': 'mails/organizer_associated_to_event_subject.txt',
-        'sponsor_just_created': 'mails/sponsor_just_created_subject.txt'
+        'sponsor_just_created': 'mails/sponsor_just_created_subject.txt',
+        'invoice_just_created': 'mails/invoice_just_created_subject.txt'
     }
 
     def send_organizer_associated_to_event(self, event, organizers, context):
@@ -67,11 +69,42 @@ class EmailNotification():
         # We need to manually close the connection.
         connection.close()
 
+    def send_new_invoice_created(self, invoice, context):
+        """Send email notifiying new invoice was created.
+        Args:
+            invoice: Invoice just created
+            context: Context to compleate at less 'domain' and 'protocol'
+        """
+        template = self.EMAIL_TEMPLATES.get('invoice_just_created')
+        subject = render_to_string(self.EMAIL_SUBJECTS.get('invoice_just_created'))
+        event = invoice.sponsoring.sponsorcategory.event
+        messages = []
+        recipients = self._get_event_organizers_emails(event)
+        for recipient in recipients:
+            context['event'] = event
+            context['invoice'] = invoice
+            body = render_to_string(template, context)
+            message = self._contruct_message(subject, body, recipient)
+            messages.append(message)
+
+        connection = mail.get_connection()
+        # Send the two emails in a single call -
+        connection.send_messages(messages)
+        # The connection was already open so send_messages() doesn't close it.
+        # We need to manually close the connection.
+        connection.close()
+
     def _get_superusers_emails(self):
         recipients = []
         users = User.objects.filter(is_superuser=True).exclude(email__exact='')
         for user in users.all():
             recipients.append(user.email)
+        return recipients
+
+    def _get_event_organizers_emails(self, event):
+        recipients = []
+        for organizer in event.organizers.all():
+            recipients.append(organizer.user.email)
         return recipients
 
     def _contruct_message(self, subject, body, recipients):

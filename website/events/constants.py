@@ -9,6 +9,9 @@ CAN_VIEW_ORGANIZERS_CODENAME = 'view_organizers'
 CAN_VIEW_EVENTS_CODENAME = 'view_events'
 CAN_VIEW_SPONSORS_CODENAME = 'view_sponsors'
 CAN_SET_SPONSORS_ENABLED_CODENAME = 'set_sponsors_enabled'
+CAN_SET_APPROVED_INVOICE_CODENAME = 'set_invoice_approved'
+CAN_SET_COMPLETE_PAYMENT_CODENAME = 'set_invoice_complete_payment'
+CAN_SET_PARTIAL_PAYMENT_CODENAME = 'set_invoice_partial_payment'
 
 # Messages constants, to use on views and test.
 MUST_BE_EVENT_ORGANIZAER_MESSAGE = _(

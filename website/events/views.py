@@ -557,6 +557,21 @@ class SponsoringListView(PermissionRequiredMixin, generic.ListView):
         return ret
 
 
+class SponsoringSetClose(PermissionRequiredMixin, View):
+    permission_required = 'events.close_sponsoring'
+
+    def post(self, request, *args, **kwargs):
+        sponsoring = get_object_or_404(Sponsoring, pk=kwargs['pk'])
+        sponsoring.close = True
+        sponsoring.save()
+        messages.add_message(
+            request,
+            messages.SUCCESS,
+            _('Patrocinio cerrado exitosamente')
+        )
+        return redirect('sponsoring_detail', pk=kwargs['pk'])
+
+
 class InvoiceCreateView(PermissionRequiredMixin, generic.edit.CreateView):
     model = Invoice
     form_class = InvoiceForm
@@ -571,7 +586,18 @@ class InvoiceCreateView(PermissionRequiredMixin, generic.edit.CreateView):
 
     def form_valid(self, form):
         form.instance.sponsoring = self._get_sponsoring()
-        return super(InvoiceCreateView, self).form_valid(form)
+        ret = super(InvoiceCreateView, self).form_valid(form)
+        current_site = get_current_site(self.request)
+        context = {
+            'domain': current_site.domain,
+            'protocol': 'https' if self.request.is_secure() else 'http'
+        }
+        invoice = form.instance
+        email_notifier.send_new_invoice_created(
+            invoice,
+            context
+        )
+        return ret
 
     def form_invalid(self, form):
         response = super().form_invalid(form)
@@ -608,6 +634,51 @@ class InvoiceCreateView(PermissionRequiredMixin, generic.edit.CreateView):
             return redirect('sponsoring_detail', pk=self._get_sponsoring().pk)
         else:
             return super(InvoiceCreateView, self).handle_no_permission()
+
+
+class InvoiceSetAproved(PermissionRequiredMixin, View):
+    permission_required = 'events.set_invoice_approved'
+
+    def post(self, request, *args, **kwargs):
+        invoice = get_object_or_404(Invoice, pk=kwargs['pk'])
+        invoice.invoice_ok = True
+        invoice.save()
+        messages.add_message(
+            request,
+            messages.SUCCESS,
+            _('Factura aprobada exitosamente ')
+        )
+        return redirect('sponsoring_detail', pk=invoice.sponsoring.pk)
+
+
+class InvoiceSetCompletePayment(PermissionRequiredMixin, View):
+    permission_required = 'events.set_invoice_complete_payment'
+
+    def post(self, request, *args, **kwargs):
+        invoice = get_object_or_404(Invoice, pk=kwargs['pk'])
+        invoice.complete_payment = True
+        invoice.save()
+        messages.add_message(
+            request,
+            messages.SUCCESS,
+            _('Factura marcada como pago completo ')
+        )
+        return redirect('sponsoring_detail', pk=invoice.sponsoring.pk)
+
+
+class InvoiceSetPartialPayment(PermissionRequiredMixin, View):
+    permission_required = 'events.set_invoice_partial_payment'
+
+    def post(self, request, *args, **kwargs):
+        invoice = get_object_or_404(Invoice, pk=kwargs['pk'])
+        invoice.partial_payment = True
+        invoice.save()
+        messages.add_message(
+            request,
+            messages.SUCCESS,
+            _('Factura marcada como pago parcial ')
+        )
+        return redirect('sponsoring_detail', pk=invoice.sponsoring.pk)
 
 
 class InvoiceAffectCreateView(PermissionRequiredMixin, generic.edit.CreateView):
@@ -677,6 +748,11 @@ sponsor_set_enabled = SponsorSetEnabled.as_view()
 sponsoring_list = SponsoringListView.as_view()
 sponsoring_create = SponsoringCreateView.as_view()
 sponsoring_detail = SponsoringDetailView.as_view()
+sponsoring_set_close = SponsoringSetClose.as_view()
 
 sponsoring_invoice_create = InvoiceCreateView.as_view()
 sponsoring_invoice_affect_create = InvoiceAffectCreateView.as_view()
+
+invoice_set_approved = InvoiceSetAproved.as_view()
+invoice_set_complete_payment = InvoiceSetCompletePayment.as_view()
+invoice_set_partial_payment = InvoiceSetPartialPayment.as_view()

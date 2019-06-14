@@ -27,6 +27,12 @@ urlpatterns = [
         views.sponsoring_detail,
         name='sponsoring_detail'
     ),
+
+    path(
+        'eventos/patrocinios/<pk>/cerrar',
+        views.sponsoring_set_close,
+        name='sponsoring_set_close'
+    ),
     path(
         'eventos/patrocinios/<pk>/factura/crear/',
         views.sponsoring_invoice_create,
@@ -37,6 +43,23 @@ urlpatterns = [
         'eventos/factura/<pk>/afectacion/crear/',
         views.sponsoring_invoice_affect_create,
         name='sponsoring_invoice_affect_create'
+    ),
+
+    # Invoice actions urls.
+    path(
+        'eventos/factura/<pk>/aprobar/',
+        views.invoice_set_approved,
+        name='invoice_set_approved'
+    ),
+    path(
+        'eventos/factura/<pk>/setear-pago-completo/',
+        views.invoice_set_complete_payment,
+        name='invoice_set_complete_payment'
+    ),
+    path(
+        'eventos/factura/<pk>/setear-pago-parcial/',
+        views.invoice_set_partial_payment,
+        name='invoice_set_partial_payment'
     ),
 
     # Organizers urls.
