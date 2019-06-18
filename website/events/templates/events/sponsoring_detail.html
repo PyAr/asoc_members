@@ -107,12 +107,20 @@
         </div>
         <div class="col-md-6">
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <h4>Afectaciones</h4> 
                 </div> 
                 {% if not sponsoring.close and sponsoring.invoice.invoice_ok and perms.events.add_invoiceaffect %}
-                <div class="col-md-6 text-left" style="padding: 10px">
+                <div class="col-md-7 text-left" style="padding: 10px">
                     <a class="btn btn-primary" onclick="return open_modal('{% url 'sponsoring_invoice_affect_create' sponsoring.invoice.pk %}')"><i class="fa fa-plus"> Agregar</i></a>
+                </div>
+                {% elif not sponsoring.invoice.invoice_ok %}
+
+                <div class="col-md-7 text-left" style="padding: 10px">
+                    <div class="alert alert-info" role="alert">
+                                Necesita aprobar la factura, para agregar afectaciones.
+                    </div>
+                    
                 </div>
                 {% endif %}
             </div>
@@ -206,6 +214,10 @@
 </div>
 <div id="img-dialog" class="modal fade" role="dialog">
         <img id="img-dialog">
+</div>
+
+<div id="confirm-dialog" class="modal fade" role="dialog">
+    {% include "events/sponsoring_close_modal_confirm.html" %}
 </div>       
 {% endblock %}
 

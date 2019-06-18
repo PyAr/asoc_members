@@ -37,7 +37,17 @@
                         <td >{{ sponsoring.sponsor.organization_name }}</td>
                         <td>{{ sponsoring.sponsorcategory.name }}</td>
                         <td>{{ sponsoring.sponsorcategory.amount }}</td>
-                        <td class="text-capitalize">{{ sponsoring.state }}</td>
+                        <td class="text-capitalize">
+                        {% if sponsoring.close %}
+                        <span class="text-danger">
+                        {% elif sponsoring.state == "pago completo" %}
+                        <span class="text-success">
+                        {% else %}
+                        <span >
+                        {% endif %}
+                            <strong>{{ sponsoring.state }}</strong>
+                        </span>
+                        </td>
                     </tr>
                 
                 {% empty %}

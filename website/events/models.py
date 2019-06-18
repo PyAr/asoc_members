@@ -425,7 +425,7 @@ class InvoiceAffect(SaveReversionMixin, AudithUserTime):
         related_name='invoice_affects'
     )
 
-    document = models.FileField(_('archivo'), upload_to=affect_upload_path)
+    document = models.FileField(_('archivo'), upload_to=affect_upload_path, blank=True)
 
     category = models.CharField(
         _('tipo'), max_length=5, choices=TYPE_CHOICES
