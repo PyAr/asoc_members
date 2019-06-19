@@ -186,12 +186,13 @@
                 {% else %}
                     
                    
-                    <form action="{% url 'sponsoring_set_close' sponsoring.pk %}" method="post">
-                        {% csrf_token %}
+                    
+                    
                         {% if perms.events.close_sponsoring %}
-                        <span class="text-right">
-                            <input type="submit" class="btn btn-primary " value="Cerrar patrocinio"/>
-                        </span>
+                        
+                        <a class="btn btn-primary"
+                            onclick="return open_confirm_dialog()"
+                                >Cerrar patrocinio</a>
                         {% endif %}
                         {% if sponsoring.state == "no facturado" and perms.events.add_invoice %}
                             <a class="btn btn-success"
@@ -199,7 +200,7 @@
                                 >Facturar</a>
                         {% endif %}
                         
-                    </form>
+                    
                     
                 {% endif%}
             </div>
