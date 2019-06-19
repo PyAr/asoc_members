@@ -160,12 +160,16 @@
                                     <th scope="row">Observaciones</th>
                                     <td>{{ affect.observations }}</td>
                                 </tr>
-                                {% if affect.document %}
+                                
                                 <tr>
                                     <th scope="row">Documento</th>
+                                    {% if affect.document %}
                                     <td><a href="{{affect.document.url}}" target="_blank"> descargar <i class="fa fa-download"></i></a></td>
+                                    {% else %}
+                                    <td>Sin documento adjunto</td>
+                                    {% endif %}
                                 </tr>
-                                {% endif %}
+                                
                             </tbody>
                         </table>
                     </div>
