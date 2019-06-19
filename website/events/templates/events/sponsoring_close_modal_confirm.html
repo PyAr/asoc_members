@@ -19,7 +19,7 @@
             <div class="modal-footer">
                     <div class="col-lg-12 text-right">
                             
-                            <a class="btn btn-default" href="{% url 'sponsoring_detail' sponsoring.pk %}">Cancelar</a>
+                            <a class="btn btn-default" onclick="return close_confirm_dialog()">Cancelar</a>
                             {% if perms.events.close_sponsoring %}
                             <input type="submit" class="btn btn-primary " value="Aceptar"/>
                             {% endif %}

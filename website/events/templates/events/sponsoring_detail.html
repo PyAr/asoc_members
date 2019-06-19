@@ -126,18 +126,24 @@
             </div>
             {% for affect in sponsoring.invoice.invoice_affects.all %}
                 <div class="row">
-                    {% if affect.extension == ".pdf" %}
-                    <div class="col-md-5 pdf-affect" affect-url={{affect.document.url}}>
-                        <canvas></canvas>
-                    </div>
-                    {% elif affect.is_image_document %}
-                    <div class="col-md-5 img-affect" affect-url={{affect.document.url}}>
-                            <img src="{{affect.document.url}}" style="width: 200px;">
-                    </div>
+                    {%if affect.document %}
+                        {% if affect.extension == ".pdf" %}
+                        <div class="col-md-5 pdf-affect" affect-url={{affect.document.url}}>
+                            <canvas></canvas>
+                        </div>
+                        {% elif affect.is_image_document %}
+                        <div class="col-md-5 img-affect" affect-url={{affect.document.url}}>
+                                <img src="{{affect.document.url}}" style="width: 200px;">
+                        </div>
+                        {% else %}
+                        <div class="col-md-5" affect-url={{affect.document.url}}>
+                            <img src="{% static 'images/not_document.svg' %}" style="width: 200px;">
+                        </div>
+                        {% endif %}
                     {% else %}
-                    <div class="col-md-5" affect-url={{affect.document.url}}>
-                        <img src="{% static 'images/not_document.svg' %}" style="width: 200px;">
-                    </div>
+                        <div class="col-md-5">
+                            <img src="{% static 'images/not_document.svg' %}" style="width: 200px;">
+                        </div>
                     {% endif %}
                     <div class="col-md-7 affect-description align-middle">
                         <table class="table">
@@ -154,10 +160,12 @@
                                     <th scope="row">Observaciones</th>
                                     <td>{{ affect.observations }}</td>
                                 </tr>
+                                {% if affect.document %}
                                 <tr>
                                     <th scope="row">Documento</th>
                                     <td><a href="{{affect.document.url}}" target="_blank"> descargar <i class="fa fa-download"></i></a></td>
                                 </tr>
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>
