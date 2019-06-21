@@ -689,7 +689,20 @@ class InvoiceAffectCreateView(PermissionRequiredMixin, generic.edit.CreateView):
 
     def form_valid(self, form):
         form.instance.invoice = self._get_invoice()
-        return super(InvoiceAffectCreateView, self).form_valid(form)
+        ret = super(InvoiceAffectCreateView, self).form_valid(form)
+        current_site = get_current_site(self.request)
+        context = {
+            'domain': current_site.domain,
+            'protocol': 'https' if self.request.is_secure() else 'http'
+        }
+        invoice_affect = form.instance
+        user = self.request.user
+        email_notifier.send_new_invoice_affect_created(
+            invoice_affect,
+            user,
+            context
+        )
+        return ret
 
     def _get_invoice(self):
         return get_object_or_404(Invoice, pk=self.kwargs['pk'])

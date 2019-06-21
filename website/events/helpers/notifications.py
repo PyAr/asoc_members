@@ -10,12 +10,14 @@ class EmailNotification():
     EMAIL_TEMPLATES = {
         'organizer_associated_to_event': 'mails/organizer_associated_to_event_email.html',
         'sponsor_just_created': 'mails/sponsor_just_created_email.html',
-        'invoice_just_created': 'mails/invoice_just_created_email.html'
+        'invoice_just_created': 'mails/invoice_just_created_email.html',
+        'invoice_affect_just_created': 'mails/invoice_affect_just_created_email.html'
     }
     EMAIL_SUBJECTS = {
         'organizer_associated_to_event': 'mails/organizer_associated_to_event_subject.txt',
         'sponsor_just_created': 'mails/sponsor_just_created_subject.txt',
-        'invoice_just_created': 'mails/invoice_just_created_subject.txt'
+        'invoice_just_created': 'mails/invoice_just_created_subject.txt',
+        'invoice_affect_just_created': 'mails/invoice_affect_just_created_subject.txt'
     }
 
     def send_organizer_associated_to_event(self, event, organizers, context):
@@ -88,7 +90,33 @@ class EmailNotification():
             messages.append(message)
 
         connection = mail.get_connection()
-        # Send the two emails in a single call -
+        # Send the all emails in a single call -
+        connection.send_messages(messages)
+        # The connection was already open so send_messages() doesn't close it.
+        # We need to manually close the connection.
+        connection.close()
+
+    def send_new_invoice_affect_created(self, invoice_affect, created_by, context):
+        """Send email notifiying new invoice affect was created.
+        Args:
+            invoice_affect: InvoiceAffect just created
+            created_by: User whos create the sponsor
+            context: Context to compleate at less 'domain' and 'protocol'
+        """
+        template = self.EMAIL_TEMPLATES.get('invoice_affect_just_created')
+        subject = render_to_string(self.EMAIL_SUBJECTS.get('invoice_affect_just_created'))
+
+        messages = []
+        recipients = self._get_superusers_emails()
+        for recipient in recipients:
+            context['invoice_affect'] = invoice_affect
+            context['user'] = created_by
+            body = render_to_string(template, context)
+            message = self._contruct_message(subject, body, recipient)
+            messages.append(message)
+
+        connection = mail.get_connection()
+        # Send the all emails in a single call -
         connection.send_messages(messages)
         # The connection was already open so send_messages() doesn't close it.
         # We need to manually close the connection.

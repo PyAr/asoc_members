@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
+from django.db.models import Sum
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
@@ -365,6 +366,10 @@ class Invoice(SaveReversionMixin, AudithUserTime):
         on_delete=models.SET_NULL,
         null=True
     )
+
+    def invoice_affects_total_sum(self):
+        sum = self.invoice_affects.all().aggregate(total=Sum('amount'))
+        return sum['total']
 
     def extension(self):
         name, extension = os.path.splitext(self.document.name)
