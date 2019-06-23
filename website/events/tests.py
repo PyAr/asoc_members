@@ -15,12 +15,16 @@ from events.constants import (
 )
 from events.helpers.notifications import email_notifier
 from events.helpers.permissions import (
-    associate_users_permissions,
     ORGANIZER_GROUP_NAME,
-    organizer_permissions,
-    super_organizer_permissions
+    organizer_permissions
 )
-from events.helpers.tests import CustomAssertMethods
+from events.helpers.tests import (
+    CustomAssertMethods,
+    sponsor_data,
+    create_user_set,
+    create_event_set
+
+)
 
 from events.middleware import set_current_user
 from events.models import (
@@ -29,7 +33,7 @@ from events.models import (
     EventOrganizer,
     Organizer,
     Sponsor,
-    SponsorCategory,
+    SponsorCategory
 )
 from unittest.mock import patch
 
@@ -39,55 +43,6 @@ User = get_user_model()
 class MockSuperUser:
     def has_perm(self, perm):
         return True
-
-
-def associate_organizer_perms(organizers_users):
-    permissions = organizer_permissions()
-    associate_users_permissions(organizers_users, permissions)
-
-
-def associate_super_organizer_perms(super_organizers_users):
-    permissions = super_organizer_permissions()
-    associate_users_permissions(super_organizers_users, permissions)
-
-
-def create_user_set():
-    """Create a organizer and superuser users."""
-    organizers = []
-    super_organizers = []
-
-    organizers.append(User.objects.create_user(
-        username="organizer01",
-        email="test01@test.com",
-        password="organizer01"
-    ))
-    organizers.append(User.objects.create_user(
-        username="organizer02",
-        email="test02@test.com",
-        password="organizer02"
-    ))
-
-    super_organizers.append(User.objects.create_user(
-        username="superOrganizer01",
-        email="super01@test.com",
-        password="superOrganizer01"
-    ))
-    # Created to test perms without use superuser.
-    User.objects.create_superuser(
-        username="administrator",
-        email="admin@test.com",
-        password="administrator"
-    )
-
-    associate_organizer_perms(organizers)
-    associate_super_organizer_perms(super_organizers)
-
-
-def create_event_set(user):
-    """Create Events to test."""
-    set_current_user(user)
-    Event.objects.create(name='MyTest01', commission=10)
-    Event.objects.create(name='MyTest02', commission=20)
 
 
 def admin_event_associate_organizers_post_data(event, organizers):
@@ -130,8 +85,18 @@ class EmailTest(TestCase, CustomAssertMethods):
     def test_send_email_after_create_sponsor(self):
         self.client.login(username='organizer01', password='organizer01')
 
+        response = self.client.post(reverse('sponsor_create'), data=sponsor_data)
+        self.assertEqual(response.status_code, 302)
+        count = User.objects.filter(is_superuser=True).exclude(email__exact='').count()
+        self.assertEqual(len(mail.outbox), count)
+        self.assertEqual(mail.outbox[0].subject,
+                         render_to_string('mails/sponsor_just_created_subject.txt'))
+
+    '''def test_send_email_after_create_invoice(self):
+        # To complete the test we need, an event, an enabled sponsor, event_category
+        self.client.login(username='administrator', password='administrator')
         # Send request
-        sposor_data = {
+        invoice_data = {
             'organization_name': 'te patrocino',
             'document_number': '20-26456987-7',
             'vat_condition': 'monotributo',
@@ -139,12 +104,13 @@ class EmailTest(TestCase, CustomAssertMethods):
             'address': ''
         }
 
-        response = self.client.post(reverse('sponsor_create'), data=sposor_data)
+        response = self.client.post(reverse('invoice_create'), data=sposor_data)
         self.assertEqual(response.status_code, 302)
         count = User.objects.filter(is_superuser=True).exclude(email__exact='').count()
         self.assertEqual(len(mail.outbox), count)
         self.assertEqual(mail.outbox[0].subject,
                          render_to_string('mails/sponsor_just_created_subject.txt'))
+    '''
 
     def test_send_email_after_register_organizer(self):
         # Login client with super user
@@ -463,13 +429,7 @@ class SponsorViewsTest(TestCase, CustomAssertMethods):
         ])
 
     def test_organizer_cant_set_sponsors_enabled(self):
-        sponsor_data = {
-            'organization_name': 'te patrocino',
-            'document_number': '20-26456987-7',
-            'vat_condition': 'IVA Responsable Inscripto',
-            'contact_info': '',
-            'address': ''
-        }
+
         sponsor = Sponsor.objects.create(**sponsor_data)
         url = reverse('sponsor_set_enabled', kwargs={'pk': sponsor.pk})
         self.client.login(username='organizer01', password='organizer01')
