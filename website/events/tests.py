@@ -27,7 +27,8 @@ from events.helpers.tests import (
     create_user_set,
     create_event_set,
     create_organizer_set,
-    create_sponsors_set
+    create_sponsors_set,
+    create_sponsoring_set
 )
 
 from events.middleware import set_current_user
@@ -36,7 +37,8 @@ from events.models import (
     Event,
     Organizer,
     Sponsor,
-    SponsorCategory
+    SponsorCategory,
+    Sponsoring
 )
 from unittest.mock import patch
 
@@ -138,7 +140,7 @@ class EmailTest(TestCase, CustomAssertMethods):
             Organizer.objects.all(),
             {'domain': 'testserver', 'protocol': 'http'}
         )
-        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(len(mail.outbox), Organizer.objects.all().count())
 
         send_to = []
         for email in mail.outbox:
@@ -485,3 +487,13 @@ class SponsoringViewsTest(TestCase, CustomAssertMethods):
         self.assertNotIn(not_enabled_sponsor, sponsor_form_field._get_queryset())
         self.assertIn(enabled_sponsor, sponsor_form_field._get_queryset())
         self.assertNotIn(sponsor_category, sponsor_category_form_field._get_queryset())
+
+    def test_cant_access_sponsoring_detail_if_not_event_organizer(self):
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsoring = Sponsoring.objects.filter(sponsorcategory__event=event).first()
+
+        url = reverse('sponsoring_detail', kwargs={'pk': sponsoring.pk})
+        self.client.login(username='organizer03', password='organizer03')
+        response = self.client.get(url)
+        self.assertContainsMessage(response, MUST_BE_EVENT_ORGANIZAER_MESSAGE)

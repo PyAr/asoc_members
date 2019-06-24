@@ -12,7 +12,8 @@ from events.models import (
     EventOrganizer,
     Organizer,
     Sponsor,
-    SponsorCategory
+    SponsorCategory,
+    Sponsoring
 )
 from unittest import TestCase
 User = get_user_model()
@@ -44,9 +45,9 @@ def create_user_set():
     """Create users set to test.
 
     Postcondition:
-    A set of 5 user will be created with the next pursposes:
+    A set of 6 user will be created with the next pursposes:
     noOrganizer: user without perms or organizer association
-    organizer01, organizer02: two simple user to associate organizer perms
+    organizer01, organizer02, , organizer03: three simple user to associate organizer perms
     superOrganizer01: user to test perms that are not from simple organizer
     administrator: super user
     """
@@ -70,7 +71,11 @@ def create_user_set():
         email="test02@test.com",
         password="organizer02"
     ))
-
+    organizers.append(User.objects.create_user(
+        username="organizer03",
+        email="test03@test.com",
+        password="organizer03"
+    ))
     super_organizers.append(User.objects.create_user(
         username="superOrganizer01",
         email="super01@test.com",
@@ -123,7 +128,8 @@ def create_organizer_set(auto_create_user_set=False):
 
     Organizer.objects.bulk_create([
         Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
-        Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
+        Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02"),
+        Organizer(user=User.objects.get(username="organizer03"), first_name="Organizer03")
     ])
 
 
@@ -137,6 +143,7 @@ def associate_events_organizers():
     Postcondition:
     MyTest01 event associated with organizer01 and organizer02
     MyTest02 event associated with organizer02
+    organizer03 has not events associated
     """
     event01 = Event.objects.filter(name='MyTest01').first()
     event02 = Event.objects.filter(name='MyTest02').first()
@@ -162,6 +169,28 @@ def create_sponsors_set():
         document_number='20-26456987-8',
         vat_condition='monotributo',
         enabled=True)
+
+
+def create_sponsoring_set(auto_create_sponsors_set=False):
+    """Create sponsoring set to test.
+
+    Keyword arguments:
+    auto_create_sponsors_set -- flag tindicating that create_sponsors_set function must be executed
+
+    Precondition:
+    create_sponsors_set
+
+    Postcondition:
+    sponsoring created for a enabled sponsor and sponsorcategory1 that is associated with event1
+    """
+    if auto_create_sponsors_set:
+        create_sponsors_set()
+
+    event = Event.objects.filter(name='MyTest01').first()
+    Sponsoring.objects.create(
+        sponsor=Sponsor.objects.filter(enabled=True).first(),
+        sponsorcategory=SponsorCategory.objects.filter(event=event).first()
+    )
 
 
 def get_response_wsgi_messages(response):
