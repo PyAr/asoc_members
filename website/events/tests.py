@@ -497,3 +497,12 @@ class SponsoringViewsTest(TestCase, CustomAssertMethods):
         self.client.login(username='organizer03', password='organizer03')
         response = self.client.get(url)
         self.assertContainsMessage(response, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+
+    def test_cant_access_sponsoring_list_if_not_event_organizer(self):
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+
+        url = reverse('sponsoring_list', kwargs={'event_pk': event.pk})
+        self.client.login(username='organizer03', password='organizer03')
+        response = self.client.get(url)
+        self.assertContainsMessage(response, MUST_BE_EVENT_ORGANIZAER_MESSAGE)

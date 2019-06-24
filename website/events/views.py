@@ -558,6 +558,13 @@ class SponsoringListView(PermissionRequiredMixin, generic.ListView):
             return False
         return ret
 
+    def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+            return redirect('event_list')
+        else:
+            return super(SponsoringListView, self).handle_no_permission()
+
 
 class SponsoringSetClose(PermissionRequiredMixin, View):
     permission_required = 'events.close_sponsoring'
