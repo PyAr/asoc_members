@@ -8,7 +8,10 @@ from events.helpers.permissions import (
 )
 from events.middleware import set_current_user
 from events.models import (
-    Event
+    Event,
+    EventOrganizer,
+    Organizer,
+    SponsorCategory
 )
 from unittest import TestCase
 User = get_user_model()
@@ -22,6 +25,7 @@ sponsor_data = {
 }
 
 invoice_data = {
+    'amount': '20000'
 }
 
 sponsor_categoty_data = {
@@ -41,9 +45,24 @@ def _associate_super_organizer_perms(super_organizers_users):
 
 
 def create_user_set():
-    """Create a organizer and superuser users."""
+    """Create users set to test.
+
+    Postcondition:
+    A set of 5 user will be created with the next pursposes:
+    noOrganizer: user without perms or organizer association
+    organizer01, organizer02: two simple user to associate organizer perms
+    superOrganizer01: user to test perms that are not from simple organizer
+    administrator: super user
+    """
+
     organizers = []
     super_organizers = []
+
+    User.objects.create_user(
+        username="noOrganizer",
+        email="noOrganizer@test.com",
+        password="noOrganizer"
+    )
 
     organizers.append(User.objects.create_user(
         username="organizer01",
@@ -73,10 +92,67 @@ def create_user_set():
 
 
 def create_event_set(user):
-    """Create Events to test."""
+    """Create events set to test.
+
+    Keyword arguments:
+    user -- existing User
+
+    Postcondition:
+    Two Events created by user with: comission 10 and 20.
+    Gold and Silver SponsorCategory associated to events
+    """
     set_current_user(user)
-    Event.objects.create(name='MyTest01', commission=10)
-    Event.objects.create(name='MyTest02', commission=20)
+    event01 = Event.objects.create(name='MyTest01', commission=10)
+    event02 = Event.objects.create(name='MyTest02', commission=20)
+
+    SponsorCategory.objects.create(name='Gold', amount=10000, event=event01)
+    SponsorCategory.objects.create(name='Silver', amount=1000, event=event01)
+    SponsorCategory.objects.create(name='Gold', amount=10000, event=event02)
+
+
+def create_organizer_set(auto_create_user_set=False):
+    """Create organizers set to test.
+
+    Keyword arguments:
+    auto_create_user_set -- flag tindicating that create_user_set function must be executed
+
+    Precondition:
+    create_user_set
+
+    Postcondition:
+    Two Organizers created associated to users organizer01, and organizer02.
+    Not events association.
+    """
+    if auto_create_user_set:
+        create_user_set()
+
+    Organizer.objects.bulk_create([
+        Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
+        Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
+    ])
+
+
+def associate_events_organizers():
+    """Create associations between Events and Organizers.
+
+    Precondition:
+    Users, Organizers and Events must be created, at least by the functions:
+    create_user_set, create_organizer_set and create_event_set
+
+    Postcondition:
+    MyTest01 event associated with organizer01 and organizer02
+    MyTest02 event associated with organizer02
+    """
+    event01 = Event.objects.filter(name='MyTest01').first()
+    event02 = Event.objects.filter(name='MyTest02').first()
+    organizer01 = Organizer.objects.get(user__username='organizer01')
+    organizer02 = Organizer.objects.get(user__username='organizer02')
+
+    EventOrganizer.objects.bulk_create([
+        EventOrganizer(event=event01, organizer=organizer01),
+        EventOrganizer(event=event01, organizer=organizer02),
+        EventOrganizer(event=event02, organizer=organizer02)
+    ])
 
 
 def get_response_wsgi_messages(response):

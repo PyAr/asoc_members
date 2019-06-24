@@ -19,10 +19,12 @@ from events.helpers.permissions import (
     organizer_permissions
 )
 from events.helpers.tests import (
+    associate_events_organizers,
     CustomAssertMethods,
     sponsor_data,
     create_user_set,
-    create_event_set
+    create_event_set,
+    create_organizer_set
 
 )
 
@@ -30,7 +32,6 @@ from events.middleware import set_current_user
 from events.models import (
     BankAccountData,
     Event,
-    EventOrganizer,
     Organizer,
     Sponsor,
     SponsorCategory
@@ -94,22 +95,16 @@ class EmailTest(TestCase, CustomAssertMethods):
 
     '''def test_send_email_after_create_invoice(self):
         # To complete the test we need, an event, an enabled sponsor, event_category
-        self.client.login(username='administrator', password='administrator')
-        # Send request
+        self.client.login(username='superOrganizer01', password='superOrganizer01')
         invoice_data = {
-            'organization_name': 'te patrocino',
-            'document_number': '20-26456987-7',
-            'vat_condition': 'monotributo',
-            'contact_info': '',
-            'address': ''
+            'amount': '20000'
         }
-
-        response = self.client.post(reverse('invoice_create'), data=sposor_data)
+        response = self.client.post(reverse('sponsoring_invoice_create'), data=invoice_data)
         self.assertEqual(response.status_code, 302)
         count = User.objects.filter(is_superuser=True).exclude(email__exact='').count()
         self.assertEqual(len(mail.outbox), count)
         self.assertEqual(mail.outbox[0].subject,
-                         render_to_string('mails/sponsor_just_created_subject.txt'))
+                         render_to_string('mails/invoice_just_created_subject.txt'))
     '''
 
     def test_send_email_after_register_organizer(self):
@@ -134,10 +129,7 @@ class EmailTest(TestCase, CustomAssertMethods):
         listed organizers with the correct subject."""
 
         event = Event.objects.filter(name='MyTest01').first()
-        Organizer.objects.bulk_create([
-            Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
-            Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
-        ])
+        create_organizer_set()
 
         email_notifier.send_organizer_associated_to_event(
             event,
@@ -218,11 +210,7 @@ class EventAdminTest(TestCase):
         create_user_set()
         user = User.objects.first()
         create_event_set(user)
-
-        Organizer.objects.bulk_create([
-            Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
-            Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
-        ])
+        create_organizer_set()
 
     @patch('events.helpers.notifications.EmailNotification.send_organizer_associated_to_event')
     def test_on_organizer_associate_to_event_call_mail_function(self, send_email_function):
@@ -259,14 +247,12 @@ class BankAccountDataTest(TestCase, CustomAssertMethods):
         user = User.objects.first()
         create_event_set(user)
 
-        Organizer.objects.bulk_create([
-            Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01")
-        ])
+        create_organizer_set()
 
     def test_must_be_organizer_to_create_banck_account(self):
         organizer = Organizer.objects.get(user__username="organizer01")
         url = reverse('organizer_create_bank_account_data', kwargs={'pk': organizer.pk})
-        self.client.login(username='organizer02', password='organizer02')
+        self.client.login(username='noOrganizer', password='noOrganizer')
         response = self.client.post(url, data=self.account_data)
         expected_url = reverse('events_home')
         self.assertRedirects(response, expected_url)
@@ -274,10 +260,8 @@ class BankAccountDataTest(TestCase, CustomAssertMethods):
 
     def test_must_be_owner_to_update_banck_account(self):
         account = BankAccountData.objects.create(**self.account_data)
-        organizer02 = Organizer.objects.create(
-            user=User.objects.get(username="organizer02"),
-            first_name="organizer02"
-        )
+        organizer02 = Organizer.objects.get(user__username="organizer02")
+
         organizer = Organizer.objects.get(user__username="organizer01")
         organizer.account_data = account
         organizer.save()
@@ -309,14 +293,11 @@ class EventViewsTest(TestCase, CustomAssertMethods):
         create_user_set()
         user = User.objects.first()
         create_event_set(user)
-
-        Organizer.objects.bulk_create([
-            Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
-            Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
-        ])
+        create_organizer_set()
+        associate_events_organizers()
 
     def test_event_detail_redirects_no_associated_organizer(self):
-        event = Event.objects.filter(name='MyTest01').first()
+        event = Event.objects.filter(name='MyTest02').first()
         url = reverse('event_detail', kwargs={'pk': event.pk})
         self.client.login(username='organizer01', password='organizer01')
         response = self.client.get(url)
@@ -326,10 +307,6 @@ class EventViewsTest(TestCase, CustomAssertMethods):
 
     def test_event_change_redirects_on_closed_event(self):
         event = Event.objects.filter(name='MyTest01').first()
-        EventOrganizer.objects.create(
-            event=event,
-            organizer=Organizer.objects.get(user__username='organizer01')
-        )
         event.close = True
         event.save()
 
@@ -344,15 +321,10 @@ class EventViewsTest(TestCase, CustomAssertMethods):
     def test_cant_duplicate_sponsor_category(self):
         set_current_user(User.objects.filter(username='organizer01').first())
         event = Event.objects.filter(name='MyTest01').first()
-        EventOrganizer.objects.create(
-            event=event,
-            organizer=Organizer.objects.get(user__username='organizer01')
-        )
-        SponsorCategory.objects.create(name='Oro', amount=10000, event=event)
 
         url = reverse('event_create_sponsor_category', kwargs={'pk': event.pk})
         data = {
-            'name': 'Oro',
+            'name': 'Gold',
             'amount': '10000'
         }
         self.client.login(username='organizer01', password='organizer01')
@@ -363,7 +335,7 @@ class EventViewsTest(TestCase, CustomAssertMethods):
 
     def test_cant_create_sponsor_category_not_event_organizer(self):
         set_current_user(User.objects.filter(username='organizer01').first())
-        event = Event.objects.filter(name='MyTest01').first()
+        event = Event.objects.filter(name='MyTest02').first()
         url = reverse('event_create_sponsor_category', kwargs={'pk': event.pk})
         data = {
             'name': 'Oro',
@@ -377,14 +349,11 @@ class EventViewsTest(TestCase, CustomAssertMethods):
     def test_create_sponsor_category_by_event_organizer(self):
         set_current_user(User.objects.filter(username='organizer01').first())
         event = Event.objects.filter(name='MyTest01').first()
-        EventOrganizer.objects.create(
-            event=event,
-            organizer=Organizer.objects.get(user__username='organizer01')
-        )
+
         url = reverse('event_create_sponsor_category', kwargs={'pk': event.pk})
         data = {
             'name': 'Oro',
-            'amount': '10000'
+            'amount': '50000'
         }
         self.client.login(username='organizer01', password='organizer01')
         self.client.post(url, data)
@@ -393,11 +362,6 @@ class EventViewsTest(TestCase, CustomAssertMethods):
 
     def test_event_change_not_updating_name_and_commission(self):
         event = Event.objects.filter(name='MyTest01').first()
-        EventOrganizer.objects.create(
-            event=event,
-            organizer=Organizer.objects.get(user__username='organizer01')
-        )
-
         old_name = event.name
         old_commission = event.commission
 
@@ -419,20 +383,36 @@ class EventViewsTest(TestCase, CustomAssertMethods):
 
 class SponsorViewsTest(TestCase, CustomAssertMethods):
     def setUp(self):
-        create_user_set()
-        # user = User.objects.first()
-        # create_event_set(user)
-
-        Organizer.objects.bulk_create([
-            Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
-            Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
-        ])
+        create_organizer_set(auto_create_user_set=True)
 
     def test_organizer_cant_set_sponsors_enabled(self):
-
         sponsor = Sponsor.objects.create(**sponsor_data)
         url = reverse('sponsor_set_enabled', kwargs={'pk': sponsor.pk})
         self.client.login(username='organizer01', password='organizer01')
         response = self.client.post(url)
         redirect_to_login_url = reverse('login') + '?next=' + url
         self.assertRedirects(response, redirect_to_login_url)
+
+    def test_can_set_sponsors_enabled_with_perms(self):
+        sponsor = Sponsor.objects.create(**sponsor_data)
+        url = reverse('sponsor_set_enabled', kwargs={'pk': sponsor.pk})
+        self.client.login(username='superOrganizer01', password='superOrganizer01')
+        response = self.client.post(url)
+        redirect_to_login_url = reverse('sponsor_detail', kwargs={'pk': sponsor.pk})
+        self.assertRedirects(response, redirect_to_login_url)
+
+    def test_organizer_can_create_sponsor(self):
+        sponsors_count = Sponsor.objects.all().count()
+        url = reverse('sponsor_create')
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url, data=sponsor_data)
+        self.assertEqual(Sponsor.objects.all().count(), sponsors_count+1)
+        self.assertEqual(response.status_code, 302)
+
+
+class SponsoringViewsTest(TestCase, CustomAssertMethods):
+    def setUp(self):
+        create_organizer_set(auto_create_user_set=True)
+        user = User.objects.first()
+        create_event_set(user)
+        associate_events_organizers()
