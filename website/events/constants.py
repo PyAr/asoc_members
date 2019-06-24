@@ -46,6 +46,14 @@ MUST_BE_APPROVED_INVOICE_MESSAGE = _(
     'La factura debe estar aprobada para poder realizar la acción seleccionada'
 )
 
+MUST_EXISTS_SPONSOR_MESSAGE = _(
+    'No se puede asociar patrocinios sin sponsors habilitados'
+)
+
+MUST_EXISTS_SPONSOR_CATEGORY_MESSAGE = _(
+    'No se puede asociar patrocinios sin categorias de sponsor en el evento'
+)
+
 # Sponsoring/invoice states
 SPONSOR_STATE_UNBILLED = _('no facturado')
 SPONSOR_STATE_INVOICED = _('facturado')

@@ -11,6 +11,7 @@ from events.models import (
     Event,
     EventOrganizer,
     Organizer,
+    Sponsor,
     SponsorCategory
 )
 from unittest import TestCase
@@ -26,11 +27,6 @@ sponsor_data = {
 
 invoice_data = {
     'amount': '20000'
-}
-
-sponsor_categoty_data = {
-    'name': 'Oro',
-    'amount': '10000'
 }
 
 
@@ -103,11 +99,10 @@ def create_event_set(user):
     """
     set_current_user(user)
     event01 = Event.objects.create(name='MyTest01', commission=10)
-    event02 = Event.objects.create(name='MyTest02', commission=20)
+    Event.objects.create(name='MyTest02', commission=20)
 
     SponsorCategory.objects.create(name='Gold', amount=10000, event=event01)
     SponsorCategory.objects.create(name='Silver', amount=1000, event=event01)
-    SponsorCategory.objects.create(name='Gold', amount=10000, event=event02)
 
 
 def create_organizer_set(auto_create_user_set=False):
@@ -153,6 +148,20 @@ def associate_events_organizers():
         EventOrganizer(event=event01, organizer=organizer02),
         EventOrganizer(event=event02, organizer=organizer02)
     ])
+
+
+def create_sponsors_set():
+    """Create Sponsors set to test.
+
+    Postcondition:
+    creates two sponsor one is enabled and the other not.
+    """
+    Sponsor.objects.create(**sponsor_data)
+    Sponsor.objects.create(
+        organization_name='EnabledSponsor',
+        document_number='20-26456987-8',
+        vat_condition='monotributo',
+        enabled=True)
 
 
 def get_response_wsgi_messages(response):

@@ -8,6 +8,8 @@ from django.urls import reverse
 from events.constants import (
     CANT_CHANGE_CLOSE_EVENT_MESSAGE,
     DUPLICATED_SPONSOR_CATEGORY_MESSAGE,
+    MUST_EXISTS_SPONSOR_MESSAGE,
+    MUST_EXISTS_SPONSOR_CATEGORY_MESSAGE,
     MUST_BE_ACCOUNT_OWNER_MESSAGE,
     MUST_BE_ORGANIZER_MESSAGE,
     MUST_BE_EVENT_ORGANIZAER_MESSAGE,
@@ -24,8 +26,8 @@ from events.helpers.tests import (
     sponsor_data,
     create_user_set,
     create_event_set,
-    create_organizer_set
-
+    create_organizer_set,
+    create_sponsors_set
 )
 
 from events.middleware import set_current_user
@@ -416,3 +418,70 @@ class SponsoringViewsTest(TestCase, CustomAssertMethods):
         user = User.objects.first()
         create_event_set(user)
         associate_events_organizers()
+
+    def test_cant_get_sponsor_create_form_without_sponsors(self):
+        event = Event.objects.filter(name='MyTest01').first()
+        url = reverse('sponsoring_create', kwargs={'event_pk': event.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.get(url)
+        self.assertContainsMessage(response, MUST_EXISTS_SPONSOR_MESSAGE)
+        redirect_url = reverse('sponsoring_list', kwargs={'event_pk': event.pk})
+        self.assertRedirects(response, redirect_url)
+
+    def test_cant_get_sponsor_create_form_without_sponsor_category(self):
+        create_sponsors_set()
+        event = Event.objects.filter(name='MyTest02').first()
+        url = reverse('sponsoring_create', kwargs={'event_pk': event.pk})
+        self.client.login(username='organizer02', password='organizer02')
+        response = self.client.get(url)
+        self.assertContainsMessage(response, MUST_EXISTS_SPONSOR_CATEGORY_MESSAGE)
+        redirect_url = reverse('sponsoring_list', kwargs={'event_pk': event.pk})
+        self.assertRedirects(response, redirect_url)
+
+    def test_cant_get_sponsor_create_form_if_not_event_organizer(self):
+        create_sponsors_set()
+        event = Event.objects.filter(name='MyTest02').first()
+        SponsorCategory.objects.create(name='Silver', amount=1000, event=event)
+
+        url = reverse('sponsoring_create', kwargs={'event_pk': event.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.get(url)
+        self.assertContainsMessage(response, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+        redirect_url = reverse('event_list')
+        self.assertRedirects(response, redirect_url)
+
+    def test_organizer_can_create_sponsoring(self):
+        create_sponsors_set()
+        event = Event.objects.filter(name='MyTest01').first()
+        url = reverse('sponsoring_create', kwargs={'event_pk': event.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        sponsor_category = SponsorCategory.objects.filter(event=event).first()
+        data = {
+            'comments': ''
+        }
+        sponsor = Sponsor.objects.filter(enabled=True).first()
+        data['sponsorcategory'] = sponsor_category.pk
+        data['sponsor'] = sponsor.pk
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)
+
+    def test_sponsoring_create_form_prefiltered(self):
+        create_sponsors_set()
+        event = Event.objects.filter(name='MyTest01').first()
+        event02 = Event.objects.filter(name='MyTest02').first()
+        sponsor_category = SponsorCategory.objects.create(
+            name='TEst',
+            amount=1000,
+            event=event02
+        )
+
+        url = reverse('sponsoring_create', kwargs={'event_pk': event.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.get(url)
+        sponsor_form_field = response.context['form'].fields['sponsor']
+        sponsor_category_form_field = response.context['form'].fields['sponsorcategory']
+        not_enabled_sponsor = Sponsor.objects.filter(enabled=False).first()
+        enabled_sponsor = Sponsor.objects.filter(enabled=True).first()
+        self.assertNotIn(not_enabled_sponsor, sponsor_form_field._get_queryset())
+        self.assertIn(enabled_sponsor, sponsor_form_field._get_queryset())
+        self.assertNotIn(sponsor_category, sponsor_category_form_field._get_queryset())

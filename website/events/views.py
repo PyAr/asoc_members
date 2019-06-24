@@ -22,6 +22,8 @@ from events.constants import (
     MUST_BE_APPROVED_INVOICE_MESSAGE,
     MUST_BE_EVENT_ORGANIZAER_MESSAGE,
     MUST_BE_ORGANIZER_MESSAGE,
+    MUST_EXISTS_SPONSOR_CATEGORY_MESSAGE,
+    MUST_EXISTS_SPONSOR_MESSAGE,
     ORGANIZER_MAIL_NOTOFICATION_MESSAGE
 )
 from events.forms import (
@@ -491,13 +493,13 @@ class SponsoringCreateView(PermissionRequiredMixin, generic.edit.CreateView):
             messages.add_message(
                 request,
                 messages.WARNING,
-                _('No se puede asociar patrocinios sin categorias de sponsor en el evento')
+                MUST_EXISTS_SPONSOR_CATEGORY_MESSAGE
             )
         if not exists_sponsors:
             messages.add_message(
                 request,
                 messages.WARNING,
-                _('No se puede asociar patrocinios sin sponsors habilitados')
+                MUST_EXISTS_SPONSOR_MESSAGE
             )
 
         if not exists_category or not exists_sponsors:
