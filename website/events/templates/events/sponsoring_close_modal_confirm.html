@@ -1,7 +1,5 @@
 <div class="modal-dialog modal-md">
     <div class="modal-content">
-        <form action="{% url 'sponsoring_set_close' sponsoring.pk %}" method="post">
-                {% csrf_token %}
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal">x</button>
                 
@@ -12,10 +10,12 @@
             
                 <div class="panel panel-default">
                         <div class="panel-body">
-                            Esta seguro que desea cerrar el patrocinio actual?. Esto bloqueará todas las acciones sobre el mismo.
+                            ¿Esta seguro que desea cerrar el patrocinio actual?. Esto bloqueará todas las acciones sobre el mismo.
                         </div>
                 </div>
             </div>
+            <form action="{% url 'sponsoring_set_close' sponsoring.pk %}" method="post">
+                    {% csrf_token %}
             <div class="modal-footer">
                     <div class="col-lg-12 text-right">
                             

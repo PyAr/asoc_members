@@ -6,7 +6,7 @@ from django.db.models import Sum
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
-from events.helpers.models import AudithUserTime, SaveReversionMixin, ActiveManager
+from events.helpers.models import AuditUserTime, SaveReversionMixin, ActiveManager
 from events.constants import (
     CUIT_REGEX,
     CAN_CLOSE_SPONSORING_CODENAME,
@@ -38,7 +38,7 @@ def lower_non_spaces(text):
 
 
 @reversion.register
-class BankAccountData(SaveReversionMixin, AudithUserTime):
+class BankAccountData(SaveReversionMixin, AuditUserTime):
     """Account data for monetary transferences."""
     CC = 'CC'
     CA = 'CA'
@@ -78,7 +78,7 @@ class BankAccountData(SaveReversionMixin, AudithUserTime):
 
 
 @reversion.register
-class Organizer(SaveReversionMixin, AudithUserTime):
+class Organizer(SaveReversionMixin, AuditUserTime):
     """Organizer, person asigned to administrate events."""
     first_name = models.CharField(_('nombre'), max_length=DEFAULT_MAX_LEN)
     last_name = models.CharField(_('apellido'), max_length=DEFAULT_MAX_LEN)
@@ -114,7 +114,7 @@ class Organizer(SaveReversionMixin, AudithUserTime):
 
 
 @reversion.register
-class Event(SaveReversionMixin, AudithUserTime):
+class Event(SaveReversionMixin, AuditUserTime):
     """A representation of an Event."""
     PYDAY = 'PD'
     PYCON = 'PCo'
@@ -167,7 +167,7 @@ class Event(SaveReversionMixin, AudithUserTime):
 
 
 @reversion.register
-class EventOrganizer(SaveReversionMixin, AudithUserTime):
+class EventOrganizer(SaveReversionMixin, AuditUserTime):
     """Represents the many to many relationship between events and organizers. With TimeStamped
     is easy to kwon when a user start as organizer from an event, etc."""
     event = models.ForeignKey('Event', related_name='event_organizers', on_delete=models.CASCADE)
@@ -182,7 +182,7 @@ class EventOrganizer(SaveReversionMixin, AudithUserTime):
 
 
 @reversion.register
-class SponsorCategory(SaveReversionMixin, AudithUserTime):
+class SponsorCategory(SaveReversionMixin, AuditUserTime):
     name = models.CharField(_('nombre'), max_length=DEFAULT_MAX_LEN)
     amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
     event = models.ForeignKey(
@@ -207,7 +207,7 @@ class SponsorCategory(SaveReversionMixin, AudithUserTime):
 
 
 @reversion.register
-class Sponsoring(SaveReversionMixin, AudithUserTime):
+class Sponsoring(SaveReversionMixin, AuditUserTime):
     """
     Sponsoring:
     Represents the many to many relationship between SponsorCategory and Sponsors. Is important
@@ -262,7 +262,7 @@ class Sponsoring(SaveReversionMixin, AudithUserTime):
 
 
 @reversion.register
-class Sponsor(SaveReversionMixin, AudithUserTime):
+class Sponsor(SaveReversionMixin, AuditUserTime):
     """Represents a sponsor. The active atributte is like a soft deletion."""
 
     RESPONSABLE_INSCRIPTO = 'responsable inscripto'
@@ -352,7 +352,7 @@ def invoice_upload_path(instance, filename):
 
 
 @reversion.register
-class Invoice(SaveReversionMixin, AudithUserTime):
+class Invoice(SaveReversionMixin, AuditUserTime):
     amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
     partial_payment = models.BooleanField(_('pago parcial'), default=False)
     complete_payment = models.BooleanField(_('pago completo'), default=False)
@@ -411,7 +411,7 @@ def affect_upload_path(instance, filename):
 
 
 @reversion.register
-class InvoiceAffect(SaveReversionMixin, AudithUserTime):
+class InvoiceAffect(SaveReversionMixin, AuditUserTime):
     PAYMENT = 'Pay'
     WITHHOLD = 'Hold'
     OTHER = 'Oth'
