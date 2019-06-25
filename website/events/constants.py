@@ -54,6 +54,14 @@ MUST_EXISTS_SPONSOR_CATEGORY_MESSAGE = _(
     'No se puede asociar patrocinios sin categorias de sponsor en el evento'
 )
 
+INVOICE_APPOVED_MESSAGE = _('Factura aprobada exitosamente ')
+
+INVOICE_SET_COMPLETE_PAYMENT_MESSAGE = _('Factura marcada como pago completo ')
+
+INVOICE_SET_PARTIAL_PAYMENT_MESSAGE = _('Factura marcada como pago parcial ')
+
+SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE = _('Patrocinio cerrado exitosamente')
+
 # Sponsoring/invoice states
 SPONSOR_STATE_UNBILLED = _('no facturado')
 SPONSOR_STATE_INVOICED = _('facturado')

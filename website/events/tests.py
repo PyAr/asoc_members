@@ -8,12 +8,22 @@ from django.urls import reverse
 from events.constants import (
     CANT_CHANGE_CLOSE_EVENT_MESSAGE,
     DUPLICATED_SPONSOR_CATEGORY_MESSAGE,
+    INVOICE_APPOVED_MESSAGE,
+    INVOICE_SET_COMPLETE_PAYMENT_MESSAGE,
+    INVOICE_SET_PARTIAL_PAYMENT_MESSAGE,
     MUST_EXISTS_SPONSOR_MESSAGE,
     MUST_EXISTS_SPONSOR_CATEGORY_MESSAGE,
     MUST_BE_ACCOUNT_OWNER_MESSAGE,
     MUST_BE_ORGANIZER_MESSAGE,
     MUST_BE_EVENT_ORGANIZAER_MESSAGE,
-    ORGANIZER_MAIL_NOTOFICATION_MESSAGE
+    ORGANIZER_MAIL_NOTOFICATION_MESSAGE,
+    SPONSOR_STATE_UNBILLED,
+    SPONSOR_STATE_CLOSED,
+    SPONSOR_STATE_COMPLETELY_PAID,
+    SPONSOR_STATE_INVOICED,
+    SPONSOR_STATE_CHECKED,
+    SPONSOR_STATE_PARTIALLY_PAID,
+    SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE
 )
 from events.helpers.notifications import email_notifier
 from events.helpers.permissions import (
@@ -28,7 +38,8 @@ from events.helpers.tests import (
     create_event_set,
     create_organizer_set,
     create_sponsors_set,
-    create_sponsoring_set
+    create_sponsoring_set,
+    create_sponsoring_invoice
 )
 
 from events.middleware import set_current_user
@@ -40,6 +51,7 @@ from events.models import (
     SponsorCategory,
     Sponsoring
 )
+from io import StringIO
 from unittest.mock import patch
 
 User = get_user_model()
@@ -97,19 +109,29 @@ class EmailTest(TestCase, CustomAssertMethods):
         self.assertEqual(mail.outbox[0].subject,
                          render_to_string('mails/sponsor_just_created_subject.txt'))
 
-    '''def test_send_email_after_create_invoice(self):
+    @patch('django.core.files.storage.FileSystemStorage.save')
+    def test_send_email_after_create_invoice(self, mock_save):
+        mock_save.return_value = 'invoice.pdf'
+        create_organizer_set()
+        associate_events_organizers()
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsoring = Sponsoring.objects.filter(sponsorcategory__event=event).first()
         # To complete the test we need, an event, an enabled sponsor, event_category
-        self.client.login(username='superOrganizer01', password='superOrganizer01')
-        invoice_data = {
-            'amount': '20000'
+        self.client.login(username='administrator', password='administrator')
+        data = {
+            'amount': '40000',
+            'document': StringIO('test'),
         }
-        response = self.client.post(reverse('sponsoring_invoice_create'), data=invoice_data)
-        self.assertEqual(response.status_code, 302)
-        count = User.objects.filter(is_superuser=True).exclude(email__exact='').count()
+        url = reverse('sponsoring_invoice_create', kwargs={'pk': sponsoring.pk})
+        response = self.client.post(url, data)
+
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': sponsoring.pk})
+        self.assertRedirects(response, redirect_url)
+        count = event.organizers.count()
         self.assertEqual(len(mail.outbox), count)
         self.assertEqual(mail.outbox[0].subject,
                          render_to_string('mails/invoice_just_created_subject.txt'))
-    '''
 
     def test_send_email_after_register_organizer(self):
         # Login client with super user
@@ -506,3 +528,153 @@ class SponsoringViewsTest(TestCase, CustomAssertMethods):
         self.client.login(username='organizer03', password='organizer03')
         response = self.client.get(url)
         self.assertContainsMessage(response, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+
+    def test_organizer_cant_close_sponsoring(self):
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsoring = Sponsoring.objects.filter(sponsorcategory__event=event).first()
+
+        self.assertFalse(sponsoring.close)
+        url = reverse('sponsoring_set_close', kwargs={'pk': sponsoring.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url)
+        redirect_to_login_url = reverse('login') + '?next=' + url
+        self.assertRedirects(response, redirect_to_login_url)
+
+    def test_super_organizer_can_close_sponsoring(self):
+        # Test 'close' state from 'unbilled'.
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsoring = Sponsoring.objects.filter(sponsorcategory__event=event).first()
+        self.assertEqual(sponsoring.state, SPONSOR_STATE_UNBILLED)
+        url = reverse('sponsoring_set_close', kwargs={'pk': sponsoring.pk})
+        self.client.login(username='superOrganizer01', password='superOrganizer01')
+        response = self.client.post(url)
+
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': sponsoring.pk})
+        self.assertRedirects(response, redirect_url, target_status_code=302)
+        self.assertContainsMessage(response, SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE)
+
+        sponsoring.refresh_from_db()
+        self.assertEqual(sponsoring.state, SPONSOR_STATE_CLOSED)
+
+    def test_organizer_cant_set_complete_payment(self):
+        invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        url = reverse('invoice_set_complete_payment', kwargs={'pk': invoice.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url)
+        redirect_to_login_url = reverse('login') + '?next=' + url
+        self.assertRedirects(response, redirect_to_login_url)
+
+    def test_super_organizer_can_set_complete_payment(self):
+        invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        invoice.invoice_ok = True
+        invoice.save()
+        self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_CHECKED)
+        url = reverse('invoice_set_complete_payment', kwargs={'pk': invoice.pk})
+        self.client.login(username='superOrganizer01', password='superOrganizer01')
+        response = self.client.post(url)
+
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})
+
+        self.assertRedirects(response, redirect_url, target_status_code=302)
+        self.assertContainsMessage(response, INVOICE_SET_COMPLETE_PAYMENT_MESSAGE)
+        invoice.sponsoring.refresh_from_db()
+        self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_COMPLETELY_PAID)
+
+    def test_organizer_cant_set_partial_payment(self):
+        invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        url = reverse('invoice_set_partial_payment', kwargs={'pk': invoice.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url)
+        redirect_to_login_url = reverse('login') + '?next=' + url
+        self.assertRedirects(response, redirect_to_login_url)
+
+    def test_super_organizer_can_set_partial_payment(self):
+        invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        invoice.invoice_ok = True
+        invoice.save()
+        self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_CHECKED)
+        url = reverse('invoice_set_partial_payment', kwargs={'pk': invoice.pk})
+        self.client.login(username='superOrganizer01', password='superOrganizer01')
+        response = self.client.post(url)
+
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})
+
+        self.assertRedirects(response, redirect_url, target_status_code=302)
+        self.assertContainsMessage(response, INVOICE_SET_PARTIAL_PAYMENT_MESSAGE)
+        invoice.sponsoring.refresh_from_db()
+        self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_PARTIALLY_PAID)
+
+    def test_sponsoring_state_to_invoiced_after_invoice_asscociation(self):
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsoring = Sponsoring.objects.filter(sponsorcategory__event=event).first()
+        self.assertEqual(sponsoring.state, SPONSOR_STATE_UNBILLED)
+        create_sponsoring_invoice()
+        sponsoring.refresh_from_db()
+        self.assertEqual(sponsoring.state, SPONSOR_STATE_INVOICED)
+
+    def test_organizer_cant_add_invoice(self):
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsoring = Sponsoring.objects.filter(sponsorcategory__event=event).first()
+        url = reverse('sponsoring_invoice_create', kwargs={'pk': sponsoring.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        data = {
+            'amount': '40000',
+            'document': StringIO('test'),
+        }
+        response = self.client.post(url, data)
+        redirect_to_login_url = reverse('login') + '?next=' + url
+        self.assertRedirects(response, redirect_to_login_url)
+
+    @patch('django.core.files.storage.FileSystemStorage.save')
+    def test_super_user_can_add_invoice(self, mock_save):
+        mock_save.return_value = 'invoice.pdf'
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsoring = Sponsoring.objects.filter(sponsorcategory__event=event).first()
+        url = reverse('sponsoring_invoice_create', kwargs={'pk': sponsoring.pk})
+        self.client.login(username='administrator', password='administrator')
+        data = {
+            'amount': '40000',
+            'document': StringIO('test'),
+        }
+        response = self.client.post(url, data)
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': sponsoring.pk})
+        self.assertRedirects(response, redirect_url)
+        sponsoring.refresh_from_db()
+        self.assertEqual(sponsoring.state, SPONSOR_STATE_INVOICED)
+
+    def test_organizer_can_check_invoice(self):
+        invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_INVOICED)
+
+        url = reverse('invoice_set_approved', kwargs={'pk': invoice.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url)
+
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})
+
+        self.assertRedirects(response, redirect_url)
+        self.assertContainsMessage(response, INVOICE_APPOVED_MESSAGE)
+        invoice.sponsoring.refresh_from_db()
+        self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_CHECKED)
+
+    def test_organizer_can_add_invoice_affect(self):
+        invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        invoice.invoice_ok = True
+        invoice.save()
+
+        url = reverse('sponsoring_invoice_affect_create', kwargs={'pk': invoice.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        data = {
+            'amount': '1000',
+            'category': 'Pay'
+        }
+        response = self.client.post(url, data)
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})
+        self.assertRedirects(response, redirect_url)
+        invoice.sponsoring.refresh_from_db()
+        self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_CHECKED)

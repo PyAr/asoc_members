@@ -18,13 +18,17 @@ from events.constants import (
     CANT_CHANGE_CLOSE_EVENT_MESSAGE,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     DUPLICATED_SPONSOR_CATEGORY_MESSAGE,
+    INVOICE_APPOVED_MESSAGE,
+    INVOICE_SET_COMPLETE_PAYMENT_MESSAGE,
+    INVOICE_SET_PARTIAL_PAYMENT_MESSAGE,
     MUST_BE_ACCOUNT_OWNER_MESSAGE,
     MUST_BE_APPROVED_INVOICE_MESSAGE,
     MUST_BE_EVENT_ORGANIZAER_MESSAGE,
     MUST_BE_ORGANIZER_MESSAGE,
     MUST_EXISTS_SPONSOR_CATEGORY_MESSAGE,
     MUST_EXISTS_SPONSOR_MESSAGE,
-    ORGANIZER_MAIL_NOTOFICATION_MESSAGE
+    ORGANIZER_MAIL_NOTOFICATION_MESSAGE,
+    SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE
 )
 from events.forms import (
     BankAccountDataForm,
@@ -254,10 +258,6 @@ class BankOrganizerAccountDataCreateView(PermissionRequiredMixin, generic.edit.C
         organizer.account_data = self.object
         organizer.save()
         return HttpResponseRedirect(self.get_success_url())
-
-    """ def form_invalid(self, form):
-        ret = super(BankOrganizerAccountDataCreateView, self).form_invalid(form)
-        return ret """
 
     def get_success_url(self):
         return self._get_organizer().get_absolute_url()
@@ -576,7 +576,7 @@ class SponsoringSetClose(PermissionRequiredMixin, View):
         messages.add_message(
             request,
             messages.SUCCESS,
-            _('Patrocinio cerrado exitosamente')
+            SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE
         )
         return redirect('sponsoring_detail', pk=kwargs['pk'])
 
@@ -640,7 +640,7 @@ class InvoiceCreateView(PermissionRequiredMixin, generic.edit.CreateView):
     def handle_no_permission(self):
         if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
             messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
-            return redirect('sponsoring_detail', pk=self._get_sponsoring().pk)
+            return redirect('event_list')
         else:
             return super(InvoiceCreateView, self).handle_no_permission()
 
@@ -655,7 +655,7 @@ class InvoiceSetAproved(PermissionRequiredMixin, View):
         messages.add_message(
             request,
             messages.SUCCESS,
-            _('Factura aprobada exitosamente ')
+            INVOICE_APPOVED_MESSAGE
         )
         return redirect('sponsoring_detail', pk=invoice.sponsoring.pk)
 
@@ -670,7 +670,7 @@ class InvoiceSetCompletePayment(PermissionRequiredMixin, View):
         messages.add_message(
             request,
             messages.SUCCESS,
-            _('Factura marcada como pago completo ')
+            INVOICE_SET_COMPLETE_PAYMENT_MESSAGE
         )
         return redirect('sponsoring_detail', pk=invoice.sponsoring.pk)
 
@@ -685,7 +685,7 @@ class InvoiceSetPartialPayment(PermissionRequiredMixin, View):
         messages.add_message(
             request,
             messages.SUCCESS,
-            _('Factura marcada como pago parcial ')
+            INVOICE_SET_PARTIAL_PAYMENT_MESSAGE
         )
         return redirect('sponsoring_detail', pk=invoice.sponsoring.pk)
 

@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
+from django.core.files import File
 from django.utils.translation import ugettext_lazy as _
 from events.helpers.permissions import (
     associate_users_permissions,
@@ -10,13 +11,16 @@ from events.middleware import set_current_user
 from events.models import (
     Event,
     EventOrganizer,
+    Invoice,
     Organizer,
     Sponsor,
     SponsorCategory,
     Sponsoring
 )
-from unittest import TestCase
+from unittest import TestCase, mock
+
 User = get_user_model()
+
 
 sponsor_data = {
     'organization_name': 'te patrocino',
@@ -191,6 +195,39 @@ def create_sponsoring_set(auto_create_sponsors_set=False):
         sponsor=Sponsor.objects.filter(enabled=True).first(),
         sponsorcategory=SponsorCategory.objects.filter(event=event).first()
     )
+
+
+def create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=False):
+    """Create sponsoring invoice to test.
+
+    Keyword arguments:
+    auto_create_sponsoring_and_sponsor -- flag tindicating that create_sponsoring_set function
+    must be executed
+
+    Precondition:
+    create_sponsoring_set
+
+    Postcondition:
+    invoice created for an unclose sponsoring associate with sponsorcategory1 that is associated
+    with event1
+    """
+    invoice_file_mock = mock.MagicMock(spec=File, name='InvoiceMock')
+    invoice_file_mock.name = 'invoice.pdf'
+
+    if auto_create_sponsoring_and_sponsor:
+        create_sponsoring_set(auto_create_sponsors_set=True)
+
+    event = Event.objects.filter(name='MyTest01').first()
+    sponsoring = Sponsoring.objects.filter(
+        close=False,
+        sponsorcategory=SponsorCategory.objects.filter(event=event).first()
+    ).first()
+    invoice = Invoice(amount=10000, sponsoring=sponsoring, document=invoice_file_mock)
+    with mock.patch('django.core.files.storage.FileSystemStorage.save') as mock_save:
+        mock_save.return_value = 'invoice.pdf'
+        invoice.save()
+
+    return invoice
 
 
 def get_response_wsgi_messages(response):
