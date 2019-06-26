@@ -133,6 +133,29 @@ class EmailTest(TestCase, CustomAssertMethods):
         self.assertEqual(mail.outbox[0].subject,
                          render_to_string('mails/invoice_just_created_subject.txt'))
 
+    def test_send_email_after_create_invoice_affect(self):
+        create_organizer_set()
+        associate_events_organizers()
+        invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        invoice.invoice_ok = True
+        invoice.save()
+
+        url = reverse('sponsoring_invoice_affect_create', kwargs={'pk': invoice.pk})
+        # To complete the test we need, an event, an enabled sponsor, event_category
+        self.client.login(username='administrator', password='administrator')
+        data = {
+            'amount': '1000',
+            'category': 'Pay'
+        }
+        response = self.client.post(url, data)
+
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})
+        self.assertRedirects(response, redirect_url)
+        count = User.objects.filter(is_superuser=True).exclude(email__exact='').count()
+        self.assertEqual(len(mail.outbox), count)
+        self.assertEqual(mail.outbox[0].subject,
+                         render_to_string('mails/invoice_affect_just_created_subject.txt'))
+
     def test_send_email_after_register_organizer(self):
         # Login client with super user
         self.client.login(username='administrator', password='administrator')
