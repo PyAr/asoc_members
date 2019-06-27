@@ -103,6 +103,12 @@ class Organizer(SaveReversionMixin, AuditUserTime):
     def __str__(self):
         return f"{ self.user.username } - {self.email}"
 
+    def get_associate_events(self, show_closed=False):
+        if show_closed:
+            return self.events
+        else:
+            return self.events.filter(close=False)
+
     def get_absolute_url(self):
         return reverse('organizer_detail', args=[str(self.pk)])
 
@@ -158,6 +164,9 @@ class Event(SaveReversionMixin, AuditUserTime):
             f"- {self.name} "
             f"({self.place})"
         )
+
+    def has_complete_data(self):
+        return self.place and self.start_date and self.category
 
     class Meta:
         permissions = (

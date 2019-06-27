@@ -30,6 +30,7 @@ from events.helpers.permissions import (
     ORGANIZER_GROUP_NAME,
     organizer_permissions
 )
+from events.helpers.task import _not_approved_invoices
 from events.helpers.tests import (
     associate_events_organizers,
     CustomAssertMethods,
@@ -701,3 +702,28 @@ class SponsoringViewsTest(TestCase, CustomAssertMethods):
         self.assertRedirects(response, redirect_url)
         invoice.sponsoring.refresh_from_db()
         self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_CHECKED)
+
+
+class PendindTaskTest(TestCase, CustomAssertMethods):
+
+    def setUp(self):
+        create_organizer_set(auto_create_user_set=True)
+        user = User.objects.first()
+        create_event_set(user)
+        associate_events_organizers()
+        self.invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+
+    def test_organizer_get_associate_events_not_include_close(self):
+        organizer = Organizer.objects.get(user__username='organizer01')
+        events = organizer.get_associate_events()
+        event01 = Event.objects.filter(name='MyTest01').first()
+        self.assertIn(event01, events)
+        event01.close = True
+        event01.save()
+        events = organizer.get_associate_events()
+        self.assertNotIn(event01, events)
+
+    def test_not_approved_invoices(self):
+        organizer = Organizer.objects.get(user__username='organizer01')
+        invoices = _not_approved_invoices(organizer)
+        self.assertIn(self.invoice, invoices)
