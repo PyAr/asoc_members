@@ -65,7 +65,24 @@ def not_sponsor_category_task_builder(event):
 
 
 def not_approved_invoices_task_builder(invoice):
-    raise NotImplementedError()
+    description = f'Falta aprobar la factura correspondiente al patrocinio: "{invoice.sponsoring}"'
+    url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})
+    time = invoice.created
+    return Task(description, url, time)
+
+
+def not_complete_personal_data_task_builder(organizer):
+    description = f'Falta completar su informacion personal'
+    url = reverse('organizer_change', kwargs={'pk': organizer.pk})
+    time = organizer.created
+    return Task(description, url, time)
+
+
+def not_account_data_task_builder(organizer):
+    description = f'Falta completar sus datos de cuenta bancaria'
+    url = reverse('organizer_create_bank_account_data', kwargs={'pk': organizer.pk})
+    time = organizer.created
+    return Task(description, url, time)
 
 
 factory = TaskFactory()
@@ -82,7 +99,7 @@ def calculate_super_user_task():
     NotImplementedError('Not implemented error')
 
 
-def calculate_organizer_task(organizer_use):
+def calculate_organizer_task(organizer_user):
     """Calculates organizer pending tasks.
 
     Parameters:
@@ -92,7 +109,8 @@ def calculate_organizer_task(organizer_use):
     list(Task): List of organizer task
     """
     tasks = []
-    organizer = Organizer.object.get(user=organizer_use)
+    organizer = Organizer.objects.get(user=organizer_user)
+
     # Incomplete events.
     incomplete_events = _incomoplete_events(organizer)
     for event in incomplete_events:
@@ -105,8 +123,16 @@ def calculate_organizer_task(organizer_use):
 
     # Not approved invoices.
     not_approved_invoices = _not_approved_invoices(organizer)
-    for invoice in not_approved_invoices():
+    for invoice in not_approved_invoices:
         tasks.append(not_approved_invoices_task_builder(invoice))
+
+    if not organizer.has_complete_personal_data():
+        tasks.append(not_complete_personal_data_task_builder(organizer))
+    else:
+        if not organizer.has_account_data():
+            tasks.append(not_account_data_task_builder(organizer))
+
+    tasks.sort(key=lambda x: x.time, reverse=True)
     return tasks
 
 
@@ -134,6 +160,6 @@ def _not_approved_invoices(organizer):
     invoices = Invoice.objects.filter(
         invoice_ok=False,
         sponsoring__close=False,
-        sponsoring__sponsorcategory__event__organizers__in=(organizer,)
+        sponsoring__sponsorcategory__event__in=organizer.get_associate_events()
     )
-    return invoices.distinct()
+    return invoices.all()

@@ -30,7 +30,7 @@ from events.helpers.permissions import (
     ORGANIZER_GROUP_NAME,
     organizer_permissions
 )
-from events.helpers.task import _not_approved_invoices
+from events.helpers.task import _not_approved_invoices, calculate_organizer_task
 from events.helpers.tests import (
     associate_events_organizers,
     CustomAssertMethods,
@@ -727,3 +727,44 @@ class PendindTaskTest(TestCase, CustomAssertMethods):
         organizer = Organizer.objects.get(user__username='organizer01')
         invoices = _not_approved_invoices(organizer)
         self.assertIn(self.invoice, invoices)
+        # After approve is not
+        self.invoice.invoice_ok = True
+        self.invoice.save()
+        invoices = _not_approved_invoices(organizer)
+        self.assertNotIn(self.invoice, invoices)
+
+    def test_orgnizer_complete_data(self):
+        organizer = Organizer.objects.get(user__username='organizer01')
+        self.assertFalse(organizer.has_complete_personal_data())
+        # True after complete first and last name
+        organizer.first_name = "TestFirstName"
+        organizer.last_name = "TestLastName"
+        organizer.save()
+        self.assertTrue(organizer.has_complete_personal_data())
+
+    @patch('events.helpers.task._incomoplete_events', return_value=[])
+    @patch('events.helpers.task._not_sponsor_category', return_value=[])
+    @patch('events.helpers.task._not_approved_invoices', return_value=[])
+    @patch('events.models.Organizer.has_complete_personal_data', return_value=True)
+    @patch('events.models.Organizer.has_account_data', return_value=False)
+    def test_calculate_organizer_tasks(
+        self,
+        organizer_has_account_data_function,
+        organizer_has_complete_personal_data_function,
+        not_approved_invoices_function,
+        not_sponsor_category_function,
+        incomplete_events_function
+    ):
+        # Some test that can be do it, are
+        # The functions _incomoplete_events, _not_sponsor_category, _not_approved_invoices
+        # organizer.has_complete_personal_data and has_account_data are called
+        # incomplete_events_function.return_value = [Event.objects.filter(name='MyTest01').first()]
+        organizer = Organizer.objects.get(user__username='organizer01')
+        tasks = calculate_organizer_task(organizer.user)
+        incomplete_events_function.assert_called_once_with(organizer)
+        not_sponsor_category_function.assert_called_once_with(organizer, [])
+        not_approved_invoices_function.assert_called_once_with(organizer)
+        organizer_has_complete_personal_data_function.assert_called_once()
+        organizer_has_account_data_function.assert_called_once()
+
+        self.assertEqual(len(tasks), 1)

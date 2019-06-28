@@ -112,6 +112,15 @@ class Organizer(SaveReversionMixin, AuditUserTime):
     def get_absolute_url(self):
         return reverse('organizer_detail', args=[str(self.pk)])
 
+    def has_account_data(self):
+        return self.account_data is not None
+
+    def has_complete_personal_data(self):
+        if self.first_name and self.last_name:
+            return True
+        else:
+            return False
+
     class Meta:
         permissions = (
             (CAN_VIEW_ORGANIZERS_CODENAME, _('puede ver organizadores')),
