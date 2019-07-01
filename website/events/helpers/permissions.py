@@ -1,10 +1,15 @@
 from django.apps import apps
 from events.constants import (
+    CAN_CLOSE_SPONSORING_CODENAME,
+    CAN_SET_APPROVED_INVOICE_CODENAME,
+    CAN_SET_COMPLETE_PAYMENT_CODENAME,
+    CAN_SET_PARTIAL_PAYMENT_CODENAME,
     CAN_SET_SPONSORS_ENABLED_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
     CAN_VIEW_SPONSORS_CODENAME
 )
+from events.models import Organizer
 
 Group = apps.get_model("auth", "Group")
 Permission = apps.get_model("auth", "Permission")
@@ -24,6 +29,9 @@ ORGANIZER_PERMISSIONS_CODENAMES = [
     'delete_sponsoring',
     CAN_VIEW_SPONSORS_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
+    'add_invoiceaffect',
+    'delete_invoiceaffect',
+    CAN_SET_APPROVED_INVOICE_CODENAME,
 ]
 
 # Initial only superuser has these permissions. But each perm check on view is added here to test
@@ -36,7 +44,11 @@ SUPER_ORGANIZER_PERMISSIONS_CODENAMES = [
     'add_eventorganizer',
     'change_eventorganizer',
     'delete_eventorganizer',
-    CAN_SET_SPONSORS_ENABLED_CODENAME
+    CAN_SET_SPONSORS_ENABLED_CODENAME,
+    CAN_CLOSE_SPONSORING_CODENAME,
+    'add_invoice',
+    CAN_SET_COMPLETE_PAYMENT_CODENAME,
+    CAN_SET_PARTIAL_PAYMENT_CODENAME
 ]
 
 
@@ -91,3 +103,20 @@ def remove_organizer_group(apps, schema_editor):
     Group = apps.get_model("auth", "Group")
     organizer_group = Group.objects.get(name=ORGANIZER_GROUP_NAME)
     organizer_group.delete()
+
+
+def is_event_organizer(user, event):
+    # Returns if a user is organizer of an event, or is a superuser.
+    if not user.is_superuser:
+        try:
+            organizer = Organizer.objects.get(user=user)
+        except Organizer.DoesNotExist:
+            organizer = None
+        if organizer and (organizer in event.organizers.all()):
+            return True
+        else:
+            return False
+    else:
+        return True
+
+    return False

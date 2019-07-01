@@ -78,18 +78,16 @@ class InvoiceAdmin(CompareVersionAdmin):
         'document',
         'invoice_ok',
         'partial_payment',
-        'complete_payment',
-        'close'
+        'complete_payment'
     )
     list_display = (
         'sponsoring',
         'amount',
         'partial_payment',
         'complete_payment',
-        'invoice_ok',
-        'close')
+        'invoice_ok')
     search_fields = ('sponsoring__sponsor__organization_name', )
-    list_filter = ('invoice_ok', 'partial_payment', 'complete_payment', 'close')
+    list_filter = ('invoice_ok', 'partial_payment', 'complete_payment')
     list_select_related = (
         'sponsoring',
     )
@@ -140,9 +138,10 @@ class SponsoringAdmin(CompareVersionAdmin):
     fields = (
         'sponsor',
         'sponsorcategory',
-        'comments'
+        'comments',
+        'close'
     )
-    list_display = ('sponsor', 'event')
+    list_display = ('sponsor', 'event', 'close')
     search_fields = (
         'invoice__sponsoring__sponsor__organization_name',
         'invoice__sponsoring__sponsorcategory__event__name'

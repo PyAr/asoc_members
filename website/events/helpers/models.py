@@ -8,7 +8,7 @@ import reversion
 User = get_user_model()
 
 
-class AudithUserTime(TimeStampedModel):
+class AuditUserTime(TimeStampedModel):
     """Abstrac model to audith times and user."""
     created_by = models.ForeignKey(
         User,
@@ -30,7 +30,7 @@ class AudithUserTime(TimeStampedModel):
             if not self.pk:  #: Is a create.
                 self.created_by = user
             self.changed_by = user
-        super(AudithUserTime, self).save(*args, **kwargs)
+        super(AuditUserTime, self).save(*args, **kwargs)
 
     class Meta:
         abstract = True

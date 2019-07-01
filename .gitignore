@@ -102,6 +102,7 @@ ENV/
 
 db.sqlite3
 /static/
+website/media/
 website/static/
 website/pictures/
 mercadopago*.json

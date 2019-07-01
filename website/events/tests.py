@@ -8,28 +8,50 @@ from django.urls import reverse
 from events.constants import (
     CANT_CHANGE_CLOSE_EVENT_MESSAGE,
     DUPLICATED_SPONSOR_CATEGORY_MESSAGE,
+    INVOICE_APPOVED_MESSAGE,
+    INVOICE_SET_COMPLETE_PAYMENT_MESSAGE,
+    INVOICE_SET_PARTIAL_PAYMENT_MESSAGE,
+    MUST_EXISTS_SPONSOR_MESSAGE,
+    MUST_EXISTS_SPONSOR_CATEGORY_MESSAGE,
     MUST_BE_ACCOUNT_OWNER_MESSAGE,
     MUST_BE_ORGANIZER_MESSAGE,
     MUST_BE_EVENT_ORGANIZAER_MESSAGE,
-    ORGANIZER_MAIL_NOTOFICATION_MESSAGE
+    ORGANIZER_MAIL_NOTOFICATION_MESSAGE,
+    SPONSOR_STATE_UNBILLED,
+    SPONSOR_STATE_CLOSED,
+    SPONSOR_STATE_COMPLETELY_PAID,
+    SPONSOR_STATE_INVOICED,
+    SPONSOR_STATE_CHECKED,
+    SPONSOR_STATE_PARTIALLY_PAID,
+    SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE
 )
 from events.helpers.notifications import email_notifier
 from events.helpers.permissions import (
-    associate_users_permissions,
     ORGANIZER_GROUP_NAME,
-    organizer_permissions,
-    super_organizer_permissions
+    organizer_permissions
 )
-from events.helpers.tests import CustomAssertMethods
+from events.helpers.tests import (
+    associate_events_organizers,
+    CustomAssertMethods,
+    sponsor_data,
+    create_user_set,
+    create_event_set,
+    create_organizer_set,
+    create_sponsors_set,
+    create_sponsoring_set,
+    create_sponsoring_invoice
+)
+
 from events.middleware import set_current_user
 from events.models import (
     BankAccountData,
     Event,
-    EventOrganizer,
     Organizer,
     Sponsor,
     SponsorCategory,
+    Sponsoring
 )
+from io import StringIO
 from unittest.mock import patch
 
 User = get_user_model()
@@ -38,55 +60,6 @@ User = get_user_model()
 class MockSuperUser:
     def has_perm(self, perm):
         return True
-
-
-def associate_organizer_perms(organizers_users):
-    permissions = organizer_permissions()
-    associate_users_permissions(organizers_users, permissions)
-
-
-def associate_super_organizer_perms(super_organizers_users):
-    permissions = super_organizer_permissions()
-    associate_users_permissions(super_organizers_users, permissions)
-
-
-def create_user_set():
-    """Create a organizer and superuser users."""
-    organizers = []
-    super_organizers = []
-
-    organizers.append(User.objects.create_user(
-        username="organizer01",
-        email="test01@test.com",
-        password="organizer01"
-    ))
-    organizers.append(User.objects.create_user(
-        username="organizer02",
-        email="test02@test.com",
-        password="organizer02"
-    ))
-
-    super_organizers.append(User.objects.create_user(
-        username="superOrganizer01",
-        email="super01@test.com",
-        password="superOrganizer01"
-    ))
-    # Created to test perms without use superuser.
-    User.objects.create_superuser(
-        username="administrator",
-        email="admin@test.com",
-        password="administrator"
-    )
-
-    associate_organizer_perms(organizers)
-    associate_super_organizer_perms(super_organizers)
-
-
-def create_event_set(user):
-    """Create Events to test."""
-    set_current_user(user)
-    Event.objects.create(name='MyTest01', commission=10)
-    Event.objects.create(name='MyTest02', commission=20)
 
 
 def admin_event_associate_organizers_post_data(event, organizers):
@@ -129,21 +102,59 @@ class EmailTest(TestCase, CustomAssertMethods):
     def test_send_email_after_create_sponsor(self):
         self.client.login(username='organizer01', password='organizer01')
 
-        # Send request
-        sposor_data = {
-            'organization_name': 'te patrocino',
-            'document_number': '20-26456987-7',
-            'vat_condition': 'monotributo',
-            'contact_info': '',
-            'address': ''
-        }
-
-        response = self.client.post(reverse('sponsor_create'), data=sposor_data)
+        response = self.client.post(reverse('sponsor_create'), data=sponsor_data)
         self.assertEqual(response.status_code, 302)
         count = User.objects.filter(is_superuser=True).exclude(email__exact='').count()
         self.assertEqual(len(mail.outbox), count)
         self.assertEqual(mail.outbox[0].subject,
                          render_to_string('mails/sponsor_just_created_subject.txt'))
+
+    @patch('django.core.files.storage.FileSystemStorage.save')
+    def test_send_email_after_create_invoice(self, mock_save):
+        mock_save.return_value = 'invoice.pdf'
+        create_organizer_set()
+        associate_events_organizers()
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsoring = Sponsoring.objects.filter(sponsorcategory__event=event).first()
+        # To complete the test we need, an event, an enabled sponsor, event_category
+        self.client.login(username='administrator', password='administrator')
+        data = {
+            'amount': '40000',
+            'document': StringIO('test'),
+        }
+        url = reverse('sponsoring_invoice_create', kwargs={'pk': sponsoring.pk})
+        response = self.client.post(url, data)
+
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': sponsoring.pk})
+        self.assertRedirects(response, redirect_url)
+        count = event.organizers.count()
+        self.assertEqual(len(mail.outbox), count)
+        self.assertEqual(mail.outbox[0].subject,
+                         render_to_string('mails/invoice_just_created_subject.txt'))
+
+    def test_send_email_after_create_invoice_affect(self):
+        create_organizer_set()
+        associate_events_organizers()
+        invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        invoice.invoice_ok = True
+        invoice.save()
+
+        url = reverse('sponsoring_invoice_affect_create', kwargs={'pk': invoice.pk})
+        # To complete the test we need, an event, an enabled sponsor, event_category
+        self.client.login(username='administrator', password='administrator')
+        data = {
+            'amount': '1000',
+            'category': 'Pay'
+        }
+        response = self.client.post(url, data)
+
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})
+        self.assertRedirects(response, redirect_url)
+        count = User.objects.filter(is_superuser=True).exclude(email__exact='').count()
+        self.assertEqual(len(mail.outbox), count)
+        self.assertEqual(mail.outbox[0].subject,
+                         render_to_string('mails/invoice_affect_just_created_subject.txt'))
 
     def test_send_email_after_register_organizer(self):
         # Login client with super user
@@ -167,17 +178,14 @@ class EmailTest(TestCase, CustomAssertMethods):
         listed organizers with the correct subject."""
 
         event = Event.objects.filter(name='MyTest01').first()
-        Organizer.objects.bulk_create([
-            Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
-            Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
-        ])
+        create_organizer_set()
 
         email_notifier.send_organizer_associated_to_event(
             event,
             Organizer.objects.all(),
             {'domain': 'testserver', 'protocol': 'http'}
         )
-        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(len(mail.outbox), Organizer.objects.all().count())
 
         send_to = []
         for email in mail.outbox:
@@ -251,11 +259,7 @@ class EventAdminTest(TestCase):
         create_user_set()
         user = User.objects.first()
         create_event_set(user)
-
-        Organizer.objects.bulk_create([
-            Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
-            Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
-        ])
+        create_organizer_set()
 
     @patch('events.helpers.notifications.EmailNotification.send_organizer_associated_to_event')
     def test_on_organizer_associate_to_event_call_mail_function(self, send_email_function):
@@ -292,14 +296,12 @@ class BankAccountDataTest(TestCase, CustomAssertMethods):
         user = User.objects.first()
         create_event_set(user)
 
-        Organizer.objects.bulk_create([
-            Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01")
-        ])
+        create_organizer_set()
 
     def test_must_be_organizer_to_create_banck_account(self):
         organizer = Organizer.objects.get(user__username="organizer01")
         url = reverse('organizer_create_bank_account_data', kwargs={'pk': organizer.pk})
-        self.client.login(username='organizer02', password='organizer02')
+        self.client.login(username='noOrganizer', password='noOrganizer')
         response = self.client.post(url, data=self.account_data)
         expected_url = reverse('events_home')
         self.assertRedirects(response, expected_url)
@@ -307,10 +309,8 @@ class BankAccountDataTest(TestCase, CustomAssertMethods):
 
     def test_must_be_owner_to_update_banck_account(self):
         account = BankAccountData.objects.create(**self.account_data)
-        organizer02 = Organizer.objects.create(
-            user=User.objects.get(username="organizer02"),
-            first_name="organizer02"
-        )
+        organizer02 = Organizer.objects.get(user__username="organizer02")
+
         organizer = Organizer.objects.get(user__username="organizer01")
         organizer.account_data = account
         organizer.save()
@@ -342,14 +342,11 @@ class EventViewsTest(TestCase, CustomAssertMethods):
         create_user_set()
         user = User.objects.first()
         create_event_set(user)
-
-        Organizer.objects.bulk_create([
-            Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
-            Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
-        ])
+        create_organizer_set()
+        associate_events_organizers()
 
     def test_event_detail_redirects_no_associated_organizer(self):
-        event = Event.objects.filter(name='MyTest01').first()
+        event = Event.objects.filter(name='MyTest02').first()
         url = reverse('event_detail', kwargs={'pk': event.pk})
         self.client.login(username='organizer01', password='organizer01')
         response = self.client.get(url)
@@ -359,10 +356,6 @@ class EventViewsTest(TestCase, CustomAssertMethods):
 
     def test_event_change_redirects_on_closed_event(self):
         event = Event.objects.filter(name='MyTest01').first()
-        EventOrganizer.objects.create(
-            event=event,
-            organizer=Organizer.objects.get(user__username='organizer01')
-        )
         event.close = True
         event.save()
 
@@ -377,15 +370,10 @@ class EventViewsTest(TestCase, CustomAssertMethods):
     def test_cant_duplicate_sponsor_category(self):
         set_current_user(User.objects.filter(username='organizer01').first())
         event = Event.objects.filter(name='MyTest01').first()
-        EventOrganizer.objects.create(
-            event=event,
-            organizer=Organizer.objects.get(user__username='organizer01')
-        )
-        SponsorCategory.objects.create(name='Oro', amount=10000, event=event)
 
         url = reverse('event_create_sponsor_category', kwargs={'pk': event.pk})
         data = {
-            'name': 'Oro',
+            'name': 'Gold',
             'amount': '10000'
         }
         self.client.login(username='organizer01', password='organizer01')
@@ -396,7 +384,7 @@ class EventViewsTest(TestCase, CustomAssertMethods):
 
     def test_cant_create_sponsor_category_not_event_organizer(self):
         set_current_user(User.objects.filter(username='organizer01').first())
-        event = Event.objects.filter(name='MyTest01').first()
+        event = Event.objects.filter(name='MyTest02').first()
         url = reverse('event_create_sponsor_category', kwargs={'pk': event.pk})
         data = {
             'name': 'Oro',
@@ -410,14 +398,11 @@ class EventViewsTest(TestCase, CustomAssertMethods):
     def test_create_sponsor_category_by_event_organizer(self):
         set_current_user(User.objects.filter(username='organizer01').first())
         event = Event.objects.filter(name='MyTest01').first()
-        EventOrganizer.objects.create(
-            event=event,
-            organizer=Organizer.objects.get(user__username='organizer01')
-        )
+
         url = reverse('event_create_sponsor_category', kwargs={'pk': event.pk})
         data = {
             'name': 'Oro',
-            'amount': '10000'
+            'amount': '50000'
         }
         self.client.login(username='organizer01', password='organizer01')
         self.client.post(url, data)
@@ -426,11 +411,6 @@ class EventViewsTest(TestCase, CustomAssertMethods):
 
     def test_event_change_not_updating_name_and_commission(self):
         event = Event.objects.filter(name='MyTest01').first()
-        EventOrganizer.objects.create(
-            event=event,
-            organizer=Organizer.objects.get(user__username='organizer01')
-        )
-
         old_name = event.name
         old_commission = event.commission
 
@@ -452,26 +432,272 @@ class EventViewsTest(TestCase, CustomAssertMethods):
 
 class SponsorViewsTest(TestCase, CustomAssertMethods):
     def setUp(self):
-        create_user_set()
-        # user = User.objects.first()
-        # create_event_set(user)
-
-        Organizer.objects.bulk_create([
-            Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
-            Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02")
-        ])
+        create_organizer_set(auto_create_user_set=True)
 
     def test_organizer_cant_set_sponsors_enabled(self):
-        sponsor_data = {
-            'organization_name': 'te patrocino',
-            'document_number': '20-26456987-7',
-            'vat_condition': 'IVA Responsable Inscripto',
-            'contact_info': '',
-            'address': ''
-        }
         sponsor = Sponsor.objects.create(**sponsor_data)
         url = reverse('sponsor_set_enabled', kwargs={'pk': sponsor.pk})
         self.client.login(username='organizer01', password='organizer01')
         response = self.client.post(url)
         redirect_to_login_url = reverse('login') + '?next=' + url
         self.assertRedirects(response, redirect_to_login_url)
+
+    def test_can_set_sponsors_enabled_with_perms(self):
+        sponsor = Sponsor.objects.create(**sponsor_data)
+        url = reverse('sponsor_set_enabled', kwargs={'pk': sponsor.pk})
+        self.client.login(username='superOrganizer01', password='superOrganizer01')
+        response = self.client.post(url)
+        redirect_to_login_url = reverse('sponsor_detail', kwargs={'pk': sponsor.pk})
+        self.assertRedirects(response, redirect_to_login_url)
+
+    def test_organizer_can_create_sponsor(self):
+        sponsors_count = Sponsor.objects.all().count()
+        url = reverse('sponsor_create')
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url, data=sponsor_data)
+        self.assertEqual(Sponsor.objects.all().count(), sponsors_count+1)
+        self.assertEqual(response.status_code, 302)
+
+
+class SponsoringViewsTest(TestCase, CustomAssertMethods):
+    def setUp(self):
+        create_organizer_set(auto_create_user_set=True)
+        user = User.objects.first()
+        create_event_set(user)
+        associate_events_organizers()
+
+    def test_cant_get_sponsor_create_form_without_sponsors(self):
+        event = Event.objects.filter(name='MyTest01').first()
+        url = reverse('sponsoring_create', kwargs={'event_pk': event.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.get(url)
+        self.assertContainsMessage(response, MUST_EXISTS_SPONSOR_MESSAGE)
+        redirect_url = reverse('sponsoring_list', kwargs={'event_pk': event.pk})
+        self.assertRedirects(response, redirect_url)
+
+    def test_cant_get_sponsor_create_form_without_sponsor_category(self):
+        create_sponsors_set()
+        event = Event.objects.filter(name='MyTest02').first()
+        url = reverse('sponsoring_create', kwargs={'event_pk': event.pk})
+        self.client.login(username='organizer02', password='organizer02')
+        response = self.client.get(url)
+        self.assertContainsMessage(response, MUST_EXISTS_SPONSOR_CATEGORY_MESSAGE)
+        redirect_url = reverse('sponsoring_list', kwargs={'event_pk': event.pk})
+        self.assertRedirects(response, redirect_url)
+
+    def test_cant_get_sponsor_create_form_if_not_event_organizer(self):
+        create_sponsors_set()
+        event = Event.objects.filter(name='MyTest02').first()
+        SponsorCategory.objects.create(name='Silver', amount=1000, event=event)
+
+        url = reverse('sponsoring_create', kwargs={'event_pk': event.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.get(url)
+        self.assertContainsMessage(response, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+        redirect_url = reverse('event_list')
+        self.assertRedirects(response, redirect_url)
+
+    def test_organizer_can_create_sponsoring(self):
+        create_sponsors_set()
+        event = Event.objects.filter(name='MyTest01').first()
+        url = reverse('sponsoring_create', kwargs={'event_pk': event.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        sponsor_category = SponsorCategory.objects.filter(event=event).first()
+        data = {
+            'comments': ''
+        }
+        sponsor = Sponsor.objects.filter(enabled=True).first()
+        data['sponsorcategory'] = sponsor_category.pk
+        data['sponsor'] = sponsor.pk
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)
+
+    def test_sponsoring_create_form_prefiltered(self):
+        create_sponsors_set()
+        event = Event.objects.filter(name='MyTest01').first()
+        event02 = Event.objects.filter(name='MyTest02').first()
+        sponsor_category = SponsorCategory.objects.create(
+            name='TEst',
+            amount=1000,
+            event=event02
+        )
+
+        url = reverse('sponsoring_create', kwargs={'event_pk': event.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.get(url)
+        sponsor_form_field = response.context['form'].fields['sponsor']
+        sponsor_category_form_field = response.context['form'].fields['sponsorcategory']
+        not_enabled_sponsor = Sponsor.objects.filter(enabled=False).first()
+        enabled_sponsor = Sponsor.objects.filter(enabled=True).first()
+        self.assertNotIn(not_enabled_sponsor, sponsor_form_field._get_queryset())
+        self.assertIn(enabled_sponsor, sponsor_form_field._get_queryset())
+        self.assertNotIn(sponsor_category, sponsor_category_form_field._get_queryset())
+
+    def test_cant_access_sponsoring_detail_if_not_event_organizer(self):
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsoring = Sponsoring.objects.filter(sponsorcategory__event=event).first()
+
+        url = reverse('sponsoring_detail', kwargs={'pk': sponsoring.pk})
+        self.client.login(username='organizer03', password='organizer03')
+        response = self.client.get(url)
+        self.assertContainsMessage(response, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+
+    def test_cant_access_sponsoring_list_if_not_event_organizer(self):
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+
+        url = reverse('sponsoring_list', kwargs={'event_pk': event.pk})
+        self.client.login(username='organizer03', password='organizer03')
+        response = self.client.get(url)
+        self.assertContainsMessage(response, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+
+    def test_organizer_cant_close_sponsoring(self):
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsoring = Sponsoring.objects.filter(sponsorcategory__event=event).first()
+
+        self.assertFalse(sponsoring.close)
+        url = reverse('sponsoring_set_close', kwargs={'pk': sponsoring.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url)
+        redirect_to_login_url = reverse('login') + '?next=' + url
+        self.assertRedirects(response, redirect_to_login_url)
+
+    def test_super_organizer_can_close_sponsoring(self):
+        # Test 'close' state from 'unbilled'.
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsoring = Sponsoring.objects.filter(sponsorcategory__event=event).first()
+        self.assertEqual(sponsoring.state, SPONSOR_STATE_UNBILLED)
+        url = reverse('sponsoring_set_close', kwargs={'pk': sponsoring.pk})
+        self.client.login(username='superOrganizer01', password='superOrganizer01')
+        response = self.client.post(url)
+
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': sponsoring.pk})
+        self.assertRedirects(response, redirect_url, target_status_code=302)
+        self.assertContainsMessage(response, SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE)
+
+        sponsoring.refresh_from_db()
+        self.assertEqual(sponsoring.state, SPONSOR_STATE_CLOSED)
+
+    def test_organizer_cant_set_complete_payment(self):
+        invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        url = reverse('invoice_set_complete_payment', kwargs={'pk': invoice.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url)
+        redirect_to_login_url = reverse('login') + '?next=' + url
+        self.assertRedirects(response, redirect_to_login_url)
+
+    def test_super_organizer_can_set_complete_payment(self):
+        invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        invoice.invoice_ok = True
+        invoice.save()
+        self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_CHECKED)
+        url = reverse('invoice_set_complete_payment', kwargs={'pk': invoice.pk})
+        self.client.login(username='superOrganizer01', password='superOrganizer01')
+        response = self.client.post(url)
+
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})
+
+        self.assertRedirects(response, redirect_url, target_status_code=302)
+        self.assertContainsMessage(response, INVOICE_SET_COMPLETE_PAYMENT_MESSAGE)
+        invoice.sponsoring.refresh_from_db()
+        self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_COMPLETELY_PAID)
+
+    def test_organizer_cant_set_partial_payment(self):
+        invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        url = reverse('invoice_set_partial_payment', kwargs={'pk': invoice.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url)
+        redirect_to_login_url = reverse('login') + '?next=' + url
+        self.assertRedirects(response, redirect_to_login_url)
+
+    def test_super_organizer_can_set_partial_payment(self):
+        invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        invoice.invoice_ok = True
+        invoice.save()
+        self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_CHECKED)
+        url = reverse('invoice_set_partial_payment', kwargs={'pk': invoice.pk})
+        self.client.login(username='superOrganizer01', password='superOrganizer01')
+        response = self.client.post(url)
+
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})
+
+        self.assertRedirects(response, redirect_url, target_status_code=302)
+        self.assertContainsMessage(response, INVOICE_SET_PARTIAL_PAYMENT_MESSAGE)
+        invoice.sponsoring.refresh_from_db()
+        self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_PARTIALLY_PAID)
+
+    def test_sponsoring_state_to_invoiced_after_invoice_asscociation(self):
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsoring = Sponsoring.objects.filter(sponsorcategory__event=event).first()
+        self.assertEqual(sponsoring.state, SPONSOR_STATE_UNBILLED)
+        create_sponsoring_invoice()
+        sponsoring.refresh_from_db()
+        self.assertEqual(sponsoring.state, SPONSOR_STATE_INVOICED)
+
+    def test_organizer_cant_add_invoice(self):
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsoring = Sponsoring.objects.filter(sponsorcategory__event=event).first()
+        url = reverse('sponsoring_invoice_create', kwargs={'pk': sponsoring.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        data = {
+            'amount': '40000',
+            'document': StringIO('test'),
+        }
+        response = self.client.post(url, data)
+        redirect_to_login_url = reverse('login') + '?next=' + url
+        self.assertRedirects(response, redirect_to_login_url)
+
+    @patch('django.core.files.storage.FileSystemStorage.save')
+    def test_super_user_can_add_invoice(self, mock_save):
+        mock_save.return_value = 'invoice.pdf'
+        create_sponsoring_set(auto_create_sponsors_set=True)
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsoring = Sponsoring.objects.filter(sponsorcategory__event=event).first()
+        url = reverse('sponsoring_invoice_create', kwargs={'pk': sponsoring.pk})
+        self.client.login(username='administrator', password='administrator')
+        data = {
+            'amount': '40000',
+            'document': StringIO('test'),
+        }
+        response = self.client.post(url, data)
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': sponsoring.pk})
+        self.assertRedirects(response, redirect_url)
+        sponsoring.refresh_from_db()
+        self.assertEqual(sponsoring.state, SPONSOR_STATE_INVOICED)
+
+    def test_organizer_can_check_invoice(self):
+        invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_INVOICED)
+
+        url = reverse('invoice_set_approved', kwargs={'pk': invoice.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url)
+
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})
+
+        self.assertRedirects(response, redirect_url)
+        self.assertContainsMessage(response, INVOICE_APPOVED_MESSAGE)
+        invoice.sponsoring.refresh_from_db()
+        self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_CHECKED)
+
+    def test_organizer_can_add_invoice_affect(self):
+        invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        invoice.invoice_ok = True
+        invoice.save()
+
+        url = reverse('sponsoring_invoice_affect_create', kwargs={'pk': invoice.pk})
+        self.client.login(username='organizer01', password='organizer01')
+        data = {
+            'amount': '1000',
+            'category': 'Pay'
+        }
+        response = self.client.post(url, data)
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})
+        self.assertRedirects(response, redirect_url)
+        invoice.sponsoring.refresh_from_db()
+        self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_CHECKED)

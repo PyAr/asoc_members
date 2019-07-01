@@ -1,0 +1,18 @@
+{% autoescape off %}
+
+El usuario "{{ user.username }}" ha creado un nueva afectacion de factura con la siguiente información:
+
+Patrocinio: {{invoice_affect.invoice.sponsoring}}
+Tipo Afectación: {{ invoice_affect.get_category_display }}
+Monto: {{ invoice_affect.amount }}
+
+Junto con esta afectación los estados de cuenta del patrocinio quedan como:
+Facturado: ${{ invoice_affect.invoice.amount }}
+Suma afectaciones: ${{ invoice_affect.invoice.invoice_affects_total_sum }}
+
+
+En caso de necesitar realizar alguna acción puede ingresar directo al patrocinio desde el siguiente link.
+{{ protocol }}://{{ domain }}{% url 'sponsoring_detail' pk=invoice_affect.invoice.sponsoring.pk %}
+
+
+{% endautoescape %}
