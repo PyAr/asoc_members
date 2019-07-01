@@ -42,7 +42,7 @@ from events.forms import (
     SponsoringForm
 )
 from events.helpers.notifications import email_notifier
-from events.helpers.task import calculate_organizer_task
+from events.helpers.task import calculate_organizer_task, calculate_super_user_task
 from events.helpers.views import seach_filterd_queryset
 from events.helpers.permissions import is_event_organizer, ORGANIZER_GROUP_NAME
 from events.models import (
@@ -66,7 +66,7 @@ def events_home(request):
         tasks = calculate_organizer_task(user)
     else:
         if user.is_superuser:
-            tasks = []
+            tasks = calculate_super_user_task()
 
     return render(request, 'events_home.html', {'tasks': tasks})
 

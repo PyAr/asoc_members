@@ -15,7 +15,8 @@ The idea is represents the next set of task types:
         * Sponsoring with invoice affect that sum total invoice and not complete flag setted
 """
 from django.urls import reverse
-from events.models import Invoice, Organizer, SponsorCategory
+from django.utils.translation import gettext_lazy as _
+from events.models import Invoice, Organizer, Sponsor, SponsorCategory
 
 INCOMPLETE_EVENT = 'incomplete_event'
 NOT_SPONSOR_CAEGORY = 'not_sponsor_category'
@@ -51,42 +52,68 @@ class TaskFactory:
 
 
 def incomplete_event_task_builder(event):
-    description = f'El evento: "{event}", no tiene toda la informacion completa'
+    description = _(
+        f'El evento: "{event}", no tiene toda la informacion completa'
+    )
     url = reverse('event_change', kwargs={'pk': event.pk})
     time = event.modified
     return Task(description, url, time)
 
 
 def not_sponsor_category_task_builder(event):
-    description = f'El evento: "{event}", no tiene categorias de sponsor cargadas'
+    description = _(
+        f'El evento: "{event}", no tiene categorias de sponsor cargadas'
+    )
     url = reverse('event_detail', kwargs={'pk': event.pk})
     time = event.modified
     return Task(description, url, time)
 
 
 def not_approved_invoices_task_builder(invoice):
-    description = f'Falta aprobar la factura correspondiente al patrocinio: "{invoice.sponsoring}"'
+    description = _(
+        f'Falta aprobar la factura correspondiente al patrocinio: "{invoice.sponsoring}"'
+    )
     url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})
     time = invoice.created
     return Task(description, url, time)
 
 
 def not_complete_personal_data_task_builder(organizer):
-    description = f'Falta completar su informacion personal'
+    description = _(
+        f'Falta completar su informacion personal'
+    )
     url = reverse('organizer_change', kwargs={'pk': organizer.pk})
     time = organizer.created
     return Task(description, url, time)
 
 
 def not_account_data_task_builder(organizer):
-    description = f'Falta completar sus datos de cuenta bancaria'
+    description = _(
+        f'Falta completar sus datos de cuenta bancaria'
+    )
     url = reverse('organizer_create_bank_account_data', kwargs={'pk': organizer.pk})
     time = organizer.created
     return Task(description, url, time)
 
 
-factory = TaskFactory()
-factory.register_builder(INCOMPLETE_EVENT, incomplete_event_task_builder)
+def not_enabled_sponsor_task_builder(sponsor):
+    description = _(
+        f'El patrocinador: "{sponsor}" se encuentra sin habilitar'
+    )
+    url = reverse('sponsor_detail', kwargs={'pk': sponsor.pk})
+    time = sponsor.created
+    return Task(description, url, time)
+
+
+def unpayment_invoices_task_builder(invoice):
+    description = _(
+        f'La factura: "{invoice}" tiene afectación pero no esta marcada '
+        'como pago parcial o completo'
+    )
+    url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})
+    # TODO: use las invoice_affect date
+    time = invoice.created
+    return Task(description, url, time)
 
 
 def calculate_super_user_task():
@@ -96,7 +123,27 @@ def calculate_super_user_task():
     Returns:
     list(Task): List of superusar task
     """
-    NotImplementedError('Not implemented error')
+    tasks = []
+
+    # Sponsor not enabled.
+    not_enabled_sponsors = Sponsor.objects.filter(enabled=False).all()
+    for sponsor in not_enabled_sponsors:
+        tasks.append(not_enabled_sponsor_task_builder(sponsor))
+
+    # Invoice without set complete or partial payment
+    # TODO: move query into manager
+    unpayment_invoices = Invoice.objects.filter(
+        invoice_affects__isnull=False,
+        partial_payment=False,
+        complete_payment=False,
+        sponsoring__close=False
+        ).all()
+    for invoice in unpayment_invoices:
+        tasks.append(unpayment_invoices_task_builder(invoice))
+
+    # Sponsoring without invoice attached.
+    tasks.sort(key=lambda x: x.time, reverse=True)
+    return tasks
 
 
 def calculate_organizer_task(organizer_user):
