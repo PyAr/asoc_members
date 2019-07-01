@@ -42,6 +42,7 @@ from events.forms import (
     SponsoringForm
 )
 from events.helpers.notifications import email_notifier
+from events.helpers.task import calculate_organizer_task
 from events.helpers.views import seach_filterd_queryset
 from events.helpers.permissions import is_event_organizer, ORGANIZER_GROUP_NAME
 from events.models import (
@@ -59,7 +60,15 @@ from pyar_auth.forms import PasswordResetForm
 
 @login_required()
 def events_home(request):
-    return render(request, 'events_home.html')
+    user = request.user
+    tasks = []
+    if Organizer.objects.filter(user=user).exists():
+        tasks = calculate_organizer_task(user)
+    else:
+        if user.is_superuser:
+            tasks = []
+
+    return render(request, 'events_home.html', {'tasks': tasks})
 
 
 @permission_required('events.add_organizer')

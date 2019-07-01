@@ -75,10 +75,25 @@
         </div>
     </div>
     <div class="user-pending">
-        <h3>Tareas</h3>
-        <p>Temas pendientes del usuario, ver como se va a manejar esto para saber que las cosas progresan</p>
+        <h4>Tareas <span class="badge">{{tasks|length}}</span></h4>
+        <div class="list-group">
+        {% for task in tasks %}
+        <div class="list-group-item">
+            <div class="row task-element">
+                <div class="col-md-8 task-description">
+                    {{ task.description }}
+                </div>
+                <div class="col-md-4 task-action">
+                    <a class="btn btn-success" href="{{task.url}}">Ir</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+            <div class="alert alert-info" role="alert">
+                No hay tareas pendientes para el usuario logueado.
+            </div>
+        {% endfor %}
+        </div>
     </div>
-    
-
 </div>
 {% endblock %}
