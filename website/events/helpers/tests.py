@@ -12,6 +12,7 @@ from events.models import (
     Event,
     EventOrganizer,
     Invoice,
+    InvoiceAffect,
     Organizer,
     Sponsor,
     SponsorCategory,
@@ -228,6 +229,13 @@ def create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=False):
         invoice.save()
 
     return invoice
+
+
+def create_invoice_affect_set(invoice, total_amount=False):
+    InvoiceAffect.objects.create(amount=1000, invoice=invoice, category='Pay')
+    InvoiceAffect.objects.create(amount=1000, invoice=invoice, category='Hold')
+    if total_amount:
+        InvoiceAffect.objects.create(amount=invoice.amount, invoice=invoice, category='Hold')
 
 
 def get_response_wsgi_messages(response):

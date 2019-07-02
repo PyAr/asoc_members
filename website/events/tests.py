@@ -4,6 +4,7 @@ from django.core import mail
 from django.template.loader import render_to_string
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from events.constants import (
     CANT_CHANGE_CLOSE_EVENT_MESSAGE,
@@ -30,13 +31,19 @@ from events.helpers.permissions import (
     ORGANIZER_GROUP_NAME,
     organizer_permissions
 )
-from events.helpers.task import _not_approved_invoices, calculate_organizer_task
+from events.helpers.task import (
+    _not_approved_invoices,
+    calculate_organizer_task,
+    calculate_super_user_task,
+    Task
+)
 from events.helpers.tests import (
     associate_events_organizers,
     CustomAssertMethods,
     sponsor_data,
     create_user_set,
     create_event_set,
+    create_invoice_affect_set,
     create_organizer_set,
     create_sponsors_set,
     create_sponsoring_set,
@@ -56,6 +63,7 @@ from io import StringIO
 from unittest.mock import patch
 
 User = get_user_model()
+test_task = Task('descripcion', 'url', timezone.now())
 
 
 class MockSuperUser:
@@ -768,3 +776,33 @@ class PendindTaskTest(TestCase, CustomAssertMethods):
         organizer_has_account_data_function.assert_called_once()
 
         self.assertEqual(len(tasks), 1)
+
+    @patch('events.helpers.task.not_enabled_sponsor_task_builder', return_value=test_task)
+    def test_not_enabled_sponsors_called(self, not_enabled_sponsor_function):
+        calculate_super_user_task()
+        sponsors = Sponsor.objects.filter(enabled=False)
+
+        for sponsor in sponsors:
+            not_enabled_sponsor_function.assert_called_with(sponsor)
+
+    @patch('events.helpers.task.unpayment_invoices_task_builder', return_value=test_task)
+    def test_invoice_on_unpayment_invoice_task(self, unpayment_task_builder_function):
+        self.invoice.invoice_ok = True
+        self.invoice.save()
+        create_invoice_affect_set(self.invoice)
+        calculate_super_user_task()
+        unpayment_task_builder_function.assert_called_once_with(self.invoice)
+
+    @patch('events.helpers.task.unpayment_invoices_task_builder', return_value=test_task)
+    @patch('events.helpers.task.invoices_to_complete_task_builder', return_value=test_task)
+    def test_invoice_on_to_complete_invoice_task(
+        self,
+        invoices_to_complete_builder_function,
+        unpayment_task_builder_function
+    ):
+        self.invoice.invoice_ok = True
+        self.invoice.save()
+        create_invoice_affect_set(self.invoice, total_amount=True)
+        calculate_super_user_task()
+        invoices_to_complete_builder_function.assert_called_once_with(self.invoice)
+        self.assertFalse(unpayment_task_builder_function.called)
