@@ -14,9 +14,10 @@ The idea is represents the next set of task types:
         * Sponsoring without invoice attached
         * Sponsoring with invoice affect that sum total invoice and not complete flag setted
 """
+from django.db.models import Max, Sum
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from events.models import Invoice, Organizer, Sponsor, SponsorCategory
+from events.models import Invoice, Organizer, Sponsor, Sponsoring, SponsorCategory
 
 INCOMPLETE_EVENT = 'incomplete_event'
 NOT_SPONSOR_CAEGORY = 'not_sponsor_category'
@@ -51,6 +52,7 @@ class TaskFactory:
         return builder(**kwargs)
 
 
+# Organizer Task Builders
 def incomplete_event_task_builder(event):
     description = _(
         f'El evento: "{event}", no tiene toda la informacion completa'
@@ -96,6 +98,7 @@ def not_account_data_task_builder(organizer):
     return Task(description, url, time)
 
 
+# SuperUser Tasks Builder
 def not_enabled_sponsor_task_builder(sponsor):
     description = _(
         f'El patrocinador: "{sponsor}" se encuentra sin habilitar'
@@ -116,6 +119,26 @@ def unpayment_invoices_task_builder(invoice):
     return Task(description, url, time)
 
 
+def unblilled_sponsorings_task_builder(sponsoring):
+    description = _(
+        f'El patrocinio: "{sponsoring}" se encuentra sin facturar'
+    )
+    url = reverse('sponsoring_detail', kwargs={'pk': sponsoring.pk})
+    time = sponsoring.created
+    return Task(description, url, time)
+
+
+def invoices_to_complete_task_builder(invoice):
+    description = _(
+        f'La Factura: "{invoice}" tiene afectaciones por un monto '
+        'mayor al facturado y no se encuentra marcado como pago completo'
+    )
+    url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})
+    # TODO: use last invoice_affect date
+    time = invoice.created
+    return Task(description, url, time)
+
+
 def calculate_super_user_task():
     """Calculates superuser pending tasks.
     The user is not an argument because is the same for all superusers
@@ -130,6 +153,24 @@ def calculate_super_user_task():
     for sponsor in not_enabled_sponsors:
         tasks.append(not_enabled_sponsor_task_builder(sponsor))
 
+    # Sponsoring without invoice attached.
+    # TODO: move query into manager
+    unblilled_sponsorings = Sponsoring.objects.filter(invoice__isnull=True, close=False).all()
+    for sponsoring in unblilled_sponsorings:
+        tasks.append(unblilled_sponsorings_task_builder(sponsoring))
+
+    # Invoice with invoice affect that sum tota and not complete flag setted
+    # TODO: move query into manager
+    not_complete_with_affects_sum = Invoice.objects.filter(
+        sponsoring__close=False,
+        complete_payment=False
+    ).annotate(
+        unpay_amount=Max('amount') - Sum('invoice_affects__amount')
+    ).filter(unpay_amount__lt=0)
+
+    for invoice in not_complete_with_affects_sum:
+        tasks.append(invoices_to_complete_task_builder(invoice))
+
     # Invoice without set complete or partial payment
     # TODO: move query into manager
     unpayment_invoices = Invoice.objects.filter(
@@ -137,11 +178,11 @@ def calculate_super_user_task():
         partial_payment=False,
         complete_payment=False,
         sponsoring__close=False
-        ).all()
+        ).distinct().all()
     for invoice in unpayment_invoices:
-        tasks.append(unpayment_invoices_task_builder(invoice))
+        if invoice not in not_complete_with_affects_sum:
+            tasks.append(unpayment_invoices_task_builder(invoice))
 
-    # Sponsoring without invoice attached.
     tasks.sort(key=lambda x: x.time, reverse=True)
     return tasks
 
@@ -183,6 +224,7 @@ def calculate_organizer_task(organizer_user):
     return tasks
 
 
+# Auxiliar functions to calculate objects
 def _incomoplete_events(organizer):
     ret = []
     for event in organizer.get_associate_events().all():

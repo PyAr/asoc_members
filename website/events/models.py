@@ -385,6 +385,9 @@ class Invoice(SaveReversionMixin, AuditUserTime):
         null=True
     )
 
+    def __str__(self):
+        return f"Factura por {self.amount} a {self.sponsoring}"
+
     def invoice_affects_total_sum(self):
         sum = self.invoice_affects.all().aggregate(total=Sum('amount'))
         return sum['total']
