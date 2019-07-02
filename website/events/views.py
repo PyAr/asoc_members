@@ -440,6 +440,15 @@ class SponsorSetEnabled(PermissionRequiredMixin, View):
             messages.SUCCESS,
             _('Patrocinador habilitado exitosamente ')
         )
+        current_site = get_current_site(self.request)
+        context = {
+            'domain': current_site.domain,
+            'protocol': 'https' if self.request.is_secure() else 'http'
+        }
+        email_notifier.send_sponsor_enabled(
+            sponsor,
+            context
+        )
         return redirect('sponsor_detail', pk=kwargs['pk'])
 
 

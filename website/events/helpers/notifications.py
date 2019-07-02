@@ -11,13 +11,15 @@ class EmailNotification():
         'organizer_associated_to_event': 'mails/organizer_associated_to_event_email.html',
         'sponsor_just_created': 'mails/sponsor_just_created_email.html',
         'invoice_just_created': 'mails/invoice_just_created_email.html',
-        'invoice_affect_just_created': 'mails/invoice_affect_just_created_email.html'
+        'invoice_affect_just_created': 'mails/invoice_affect_just_created_email.html',
+        'sponsor_just_enabled': 'mails/sponsor_just_enabled_email.html'
     }
     EMAIL_SUBJECTS = {
         'organizer_associated_to_event': 'mails/organizer_associated_to_event_subject.txt',
         'sponsor_just_created': 'mails/sponsor_just_created_subject.txt',
         'invoice_just_created': 'mails/invoice_just_created_subject.txt',
-        'invoice_affect_just_created': 'mails/invoice_affect_just_created_subject.txt'
+        'invoice_affect_just_created': 'mails/invoice_affect_just_created_subject.txt',
+        'sponsor_just_enabled': 'mails/sponsor_just_enabled_subject.txt'
     }
 
     def send_organizer_associated_to_event(self, event, organizers, context):
@@ -114,6 +116,28 @@ class EmailNotification():
             body = render_to_string(template, context)
             message = self._contruct_message(subject, body, recipient)
             messages.append(message)
+
+        connection = mail.get_connection()
+        # Send the all emails in a single call -
+        connection.send_messages(messages)
+        # The connection was already open so send_messages() doesn't close it.
+        # We need to manually close the connection.
+        connection.close()
+
+    def send_sponsor_enabled(self, sponsor, context):
+        """Send email notifiying that a sponsor was enabled.
+        Args:
+            sponsor: Sponsor just enabled
+            context: Context to compleate at less 'domain' and 'protocol'
+        """
+        template = self.EMAIL_TEMPLATES.get('sponsor_just_enabled')
+        subject = render_to_string(self.EMAIL_SUBJECTS.get('sponsor_just_enabled'))
+        messages = []
+        recipient = sponsor.created_by.email
+        context['sponsor'] = sponsor
+        body = render_to_string(template, context)
+        message = self._contruct_message(subject, body, recipient)
+        messages.append(message)
 
         connection = mail.get_connection()
         # Send the all emails in a single call -

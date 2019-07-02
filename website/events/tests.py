@@ -118,6 +118,16 @@ class EmailTest(TestCase, CustomAssertMethods):
         self.assertEqual(mail.outbox[0].subject,
                          render_to_string('mails/sponsor_just_created_subject.txt'))
 
+    def test_send_email_after_enable_sponsor(self):
+        self.client.login(username='administrator', password='administrator')
+        create_sponsors_set()
+        sponsor = Sponsor.objects.filter(enabled=False).first()
+        response = self.client.post(reverse('sponsor_set_enabled', kwargs={'pk': sponsor.pk}))
+        self.assertEqual(response.status_code, 302)
+
+        self.assertEqual(mail.outbox[0].subject,
+                         render_to_string('mails/sponsor_just_enabled_subject.txt'))
+
     @patch('django.core.files.storage.FileSystemStorage.save')
     def test_send_email_after_create_invoice(self, mock_save):
         mock_save.return_value = 'invoice.pdf'
