@@ -97,10 +97,10 @@ class EmailNotification():
             context: Context to compleate at less 'domain' and 'protocol'
         """
         email_type = self.SPONSOR_JUST_ENABLED
-
-        recipients = [sponsor.created_by.email]
-        context['sponsor'] = sponsor
-        self._send_emails(email_type, recipients, context)
+        if sponsor.created_by.email:
+            recipients = [sponsor.created_by.email]
+            context['sponsor'] = sponsor
+            self._send_emails(email_type, recipients, context)
 
     def send_new_sponsoring_created(self, sponsoring, created_by, context):
         """Send email notifiying new sponsor was created.
