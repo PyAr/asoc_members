@@ -503,6 +503,21 @@ class SponsoringCreateView(PermissionRequiredMixin, generic.edit.CreateView):
         context['event'] = event
         return context
 
+    def form_valid(self, form):
+        ret = super(SponsoringCreateView, self).form_valid(form)
+        current_site = get_current_site(self.request)
+        context = {
+            'domain': current_site.domain,
+            'protocol': 'https' if self.request.is_secure() else 'http'
+        }
+        sponsoring = form.instance
+        email_notifier.send_new_sponsoring_created(
+            sponsoring,
+            self.request.user,
+            context
+        )
+        return ret
+
     def get(self, request, *args, **kwargs):
         event = self._get_event()
         exists_category = SponsorCategory.objects.filter(event=event).exists()

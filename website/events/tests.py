@@ -175,6 +175,32 @@ class EmailTest(TestCase, CustomAssertMethods):
         self.assertEqual(mail.outbox[0].subject,
                          render_to_string('mails/invoice_affect_just_created_subject.txt'))
 
+    def test_send_email_after_create_sponsoring(self):
+        create_organizer_set()
+        associate_events_organizers()
+        create_sponsors_set()
+        sponsor = Sponsor.objects.filter(enabled=True).first()
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsor_category = SponsorCategory.objects.filter(event=event).first()
+        url = reverse('sponsoring_create', kwargs={'event_pk': event.pk})
+        # To complete the test we need, an event, an enabled sponsor, event_category
+        self.client.login(username='organizer02', password='organizer02')
+
+        data = {
+            'comments': ''
+        }
+        data['sponsorcategory'] = sponsor_category.pk
+        data['sponsor'] = sponsor.pk
+        response = self.client.post(url, data)
+
+        sponsoring = Sponsoring.objects.last()
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': sponsoring.pk})
+        self.assertRedirects(response, redirect_url)
+        count = User.objects.filter(is_superuser=True).exclude(email__exact='').count()
+        self.assertEqual(len(mail.outbox), count)
+        self.assertEqual(mail.outbox[0].subject,
+                         render_to_string('mails/sponsoring_just_created_subject.txt'))
+
     def test_send_email_after_register_organizer(self):
         # Login client with super user
         self.client.login(username='administrator', password='administrator')
