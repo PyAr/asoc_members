@@ -463,3 +463,99 @@ class InvoiceAffect(SaveReversionMixin, AuditUserTime):
 
     def is_image_document(self):
         return self.extension() in IMAGE_FORMATS
+
+
+def expense_upload_path(instance, filename):
+    """
+    Customize the expenses upload path to
+    MEDIA_ROOT/events/expenses/invoiceType_Amount(event_name).ext.
+    """
+    ext = filename.split('.')[-1]
+    event_name = lower_non_spaces(instance.event.name)
+
+    return (
+        f"media/events/expenses/"
+        f"{instance.invoice_type}_{instance.amount}({event_name}).{ext}"
+    )
+
+
+@reversion.register
+class Expense(SaveReversionMixin, AuditUserTime):
+    """
+    Expense:
+    Represents events expenses. Can be providers payments or refunds
+    to organizers.
+    """
+    TYPE_A = 'A'
+    TYPE_B = 'B'
+    TYPE_C = 'C'
+    TYPE_RECEIPT = 'Rec'
+    TYPE_TICKET = 'Tic'
+    INVOICE_TYPES = (
+        (TYPE_A, 'Factura A'),
+        (TYPE_B, 'Factura B'),
+        (TYPE_C, 'Factura C'),
+        (TYPE_RECEIPT, 'Recibo'),
+        (TYPE_TICKET, 'Ticket')
+    )
+
+    description = models.CharField(
+        _('descripción'),
+        max_length=DEFAULT_MAX_LEN,
+        blank=True,
+        default='',
+        help_text=_('Descripción del gasto'),
+    )
+    amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
+    invoice_type = models.CharField(
+        _('tipo factura'), max_length=5, choices=INVOICE_TYPES
+    )
+    invoice_date = models.DateField(_('fecha factura'))
+    invoice = models.FileField(_('factura'), upload_to=expense_upload_path, blank=True)
+    event = models.ForeignKey(
+        'Event',
+        verbose_name=_('Evento'),
+        on_delete=models.CASCADE,
+        related_name='expenses'
+    )
+
+
+@reversion.register
+class Provider(SaveReversionMixin, AuditUserTime):
+    account_data = models.ForeignKey(
+        'BankAccountData',
+        verbose_name=_('datos cuenta bancaria'),
+        on_delete=models.CASCADE,
+    )
+
+
+@reversion.register
+class Payment(SaveReversionMixin, AuditUserTime):
+    document = models.FileField(_('comprobante'), upload_to='media/events/payments/')
+
+
+@reversion.register
+class ProviderExpense(Expense):
+
+    payment = models.OneToOneField(
+        'Payment',
+        verbose_name=_('pago'),
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True)
+
+    provider = models.ForeignKey(
+        'Provider',
+        verbose_name=_('Proveedor'),
+        on_delete=models.CASCADE,
+        related_name='expenses'
+    )
+
+
+@reversion.register
+class OrganizerRefund(Expense):
+    payment = models.ForeignKey(
+        'Payment',
+        verbose_name=_('pago'),
+        on_delete=models.SET_NULL,
+        null=True)
