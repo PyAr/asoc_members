@@ -17,6 +17,7 @@ from events.constants import (
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
     CAN_VIEW_SPONSORS_CODENAME,
+    CAN_VIEW_PROVIDERS_CODENAME,
     IMAGE_FORMATS,
     SPONSOR_STATE_CHECKED,
     SPONSOR_STATE_CLOSED,
@@ -538,6 +539,12 @@ class Provider(BankAccountData):
 
     def get_absolute_url(self):
         return reverse('provider_detail', args=[str(self.pk)])
+
+    class Meta:
+        permissions = (
+            (CAN_VIEW_PROVIDERS_CODENAME, _('puede ver proveedores')),
+        )
+        ordering = ['-created']
 
 
 @reversion.register
