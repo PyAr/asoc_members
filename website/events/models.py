@@ -532,7 +532,7 @@ class Expense(SaveReversionMixin, AuditUserTime):
 
 @reversion.register
 class Provider(SaveReversionMixin, AuditUserTime):
-    account_data = models.ForeignKey(
+    account_data = models.OneToOneField(
         'BankAccountData',
         verbose_name=_('datos cuenta bancaria'),
         on_delete=models.CASCADE,
