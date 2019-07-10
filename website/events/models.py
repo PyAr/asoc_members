@@ -486,17 +486,24 @@ class Expense(SaveReversionMixin, AuditUserTime):
     Represents events expenses. Can be providers payments or refunds
     to organizers.
     """
-    TYPE_A = 'A'
-    TYPE_B = 'B'
-    TYPE_C = 'C'
-    TYPE_RECEIPT = 'Rec'
-    TYPE_TICKET = 'Tic'
+    PROVIDER_EXENSE_TYPE = 'Prv'
+    REFUND_EXPENSE_TYPE = 'Ref'
+    EXPENSE_TYPES = (
+        (PROVIDER_EXENSE_TYPE, 'Gasto proveedor'),
+        (REFUND_EXPENSE_TYPE, 'Reintegro organizador')
+    )
+
+    INVOICE_TYPE_A = 'A'
+    INVOICE_TYPE_B = 'B'
+    INVOICE_TYPE_C = 'C'
+    INVOICE_TYPE_RECEIPT = 'Rec'
+    INVOICE_TYPE_TICKET = 'Tic'
     INVOICE_TYPES = (
-        (TYPE_A, 'Factura A'),
-        (TYPE_B, 'Factura B'),
-        (TYPE_C, 'Factura C'),
-        (TYPE_RECEIPT, 'Recibo'),
-        (TYPE_TICKET, 'Ticket')
+        (INVOICE_TYPE_A, 'Factura A'),
+        (INVOICE_TYPE_B, 'Factura B'),
+        (INVOICE_TYPE_C, 'Factura C'),
+        (INVOICE_TYPE_RECEIPT, 'Recibo'),
+        (INVOICE_TYPE_TICKET, 'Ticket')
     )
 
     description = models.CharField(
@@ -518,6 +525,9 @@ class Expense(SaveReversionMixin, AuditUserTime):
         on_delete=models.CASCADE,
         related_name='expenses'
     )
+    category = models.CharField(
+        _('tipo gasto'), max_length=5, choices=EXPENSE_TYPES
+    )
 
 
 @reversion.register
@@ -537,6 +547,10 @@ class Payment(SaveReversionMixin, AuditUserTime):
 @reversion.register
 class ProviderExpense(Expense):
 
+    def __init__(self, *args, **kwargs):
+        super(ProviderExpense, self).__init__(*args, **kwargs)
+        self.category = Expense.PROVIDER_EXENSE_TYPE
+
     payment = models.OneToOneField(
         'Payment',
         verbose_name=_('pago'),
@@ -554,6 +568,18 @@ class ProviderExpense(Expense):
 
 @reversion.register
 class OrganizerRefund(Expense):
+
+    def __init__(self, *args, **kwargs):
+        super(OrganizerRefund, self).__init__(*args, **kwargs)
+        self.category = Expense.PROVIDER_EXENSE_TYPE
+
+    organizer = models.ForeignKey(
+        'Organizer',
+        verbose_name=_('Organizador'),
+        on_delete=models.CASCADE,
+        related_name='refunds'
+    )
+
     payment = models.ForeignKey(
         'Payment',
         verbose_name=_('pago'),
