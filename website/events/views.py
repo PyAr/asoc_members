@@ -37,6 +37,7 @@ from events.forms import (
     InvoiceAffectForm,
     OrganizerUpdateForm,
     OrganizerUserSignupForm,
+    ProviderForm,
     SponsorForm,
     SponsorCategoryForm,
     SponsoringForm
@@ -51,6 +52,7 @@ from events.models import (
     Invoice,
     InvoiceAffect,
     Organizer,
+    Provider,
     Sponsor,
     SponsorCategory,
     Sponsoring
@@ -783,6 +785,44 @@ class InvoiceAffectCreateView(PermissionRequiredMixin, generic.edit.CreateView):
             return super(InvoiceAffectCreateView, self).handle_no_permission()
 
 
+class ProvidersListView(LoginRequiredMixin, generic.ListView):
+    model = Provider
+    context_object_name = 'provider_list'
+    template_name = 'providers/providers_list.html'
+    paginate_by = 5
+    search_fields = {
+        'organization_name': 'icontains',
+        'document_number': 'icontains'
+    }
+
+    def get_queryset(self):
+        queryset = super(ProvidersListView, self).get_queryset()
+        # queryset = Sponsor.objects.all()
+        search_value = self.request.GET.get('search', None)
+        if search_value and search_value != '':
+            queryset = seach_filterd_queryset(queryset, self.search_fields, search_value)
+        return queryset
+
+
+class ProviderCreateView(PermissionRequiredMixin, generic.edit.CreateView):
+    model = Provider
+    form_class = ProviderForm
+    template_name = 'providers/provider_form.html'
+    permission_required = 'events.add_provider'
+
+
+class ProviderChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
+    model = Provider
+    form_class = ProviderForm
+    template_name = 'providers/provider_form.html'
+    permission_required = 'events.change_provider'
+
+
+class ProviderDetailView(LoginRequiredMixin, generic.DetailView):
+    model = Provider
+    template_name = 'providers/provider_detail.html'
+
+
 events_list = EventsListView.as_view()
 event_detail = EventDetailView.as_view()
 event_change = EventChangeView.as_view()
@@ -811,3 +851,8 @@ sponsoring_invoice_affect_create = InvoiceAffectCreateView.as_view()
 invoice_set_approved = InvoiceSetAproved.as_view()
 invoice_set_complete_payment = InvoiceSetCompletePayment.as_view()
 invoice_set_partial_payment = InvoiceSetPartialPayment.as_view()
+
+providers_list = ProvidersListView.as_view()
+provider_detail = ProviderDetailView.as_view()
+provider_change = ProviderChangeView.as_view()
+provider_create = ProviderCreateView.as_view()

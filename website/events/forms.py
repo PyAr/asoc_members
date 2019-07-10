@@ -12,6 +12,7 @@ from events.models import (
     Invoice,
     InvoiceAffect,
     Organizer,
+    Provider,
     Sponsor,
     SponsorCategory,
     Sponsoring
@@ -182,3 +183,19 @@ class InvoiceAffectForm(forms.ModelForm):
             'observations',
             'document',
         ]
+
+
+class ProviderForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(ProviderForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+    class Meta:
+        model = Provider
+        fields = [
+            'organization_name', 'document_number', 'bank_entity',
+            'account_type', 'account_number', 'cbu'
+            ]

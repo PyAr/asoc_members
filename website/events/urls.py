@@ -85,6 +85,12 @@ urlpatterns = [
     path('patrocinadores/<pk>/editar/', views.sponsor_change, name='sponsor_change'),
     path('patrocinadores/<pk>/habilitar/', views.sponsor_set_enabled, name='sponsor_set_enabled'),
 
+    # Providers urls.
+    path('proveedores/', views.providers_list, name='provider_list'),
+    path('proveedores/crear/', views.provider_create, name='provider_create'),
+    path('proveedores/<pk>/', views.provider_detail, name='provider_detail'),
+    path('proveedores/<pk>/editar/', views.provider_change, name='provider_change'),
+
     # Others
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

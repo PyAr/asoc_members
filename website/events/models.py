@@ -531,12 +531,13 @@ class Expense(SaveReversionMixin, AuditUserTime):
 
 
 @reversion.register
-class Provider(SaveReversionMixin, AuditUserTime):
-    account_data = models.OneToOneField(
-        'BankAccountData',
-        verbose_name=_('datos cuenta bancaria'),
-        on_delete=models.CASCADE,
-    )
+class Provider(BankAccountData):
+
+    def __str__(self):
+        return f"{self.organization_name} - {self.document_number}"
+
+    def get_absolute_url(self):
+        return reverse('provider_detail', args=[str(self.pk)])
 
 
 @reversion.register

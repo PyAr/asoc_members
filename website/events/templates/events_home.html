@@ -57,6 +57,22 @@
             </div>
             {% endif %}
 
+            <!--Providers-->
+            {% if perms.events.view_providers %}
+            <div class="col-sm-6 col-md-2">
+                <div class="thumbnail">
+                    <img src="{% static 'images/proveedores.png' %}" alt="Imagen que represente proveedores">
+                    <div class="caption">
+                        <!--h5 class="text-center">Sponsors</h5-->
+                        <!--<p class="card-text">Lista de eventos asociados a su usuario, para poder administrar, según sus permisos.</p>-->
+                        <div class="dashborard-element-actions">
+                            <a href="{% url 'provider_list' %}" class="btn btn-primary card-btn" role="button">Proveedores</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <!--Reports-->
             {% if perms.events.view_reports %}
             <div class="col-sm-6 col-md-2">
