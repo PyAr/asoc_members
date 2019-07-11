@@ -1,4 +1,4 @@
-# Aplicación web para la gestión de membresías de la Asociación Civil [![Build Status](https://travis-ci.org/PyAr/asoc_members.svg?branch=develop)](https://travis-ci.org/PyAr/asoc_members)
+# Aplicación web para la gestión de membresías de la Asociación Civil [![Build Status](https://travis-ci.org/PyAr/asoc.svg?branch=master)](https://travis-ci.org/PyAr/asoc)
 
 ## Desarrollo (con Docker)
 
@@ -19,29 +19,20 @@ Password (again):
 Superuser created successfully.
 ```
 
+## Deploy a staging (PENDING TO CONFIGURE)
 
-## Producción (con Docker)
+Cada merge a master genera una imagen actualizada en docker hub con el tag `latest` y automaticamente se actualiza el deploy.
 
-```bash
-# Actualizar el .env (copiado a partir del .env.dist)
-export $(grep -v '^#' .env)
-make build-prod
-make up-prod
-make migrate
-make collectstatic
-```
+## Deploy a producción.
 
-If you need to create a Django's superuser:
+Si se crea un tag con el formato x.y.z automaticamente se va a generar una imagen de Docker en docker hub con el tag `stable` y `prod-x.y.z` y una vez generada la imagen se va a deployar automaticamente. 
 
-```bash
-$ make createsuperuser
-Username (leave blank to use 'root'): admin
-Email address: admin@example.com
-Password:
-Password (again):
-Superuser created successfully.
-```
 
+
+
+## Producción
+
+Chequear documentación en https://github.com/PyAr/pyar_infra/
 
 ## Contribuyendo con Asoc Members
 

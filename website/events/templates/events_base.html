@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load static %}
+{% block extra_statics %}
+    <link rel="stylesheet" href="{% static 'css/events.css' %}">
+{% endblock %}
+{% block extra_logged_menu_option %}
+{% if user.organizer %}
+<li>
+    <a href="{% url 'organizer_detail' pk=user.organizer.pk %}">Datos Organizador</a>
+</li>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "events_base.html" %}
+{% load static %}
+{% block content %}
+<div class="container">
+
+    <div class="route-navigator" >
+            <ol class="breadcrumb">
+                <li><a href="{% url 'events_home' %}">Inicio</a></li>
+                {% if perms.events.view_organizers %}
+                <li><a href="{% url 'organizer_list' %}" >Organizadores</a></li>
+                {% endif %}
+                <li class="active"><a href="{% url 'organizer_detail' pk=organizer.pk %}">{{organizer.user.username}}</a></li>
+            </ol>
+    </div>
+    
+    <div class="row organizer-detail">
+        <div class="col-md-6">
+            <h3>Datos del organizador </h3>
+            <table class="table table-striped">
+                <tbody>
+                    <tr>
+                        <th scope="row">Nombre</th>
+                        <td>{{ organizer.first_name }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Apellido</th>
+                        <td>{{ organizer.last_name }}</td>
+                    </tr>
+                    <tr>
+                            <th scope="row">Usuario</th>
+                            <td>{{ organizer.user.username }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            {% if is_request_user %}
+            <a class="btn btn-primary btn-block text-uppercase" href="{% url 'organizer_change' organizer.pk %}">Editar</a>
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            
+                <h3>Datos de cuenta bancaria</h3>
+                {% if organizer.account_data %}
+                <table class="table table-striped">
+                    <tbody>
+                        <tr>
+                            <th scope="row">Banco</th>
+                            <td>{{ organizer.account_data.bank_entity }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Tipo Cuenta</th>
+                            <td>{{ organizer.account_data.get_account_type_display }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Número Cuenta</th>
+                            <td>{{ organizer.account_data.account_number }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">CBU</th>
+                            <td>{{ organizer.account_data.cbu }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Nombre/Razón social</th>
+                            <td>{{ organizer.account_data.organization_name }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">CUIT</th>
+                            <td>{{ organizer.account_data.document_number }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                {% else %}
+                    <div class="alert alert-info" role="alert">
+                        El Organizador no tiene cargados sus datos de cuenta bancaria.
+                    </div>
+                {% endif %}
+                {% if is_request_user %}
+                    {% if organizer.account_data %}
+                    <a class="btn btn-primary btn-block text-uppercase" 
+                    href="{% url 'organizer_update_bank_account_data' organizer.account_data.pk %}">Actualizar cuenta</a>
+                    {% else %}
+                    <a class="btn btn-primary btn-block text-uppercase" 
+                    href="{% url 'organizer_create_bank_account_data' organizer.pk %}">
+                    {# onclick="return open_modal('{% url 'organizer_create_bank_account_data' organizer.pk %}')"> #}
+                    Crear cuenta
+                    </a>
+                    {% endif %}
+                {% endif %}
+            
+        </div>
+    </div>
+    {% if is_request_user %}
+    <div class="row user-account">
+        
+        <div class="col-md-12">
+            <h3>Datos usuario </h3>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th scope="row">Nombre de usuario</th>
+                        <th scope="row">Correo Electrónico</th>
+                        
+                        <th scope="row">Contraseña</th>
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ organizer.user.username }}</td>
+                        <td>{{ organizer.user.email }}</td>
+                        <td>********* <span style="text-align: right; width: 100%;"><a href="{% url 'change_password' %}">(cambiar contraseña)</a></span> </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+<div id="popup" class="modal fade" role="dialog">
+</div>       
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/modal_form.js' %}"></script>
+{% endblock %}

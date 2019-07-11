@@ -1,0 +1,7 @@
+{% autoescape off %}
+
+Su cuenta de PyAr, con usuario: "{{organizer.user.username}}" ha sido asociada como organizador del evento:
+{{ protocol }}://{{ domain }}{% url 'event_change' pk=event.pk %}
+Por favor ingrese al mismo para configurar la información faltante.
+
+{% endautoescape %}

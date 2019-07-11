@@ -1,0 +1,58 @@
+{% extends "events_base_paginated_list.html" %}
+
+{% block route-navigator %}
+<div class="route-navigator" >
+        <ol class="breadcrumb">
+            <li><a href="{% url 'events_home' %}">Inicio</a></li>
+            <li class="active"><a href="{% url 'organizer_list' %}">Organizadores</a></li>
+        </ol>
+</div>
+{% endblock %}
+{% block list_title %}
+<h1>Organizadores</h1>
+{%endblock%}
+
+{% block list_content %}
+    <div class="row organizers-list">
+        <div class="col-md-12">
+            <table class="table table-striped row-clickeable-table">
+                <thead>
+                    <tr>
+                        <th scope="row">Usuario</th>
+                        <th scope="row">Nombre</th>
+                        <th scope="row">Apellido</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for organizer in organizer_list %}
+                
+                    <tr onclick="window.location='{% url 'organizer_detail' pk=organizer.pk %}';" class="clikeable">
+                        
+                        <td >{{ organizer.user.username }}</td>
+                        <td>{{ organizer.first_name }}</td>
+                        <td>{{ organizer.last_name }}</td>
+                    </tr>
+                
+                {% empty %}
+                    <tr>
+                        <td colspan="100%" class="empty-list">
+                            <strong>No hay organizadores activos.</strong>
+                        </td>
+                    </tr>
+                {% endfor %}
+                
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row organizers-list-actions">
+        <div class="col-md-12 text-right">
+            {% if perms.events.add_organizer %}
+            <a class="btn btn-primary" href="{% url 'organizer_signup' %}">Crear</a>
+            {% endif %}
+        </div>
+    </div>
+    
+
+
+{% endblock %}

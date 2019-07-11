@@ -7,3 +7,8 @@ services:
       - "8000:8000"
     volumes:
       - .:/code
+    command: "tail -f /dev/null"
+  mail:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"

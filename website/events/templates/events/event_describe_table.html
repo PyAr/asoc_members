@@ -1,0 +1,24 @@
+<table class="table table-striped">
+    <tbody>
+        <tr>
+            <th scope="row">Nombre</th>
+            <td>{{ event.name }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Tipo</th>
+            <td>{{ event.get_category_display }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Comision</th>
+            <td>{{ event.commission }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Fecha</th>
+            <td>{{ event.start_date }}</td>
+        </tr>
+        <tr>
+            <th scope="row">Lugar</th>
+            <td>{{ event.place }}</td>
+        </tr>
+    </tbody>
+</table>

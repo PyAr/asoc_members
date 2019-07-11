@@ -1,0 +1,75 @@
+{% extends "events_base_paginated_list.html" %}
+
+{% block route-navigator %}
+<div class="route-navigator" >
+        <ol class="breadcrumb">
+            <li><a href="{% url 'events_home' %}">Inicio</a></li>
+            <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="{% url 'event_detail' pk=event.pk %}">{{event.name}}</a></li>
+            <li class="active"><a href="{% url 'sponsoring_list' event_pk=event.pk%}">Patrocinios</a></li>
+        </ol>
+</div>
+{% endblock %}
+
+{% block list_title %}
+<h1>Patrocinios</h1><h3>{{event}}</h3>
+
+{%endblock%}
+{% block list_filter %}
+{% endblock %}
+{% block list_content %}
+    <div class="row sponsors-list">
+        <div class="col-md-12">
+            <table class="table table-striped row-clickeable-table">
+                <thead>
+                    <tr>
+                        <th scope="row">Sponsor</th>
+                        <th scope="row">Categoria</th>
+                        <th scope="row">Monto Categoria</th>
+                        <th scope="row">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for sponsoring in sponsoring_list %}
+                
+                    <tr onclick="window.location='{% url 'sponsoring_detail' pk=sponsoring.pk %}';" class="clikeable">
+                        
+                        <td >{{ sponsoring.sponsor.organization_name }}</td>
+                        <td>{{ sponsoring.sponsorcategory.name }}</td>
+                        <td>{{ sponsoring.sponsorcategory.amount }}</td>
+                        <td class="text-capitalize">
+                        {% if sponsoring.close %}
+                        <span class="text-danger">
+                        {% elif sponsoring.state == "pago completo" %}
+                        <span class="text-success">
+                        {% else %}
+                        <span >
+                        {% endif %}
+                            <strong>{{ sponsoring.state }}</strong>
+                        </span>
+                        </td>
+                    </tr>
+                
+                {% empty %}
+                    <tr>
+                        <td colspan="100%" class="empty-list">
+                            <strong>No hay patrocinios activos.</strong>
+                        </td>
+                    </tr>
+                {% endfor %}
+                
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row sponsors-list-actions">
+        <div class="col-md-12 text-right">
+            {% if perms.events.add_sponsor %}
+            <a class="btn btn-primary" href="{% url 'sponsoring_create' event_pk=event.pk %}">Crear</a>
+            {% endif %}
+        </div>
+    </div>
+    
+
+
+{% endblock %}

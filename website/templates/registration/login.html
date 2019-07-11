@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+{% if form.errors %}
+<p>El nombre de usuario no coincide, por favor intente otra vez.</p>
+{% endif %}
+
+{% if next %}
+    {% if user.is_authenticated %}
+    <div class="alert alert-danger" role="alert">
+        <p>Su cuenta no tiene acceso a este recurso. Para proceder 
+        conectese con una cuenta con los permisos suficientes.</p>
+    </div>
+    {% else %}
+    <p>Por favor loguese para acceder a este recurso.</p>
+    {% endif %}
+{% endif %}
+
+<div class="login-form">
+    <form method="post" action="{% url 'login' %}">
+    <h2 class="text-center">Inicio de sesión</h2> 
+    {% csrf_token %}
+    {% crispy form %}
+    <div class="form-group">
+        <input type="submit" class="btn btn-primary btn-block" value="Iniciar">
+    </div>
+    <div class="clearfix">
+            <a href="{% url 'password_reset' %}" class="pull-right">¿Olvidó su contraseña?</a>
+    </div>
+    {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+    {% else %}
+        <!--TODO: enviar al home de eventos-->
+        <input type="hidden" name="next" value="{% url 'events_home' %}">
+    {% endif %}
+    </form>
+</div>
+
+</div>
+{% endblock %}

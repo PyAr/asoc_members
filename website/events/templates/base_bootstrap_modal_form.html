@@ -1,0 +1,35 @@
+<div class="modal-dialog modal-md">
+    <div class="modal-content">
+        {% block form_action %}
+        <form role="form" action="" method="post">
+        {% endblock %}
+            
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">x</button>
+                {% block modal_title %}
+                <h3>Modal Title</h3>
+                {% endblock %}
+            </div>
+            <div class="modal-body">
+            
+                <div class="panel panel-default">
+                        <div class="panel-body">
+                            {% block modal_content %}{% endblock %}
+                        </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                    <div class="col-lg-12 text-right">
+                            {% block modal_footer %}
+                            <input type="submit" class="btn btn-primary" name="submit" value="Guardar">
+                            <button type="button" class="btn btn-default" onclick="return close_modal()">
+                                    Cancelar
+                            </button>
+                            {% endblock %}
+                    </div>
+            </div>
+
+        </form>
+
+    </div>
+</div>

@@ -1,0 +1,28 @@
+{% extends "events_base.html" %}
+{% load static %}
+{% block content %}
+<div class="container">
+
+    <div class="route-navigator" >
+            <ol class="breadcrumb">
+                <li><a href="{% url 'events_home' %}">Inicio</a></li>
+                <li><a href="{% url 'sponsor_list' %}" >Patrocinadores</a></li>
+                <li class="active"><a href="{% url 'sponsor_detail' pk=sponsor.pk %}">{{sponsor.organization_name}}</a></li>
+            </ol>
+    </div>
+    
+    <div class="row sponsor-detail">
+        <div class="col-md-8">
+            <h3>Datos del patrocinador </h3>
+            
+            {% include "sponsors/sponsor_describe_table.html" with sponsor=sponsor show_enabled=True %}
+            
+            {% if perms.events.change_sponsor %}
+            <a class="btn btn-primary btn-block text-uppercase" href="{% url 'sponsor_change' sponsor.pk %}">Editar</a>
+            {% endif %}
+        </div>
+        
+    </div>
+</div>
+
+{% endblock %}

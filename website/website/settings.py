@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 import os
 from configurations import Configuration
 
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -21,6 +24,17 @@ class Base(Configuration):
     """Base configuration for django app."""
     # Quick-start development settings - unsuitable for production
     # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
+
+    # Configuring email from enviorenment and setting mailhog as default
+    EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'mail')
+    EMAIL_PORT = os.environ.get('EMAIL_PORT', 1025)
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
+    EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
+
+    EMAIL_FROM = 'Lalita <lalita@ac.python.org.ar>'
 
     # SECURITY WARNING: keep the secret key used in production secret!
     SECRET_KEY = 'svz&bkp-k(zydvn+v9$kqmds=ncl8w8(i-sp^1u280vez=g-zj'
@@ -41,6 +55,9 @@ class Base(Configuration):
         'django_extensions',
         'members.apps.MembersConfig',
         'crispy_forms',
+        'events.apps.EventsConfig',
+        'reversion',
+        'reversion_compare',
     ]
 
     MIDDLEWARE = [
@@ -49,6 +66,7 @@ class Base(Configuration):
         'django.middleware.common.CommonMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
         'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'events.middleware.CurrentUserMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
     ]
@@ -58,7 +76,7 @@ class Base(Configuration):
     TEMPLATES = [
         {
             'BACKEND': 'django.template.backends.django.DjangoTemplates',
-            'DIRS': [],
+            'DIRS': [os.path.join(BASE_DIR, 'templates')],
             'APP_DIRS': True,
             'OPTIONS': {
                 'context_processors': [
@@ -127,18 +145,80 @@ class Base(Configuration):
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR
 
+    LOGIN_URL = '/cuentas/login/'
+
+    AFIP = {
+        'url_wsaa': "https://wsaahomo.afip.gov.ar/ws/services/LoginCms?wsdl",
+        'url_wsfev1': "https://wswhomo.afip.gov.ar/wsfev1/service.asmx?WSDL",
+        'selling_point': 4000,
+        'cuit': 20267565393,
+        'auth_cert_path': '/tmp/reingart.crt',
+        'auth_key_path': '/tmp/reingart.key',
+    }
+
+    INVOICES_GDRIVE = {
+        'credentials_filepath': "",
+        'folder_id': "",
+    }
+
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': 'DEBUG',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            },
+            '': {
+                'handlers': ['console'],
+                'propagate': True,
+                'level': 'INFO',
+            },
+        },
+    }
+
+    # Azure blob-storage
+    AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY")
+    AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME")
+    AZURE_CONTAINER = os.environ.get("AZURE_CONTAINER")
+    AZURE_SSL = os.environ.get("AZURE_SSL", True)
+    AZURE_QUERYSTRING_AUTH = os.environ.get("AZURE_QUERYSTRING_AUTH", False)
+
 
 # try to import the local settings; if the file is not there just create a stub class
 # for the inheritance later
 try:
     from local_settings import LocalSettings
-except ModuleNotFoundError as err:
+except ModuleNotFoundError:
     class LocalSettings:
         pass
 
 
 class Dev(LocalSettings, Base):
     """Development configuration."""
+
+
+class Staging(Base):
+    """Staging configuration."""
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('POSTGRES_DB', "memberships"),
+            'USER': os.environ.get('POSTGRES_USER', "postgres"),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', "secret"),
+            'HOST': os.environ.get('POSTGRES_HOST', "localhost"),
+            'PORT': os.environ.get('POSTGRES_PORT', 5432),
+        }
+    }
+
+    DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+    STATICFILES_STORAGE = "storages.backends.azure_storage.AzureStorage"
 
 
 class Prod(Base):
@@ -164,8 +244,34 @@ class Prod(Base):
     }
 
     EMAIL_HOST = os.environ.get('EMAIL_HOST')
-    EMAIL_PORT = os.environ.get('EMAIL_PORT')
+    EMAIL_PORT = os.environ.get('EMAIL_PORT', '587')
     EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
     EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
-    MAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL')
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', True)
+    EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '10'))
+    EMAIL_FROM = os.environ.get('EMAIL_FROM', 'do_not_reply@python.org.ar')
+
+    AFIP = {
+        'url_wsaa': "https://wsaa.afip.gov.ar/ws/services/LoginCms?wsdl",
+        'url_wsfev1': "https://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL",
+        'selling_point': 7,
+        'cuit': 30715639129,
+        'auth_cert_path': '/etc/secrets/afip_pyar.crt',
+        'auth_key_path': '/etc/secrets/afip_pyar.key',
+    }
+
+    DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+    STATICFILES_STORAGE = "storages.backends.azure_storage.AzureStorage"
+
+    sentry_sdk.init(
+        dsn=os.environ.get('SENTRY_DSN'),
+        integrations=[DjangoIntegration()]
+    )
+
+    INVOICES_GDRIVE = {
+        'credentials_filepath': "/etc/secrets/gdrive.json",
+        # "Factura Socies"
+        # https://drive.google.com/drive/u/1/folders/1V2z4ww1B1yNdkO0yxkah45FX7sZvt961
+        'folder_id': "1V2z4ww1B1yNdkO0yxkah45FX7sZvt961",
+    }

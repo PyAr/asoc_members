@@ -1,6 +1,5 @@
 import json
 import os
-from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -35,25 +34,21 @@ class Command(BaseCommand):
                 errors.append(payment)
                 continue
             strategy, created = PaymentStrategy.objects.get_or_create(
-                    patron=patron,
-                    platform=PaymentStrategy.MERCADO_PAGO,
-                    id_in_platform=payment['strategy']['id'],
-                    defaults={
-                        'comments': msg,
-                        }
-                    )
+                patron=patron,
+                platform=PaymentStrategy.MERCADO_PAGO,
+                id_in_platform=payment['strategy']['id'],
+                defaults={'comments': msg})
             payment_instance, created = Payment.objects.get_or_create(
-                    # TODO: Fix Timestamp object
-                    timestamp=payment['timestamp'],
-                    amount=payment['amount'],
-                    defaults={
-                        'comments': template.format(
-                            filename,
-                            payment['comment']),
-                        'strategy': strategy,
-                        },
-                    )
-        self.stdout.write(str(errors)+' '+str(len(errors)))
+                # TODO: Fix Timestamp object
+                timestamp=payment['timestamp'],
+                amount=payment['amount'],
+                defaults={
+                    'comments': template.format(
+                        filename,
+                        payment['comment']),
+                    'strategy': strategy,
+                })
+        self.stdout.write(str(errors) + ' ' + str(len(errors)))
 
     def get_patron(self, payment):
         patron = None
