@@ -7,7 +7,7 @@ urlpatterns = [
     path('', views.events_home, name='events_home'),
     # Events urls.
     path('eventos/', views.events_list, name='event_list'),
-    path('eventos/<pk>/', views.event_detail, name='event_detail'),
+    path('eventos/<pk>/configuracion/', views.event_detail, name='event_detail'),
     path('eventos/<pk>/editar/', views.event_change, name='event_change'),
     path(
         'eventos/<pk>/agregar-categoria-sponsor/',
@@ -43,6 +43,14 @@ urlpatterns = [
         'eventos/factura/<pk>/afectacion/crear/',
         views.sponsoring_invoice_affect_create,
         name='sponsoring_invoice_affect_create'
+    ),
+
+    # Expenses urls.
+    path('eventos/<event_pk>/gastos/', views.expenses_list, name='expenses_list'),
+    path(
+        'eventos/<event_pk>/gastos/proveedor/crear/',
+        views.provider_expense_create,
+        name='provider_expense_create'
     ),
 
     # Invoice actions urls.

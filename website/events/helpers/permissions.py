@@ -120,3 +120,10 @@ def is_event_organizer(user, event):
         return True
 
     return False
+
+
+def is_organizer_user(user):
+    if Organizer.objects.filter(user=user).exists():
+        return True
+    else:
+        return False

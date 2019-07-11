@@ -530,6 +530,12 @@ class Expense(SaveReversionMixin, AuditUserTime):
         _('tipo gasto'), max_length=5, choices=EXPENSE_TYPES
     )
 
+    def origin(self):
+        if self.category == self.PROVIDER_EXENSE_TYPE:
+            return self.providerexpense.provider
+        else:
+            return self.organizerrefund.organizer
+
 
 @reversion.register
 class Provider(BankAccountData):
