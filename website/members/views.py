@@ -182,6 +182,37 @@ class ReportDebts(OnlyAdminsViewMixin, View):
         return render(request, 'members/report_debts.html', context)
 
 
+def get_member_missing_info(member):
+    """Analyze and indicate in which categories the member is missing somethhing."""
+    cat_student = Category.objects.get(name=Category.STUDENT)
+    cat_collab = Category.objects.get(name=Category.COLLABORATOR)
+
+    # simple flags with "Not Applicable" situation
+    missing_student_certif = (
+        member.category == cat_student and not member.has_student_certificate)
+    missing_collab_accept = (
+        member.category == cat_collab and not member.has_collaborator_acceptance)
+
+    # info from Person
+    missing_nickname = member.person.nickname == ""
+    # picture is complicated, bool() is used to check if the Image field has an associated
+    # filename, and False itself is used as the "dont want a picture!" flag
+    missing_picture = not member.person.picture and member.person.picture is not False
+
+    # info from Member itself
+    missing_payment = member.first_payment_month is None and member.category.fee > 0
+    missing_signed_letter = not member.has_subscription_letter
+
+    return {
+        'missing_signed_letter': missing_signed_letter,
+        'missing_student_certif': missing_student_certif,
+        'missing_payment': missing_payment,
+        'missing_nickname': missing_nickname,
+        'missing_picture': missing_picture,
+        'missing_collab_accept': missing_collab_accept,
+    }
+
+
 class ReportMissing(OnlyAdminsViewMixin, View):
     """Handle the report about what different people miss to get approved as a member."""
     MAIL_SUBJECT = "Continuación del trámite de inscripción a la Asociación Civil Python Argentina"
@@ -213,6 +244,10 @@ class ReportMissing(OnlyAdminsViewMixin, View):
         (letter_filepath,) = certg.process(
             letter_svg_template, path_prefix, "dni", [person_info], images=None)
         return letter_filepath
+
+    def _analyze_member(self, member):
+        """Analyze and indicate in which categories the member is missing somethhing."""
+        return get_member_missing_info(member)
 
     def post(self, request):
         raw_sendmail = parse.parse_qs(request.body)[b'sendmail']
@@ -272,35 +307,6 @@ class ReportMissing(OnlyAdminsViewMixin, View):
         }
         return render(request, 'members/mail_sent.html', context)
 
-    def _analyze_member(self, member):
-        """Analyze and indicate in which categories the member is missing somethhing."""
-        cat_student = Category.objects.get(name=Category.STUDENT)
-        cat_collab = Category.objects.get(name=Category.COLLABORATOR)
-
-        # simple flags with "Not Applicable" situation
-        missing_student_certif = (
-            member.category == cat_student and not member.has_student_certificate)
-        missing_collab_accept = (
-            member.category == cat_collab and not member.has_collaborator_acceptance)
-
-        # info from Person
-        missing_nickname = member.person.nickname == ""
-        # picture is complicated, bool() is used to check if the Image field has an associated
-        # filename, and False itself is used as the "dont want a picture!" flag
-        missing_picture = not member.person.picture and member.person.picture is not False
-
-        # info from Member itself
-        missing_payment = member.first_payment_month is None and member.category.fee > 0
-        missing_signed_letter = not member.has_subscription_letter
-
-        return {
-            'missing_signed_letter': missing_signed_letter,
-            'missing_student_certif': missing_student_certif,
-            'missing_payment': missing_payment,
-            'missing_nickname': missing_nickname,
-            'missing_picture': missing_picture,
-            'missing_collab_accept': missing_collab_accept,
-        }
 
     def get(self, request):
         not_yet_members = Member.objects.filter(legal_id=None).order_by('created').all()
@@ -320,6 +326,7 @@ class ReportMissing(OnlyAdminsViewMixin, View):
         context = dict(incompletes=incompletes)
         return render(request, 'members/report_missing.html', context)
 
+
 class ReportComplete(View):
     """Handles the report on people who are in a position to be approved as members"""
 
@@ -328,55 +335,52 @@ class ReportComplete(View):
     MAIL_MANAGER = 'presidencia@ac.python.org.ar>'
 
     def post(self, request):
-        raw_sendmail = parse.parse_qs(request.body)[b'sendmail']
-        to_send_mail_ids = map(int, raw_sendmail)
+        print("======body?", parse.parse_qs(request.body))
+        raw_approve = parse.parse_qs(request.body)[b'approve']
+        to_approve_ids = map(int, raw_approve)
         sent_error = 0
         sent_ok = 0
         tini = time.time()
         errors_code = str(uuid.uuid4())
-        for member_id in to_send_mail_ids:
+        for member_id in to_approve_ids:
             member = Member.objects.get(id=member_id)
 
-            # create the mail text from the template
-            missing_info = self._analyze_member(member)
-            missing_info['annual_fee'] = member.category.fee * 12
-            missing_info['member'] = member
-            missing_info['on_purpose_missing_var'] = "ERROR"
-            text = render_to_string('members/mail_missing.txt', missing_info)
-            text = _clean_double_empty_lines(text)
-            if 'ERROR' in text:
-                # badly built template
-                logger.error(
-                    "Error when building the report missing mail result, info: %s", missing_info)
-                return HttpResponse("Error al armar la página")
+            # approve the member, setting a new legal_id to it
+            print("======= FIXME: approve", member)
 
-            # if missing the signed letter, produce it and attach it
-            if missing_info['missing_signed_letter']:
-                letter_filepath = self._generate_letter(member)
+            # send a mail to the person informing new membership
+            print("======= FIXME: send mail about new membership")
+            #text = render_to_string('members/mail_missing.txt', missing_info)
+            #text = _clean_double_empty_lines(text)
+            #if 'ERROR' in text:
+            #    # badly built template
+            #    logger.error(
+            #        "Error when building the report missing mail result, info: %s", missing_info)
+            #    return HttpResponse("Error al armar la página")
 
-            # build the mail
-            recipient = f"{member.entity.full_name} <{member.entity.email}>"
-            mail = EmailMessage(
-                self.MAIL_SUBJECT, text, self.MAIL_FROM, [recipient],
-                cc=[self.MAIL_MANAGER], reply_to=[self.MAIL_MANAGER])
-            if missing_info['missing_signed_letter']:
-                mail.attach_file(letter_filepath)
+            ## build the mail
+            #recipient = f"{member.entity.full_name} <{member.entity.email}>"
+            #mail = EmailMessage(
+            #    self.MAIL_SUBJECT, text, self.MAIL_FROM, [recipient],
+            #    cc=[self.MAIL_MANAGER], reply_to=[self.MAIL_MANAGER])
+            #if missing_info['missing_signed_letter']:
+            #    mail.attach_file(letter_filepath)
 
-            # actually send it
-            try:
-                mail.send()
-            except Exception as err:
-                sent_error += 1
-                logger.error(
-                    "Problems sending email [%s] to member %s: %r", errors_code, member, err)
-            else:
-                sent_ok += 1
-            finally:
-                if missing_info['missing_signed_letter']:
-                    try:
-                        os.unlink(letter_filepath)
-                    except Exception as exc:
-                        logger.warning("Couldn't remove letter file %r: %r", letter_filepath, exc)
+            ## actually send it
+            #try:
+            #    mail.send()
+            #except Exception as err:
+            #    sent_error += 1
+            #    logger.error(
+            #        "Problems sending email [%s] to member %s: %r", errors_code, member, err)
+            #else:
+            #    sent_ok += 1
+            #finally:
+            #    if missing_info['missing_signed_letter']:
+            #        try:
+            #            os.unlink(letter_filepath)
+            #        except Exception as exc:
+            #            logger.warning("Couldn't remove letter file %r: %r", letter_filepath, exc)
 
         deltat = time.time() - tini
         context = {
@@ -389,38 +393,18 @@ class ReportComplete(View):
 
     def _analyze_member(self, member):
         """Analyze and indicate in which categories the member is missing somethhing."""
-        cat_student = Category.objects.get(name=Category.STUDENT)
-        cat_collab = Category.objects.get(name=Category.COLLABORATOR)
-        # simple flags with "Not Applicable" situation
-        missing_student_certif = (
-            member.category == cat_student and member.has_student_certificate)
-
-        missing_collab_accept = (
-            member.category == cat_collab and member.has_collaborator_acceptance)
-
-        # info from Person
-        missing_nickname = member.person.nickname != ""
-        # picture is complicated, bool() is used to check if the Image field has an associated
-        # filename, and False itself is used as the "dont want a picture!" flag
-        picture = member.person.picture is not None
-
-        # info from Member itself
-        missing_payment = member.first_payment_month is not None and member.category.fee != 0
-        missing_signed_letter = member.has_subscription_letter
-        missing = missing_signed_letter and missing_nickname and picture
-
-        return {
-            'complete': (missing and missing_student_certif) or (missing and missing_payment) or
-                        (missing and missing_collab_accept),
-        }
+        missing_info = get_member_missing_info(member)
+        anything_missing = any(missing_info.values())
+        return anything_missing
 
     def get(self, request):
         not_yet_members = Member.objects.filter(legal_id=None).order_by('created').all()
 
         completes = []
-        k = 0
         for member in not_yet_members:
-            info = self._analyze_member(member)
+            anything_missing = self._analyze_member(member)
+            if anything_missing:
+                continue
 
             person = member.person
             person_info = {
@@ -428,13 +412,11 @@ class ReportComplete(View):
                 'apellido': person.last_name,
                 'dni': person.document_number,
                 'email': person.email,
+                'member': member,
             }
-
-            if info:
-                completes.append(person_info)
+            completes.append(person_info)
 
         context = dict(completes=completes)
-        print(completes)
         return render(request, 'members/report_complete.html', context)
 
 
