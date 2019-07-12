@@ -41,7 +41,7 @@ $(document).ready(function()
 			});
 	}
 
-    if($('#invoice-pdf-div').length){
+  if($('#invoice-pdf-div').length){
 		url = $('#invoice-pdf-div').attr('invoice-url');
 		canvas = document.getElementById('pdf-canvas');
 		renderPDF(url, canvas, 400);
@@ -56,6 +56,16 @@ $(document).ready(function()
 			renderPDF(url, canvas, 200);
 		});
 	}
+	// if there are payment read all pdf's 
+	if($('#pdf-payment').length){
+		//TODO
+		url = $('#pdf-payment').attr('payment-url');
+		canvas = $('#pdf-payment').children('canvas')[0];
+		renderPDF(url, canvas, 300);
+		
+	}
+
+
 	
 
 });

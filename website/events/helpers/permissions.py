@@ -6,7 +6,9 @@ from events.constants import (
     CAN_SET_PARTIAL_PAYMENT_CODENAME,
     CAN_SET_SPONSORS_ENABLED_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
+    CAN_VIEW_EXPENSES_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
+    CAN_VIEW_PROVIDERS_CODENAME,
     CAN_VIEW_SPONSORS_CODENAME
 )
 from events.models import Organizer
@@ -29,9 +31,14 @@ ORGANIZER_PERMISSIONS_CODENAMES = [
     'delete_sponsoring',
     CAN_VIEW_SPONSORS_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
+    CAN_VIEW_EXPENSES_CODENAME,
     'add_invoiceaffect',
     'delete_invoiceaffect',
     CAN_SET_APPROVED_INVOICE_CODENAME,
+    'add_expense',
+    'change_expense',
+    'add_organizerrefund',
+    'change_organizerrefund'
 ]
 
 # Initial only superuser has these permissions. But each perm check on view is added here to test
@@ -40,6 +47,7 @@ SUPER_ORGANIZER_PERMISSIONS_CODENAMES = [
     'add_organizer',
     'change_organizer',
     CAN_VIEW_ORGANIZERS_CODENAME,
+    CAN_VIEW_PROVIDERS_CODENAME,
     'add_organizer',
     'add_eventorganizer',
     'change_eventorganizer',
@@ -48,7 +56,13 @@ SUPER_ORGANIZER_PERMISSIONS_CODENAMES = [
     CAN_CLOSE_SPONSORING_CODENAME,
     'add_invoice',
     CAN_SET_COMPLETE_PAYMENT_CODENAME,
-    CAN_SET_PARTIAL_PAYMENT_CODENAME
+    CAN_SET_PARTIAL_PAYMENT_CODENAME,
+    'add_provider',
+    'change_provider',
+    'add_providerexpense',
+    'change_providerexpense',
+    'add_payment',
+    'change_payment'
 ]
 
 

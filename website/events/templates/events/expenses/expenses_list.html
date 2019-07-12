@@ -32,14 +32,18 @@
                 <tbody>
                 {% for expense in expenses_list %}
                 
-                    <tr onclick="window.location='{% url 'event_detail' pk=expense.event.pk %}';" class="clikeable">
+                    {% if expense.category == "Prv" %}
+                    <tr onclick="window.location='{% url 'provider_expense_detail' pk=expense.pk %}';" class="clikeable">
+                    {% else %}
+                    <tr onclick="window.location='{% url 'event_detail' pk=expense.event.pk %}';" class="clikeable"></tr>
+                    {% endif %}
                         
                         <td>{{ expense.get_category_display }}</td>
                         <td>
                         {% if expense.category == "Prv"%}
-                            {{ expense.origin.organization_name}}
+                            {{ expense.origin.organization_name }}
                         {% else %}
-                            {{ expense.origin.user.username}}
+                            {{ expense.origin.user.username }}
                         {% endif %}
                         </td>
                         
@@ -61,7 +65,7 @@
                 {% empty %}
                     <tr>
                         <td colspan="100%" class="empty-list">
-                            <strong>No hay patrocinios activos.</strong>
+                            <strong>No hay gastos cargados.</strong>
                         </td>
                     </tr>
                 {% endfor %}
@@ -76,7 +80,7 @@
             <a class="btn btn-primary" href="{% url 'provider_expense_create' event_pk=event.pk %}"><i class="fa fa-plus"></i> Gasto Proveedor</a>
             {% endif %}
             {% if organizer and perms.events.add_organizerrefund %}
-            <a class="btn btn-primary" href="{% url 'sponsoring_create' event_pk=event.pk %}"><i class="fa fa-plus"></i> Gasto Organizador</a>
+            <a class="btn btn-primary" href="{% url 'organizer_refund_create' event_pk=event.pk %}"><i class="fa fa-plus"></i> Gasto Propio</a>
             {% endif %}
         </div>
     </div>

@@ -15,6 +15,7 @@ from events.constants import (
     CAN_SET_PARTIAL_PAYMENT_CODENAME,
     CAN_SET_SPONSORS_ENABLED_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
+    CAN_VIEW_EXPENSES_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
     CAN_VIEW_SPONSORS_CODENAME,
     CAN_VIEW_PROVIDERS_CODENAME,
@@ -536,6 +537,18 @@ class Expense(SaveReversionMixin, AuditUserTime):
         else:
             return self.organizerrefund.organizer
 
+    def invoice_extension(self):
+        name, extension = os.path.splitext(self.invoice.name)
+        return extension
+
+    def is_image_document(self):
+        return self.invoice_extension() in IMAGE_FORMATS
+
+    class Meta:
+        permissions = (
+            (CAN_VIEW_EXPENSES_CODENAME, _('puede ver gastos')),
+        )
+
 
 @reversion.register
 class Provider(BankAccountData):
@@ -556,6 +569,13 @@ class Provider(BankAccountData):
 @reversion.register
 class Payment(SaveReversionMixin, AuditUserTime):
     document = models.FileField(_('comprobante'), upload_to='media/events/payments/')
+
+    def extension(self):
+        name, extension = os.path.splitext(self.document.name)
+        return extension
+
+    def is_image_document(self):
+        return self.extension() in IMAGE_FORMATS
 
 
 @reversion.register
@@ -579,13 +599,16 @@ class ProviderExpense(Expense):
         related_name='expenses'
     )
 
+    def get_absolute_url(self):
+        return reverse('provider_expense_detail', args=[str(self.pk)])
+
 
 @reversion.register
 class OrganizerRefund(Expense):
 
     def __init__(self, *args, **kwargs):
         super(OrganizerRefund, self).__init__(*args, **kwargs)
-        self.category = Expense.PROVIDER_EXENSE_TYPE
+        self.category = Expense.REFUND_EXPENSE_TYPE
 
     organizer = models.ForeignKey(
         'Organizer',

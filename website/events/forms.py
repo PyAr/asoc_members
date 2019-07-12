@@ -13,6 +13,7 @@ from events.models import (
     InvoiceAffect,
     Organizer,
     OrganizerRefund,
+    Payment,
     Provider,
     ProviderExpense,
     Sponsor,
@@ -208,7 +209,7 @@ class ProviderExpenseForm(forms.ModelForm):
         label=_('Fecha factura'),
         input_formats=settings.DATE_INPUT_FORMATS, help_text=_('Formato: DD/MM/AAAA'),
         widget=forms.widgets.DateInput(format=settings.DATE_INPUT_FORMATS[0]),
-        required=False
+        required=True
     )
 
     def __init__(self, *args, **kwargs):
@@ -235,7 +236,7 @@ class OrganizerRefundForm(forms.ModelForm):
         label=_('Fecha factura'),
         input_formats=settings.DATE_INPUT_FORMATS, help_text=_('Formato: DD/MM/AAAA'),
         widget=forms.widgets.DateInput(format=settings.DATE_INPUT_FORMATS[0]),
-        required=False
+        required=True
     )
 
     def __init__(self, *args, **kwargs):
@@ -253,4 +254,18 @@ class OrganizerRefundForm(forms.ModelForm):
             'invoice_date',
             'invoice',
             'description',
+        ]
+
+
+class PaymentForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(PaymentForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+    class Meta:
+        model = Payment
+        fields = [
+            'document',
         ]

@@ -8,6 +8,7 @@ CAN_VIEW_EVENT_ORGANIZERS_CODENAME = 'view_event_organizers'
 CAN_VIEW_ORGANIZERS_CODENAME = 'view_organizers'
 CAN_VIEW_EVENTS_CODENAME = 'view_events'
 CAN_VIEW_SPONSORS_CODENAME = 'view_sponsors'
+CAN_VIEW_EXPENSES_CODENAME = 'view_expenses'
 CAN_VIEW_PROVIDERS_CODENAME = 'view_providers'
 CAN_SET_SPONSORS_ENABLED_CODENAME = 'set_sponsors_enabled'
 CAN_SET_APPROVED_INVOICE_CODENAME = 'set_invoice_approved'
@@ -53,6 +54,10 @@ MUST_EXISTS_SPONSOR_MESSAGE = _(
 
 MUST_EXISTS_SPONSOR_CATEGORY_MESSAGE = _(
     'No se puede asociar patrocinios sin categorias de sponsor en el evento'
+)
+
+MUST_EXISTS_PROVIDERS_MESSAGE = _(
+    'No se puede crear un gasto de proveedor sin antes dar de alta proveedores'
 )
 
 INVOICE_APPOVED_MESSAGE = _('Factura aprobada exitosamente ')
