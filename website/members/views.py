@@ -307,7 +307,6 @@ class ReportMissing(OnlyAdminsViewMixin, View):
         }
         return render(request, 'members/mail_sent.html', context)
 
-
     def get(self, request):
         not_yet_members = Member.objects.filter(legal_id=None).order_by('created').all()
 
@@ -350,36 +349,36 @@ class ReportComplete(View):
 
             # send a mail to the person informing new membership
             print("======= FIXME: send mail about new membership")
-            #text = render_to_string('members/mail_missing.txt', missing_info)
-            #text = _clean_double_empty_lines(text)
-            #if 'ERROR' in text:
-            #    # badly built template
-            #    logger.error(
-            #        "Error when building the report missing mail result, info: %s", missing_info)
-            #    return HttpResponse("Error al armar la página")
+            # text = render_to_string('members/mail_missing.txt', missing_info)
+            # text = _clean_double_empty_lines(text)
+            # if 'ERROR' in text:
+            #     # badly built template
+            #     logger.error(
+            #         "Error when building the report missing mail result, info: %s", missing_info)
+            #     return HttpResponse("Error al armar la página")
 
-            ## build the mail
-            #recipient = f"{member.entity.full_name} <{member.entity.email}>"
-            #mail = EmailMessage(
-            #    self.MAIL_SUBJECT, text, self.MAIL_FROM, [recipient],
-            #    cc=[self.MAIL_MANAGER], reply_to=[self.MAIL_MANAGER])
-            #if missing_info['missing_signed_letter']:
-            #    mail.attach_file(letter_filepath)
+            # # build the mail
+            # recipient = f"{member.entity.full_name} <{member.entity.email}>"
+            # mail = EmailMessage(
+            #     self.MAIL_SUBJECT, text, self.MAIL_FROM, [recipient],
+            #     cc=[self.MAIL_MANAGER], reply_to=[self.MAIL_MANAGER])
+            # if missing_info['missing_signed_letter']:
+            #     mail.attach_file(letter_filepath)
 
-            ## actually send it
-            #try:
-            #    mail.send()
-            #except Exception as err:
-            #    sent_error += 1
-            #    logger.error(
-            #        "Problems sending email [%s] to member %s: %r", errors_code, member, err)
-            #else:
-            #    sent_ok += 1
-            #finally:
-            #    if missing_info['missing_signed_letter']:
-            #        try:
-            #            os.unlink(letter_filepath)
-            #        except Exception as exc:
+            # # actually send it
+            # try:
+            #     mail.send()
+            # except Exception as err:
+            #     sent_error += 1
+            #     logger.error(
+            #         "Problems sending email [%s] to member %s: %r", errors_code, member, err)
+            # else:
+            #     sent_ok += 1
+            # finally:
+            #     if missing_info['missing_signed_letter']:
+            #         try:
+            #             os.unlink(letter_filepath)
+            #         except Exception as exc:
             #            logger.warning("Couldn't remove letter file %r: %r", letter_filepath, exc)
 
         deltat = time.time() - tini
@@ -445,8 +444,8 @@ class ReportIncomeQuotas(OnlyAdminsViewMixin, View):
                     shutdown_date__isnull=True,
                     category=categ,
                 ).filter(
-                    Q(first_payment_year__lt=year) |
-                    Q(first_payment_year=year, first_payment_month__lte=month)
+                    Q(first_payment_year__lt=year)
+                    | Q(first_payment_year=year, first_payment_month__lte=month)
                 ).all()
 
                 # get how many quotas exist for those members for the given year/month
