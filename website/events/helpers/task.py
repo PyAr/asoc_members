@@ -178,7 +178,7 @@ def calculate_super_user_task():
         partial_payment=False,
         complete_payment=False,
         sponsoring__close=False
-        ).distinct().all()
+    ).distinct().all()
     for invoice in unpayment_invoices:
         if invoice not in not_complete_with_affects_sum:
             tasks.append(unpayment_invoices_task_builder(invoice))
@@ -237,8 +237,8 @@ def _not_sponsor_category(organizer, exclude_events):
     ret = []
     for event in organizer.get_associate_events().all():
         if (
-            (event not in exclude_events) and
-            (not SponsorCategory.objects.filter(event=event).exists())
+            event not in exclude_events
+            and not SponsorCategory.objects.filter(event=event).exists()
         ):
             ret.append(event)
 
