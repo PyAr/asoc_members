@@ -239,9 +239,10 @@ class OrganizerRefundForm(forms.ModelForm):
         required=True
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, event, *args, **kwargs):
         super(OrganizerRefundForm, self).__init__(*args, **kwargs)
         # Pre-filter sponsorcategory by event
+        self.fields['organizer'].queryset = event.organizers.all()
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
@@ -249,6 +250,7 @@ class OrganizerRefundForm(forms.ModelForm):
     class Meta:
         model = OrganizerRefund
         fields = [
+            'organizer',
             'amount',
             'invoice_type',
             'invoice_date',

@@ -9,36 +9,36 @@
                 <li><a href="{% url 'event_list' %}">Eventos</a></li>
                 <li><a href="{% url 'event_detail' pk=event.pk %}">{{event.name}}</a></li>
                 <li><a href="{% url 'expenses_list' event_pk=event.pk%}">Gastos</a></li>
-                <li class="active"><a href="{% url 'provider_expense_detail' pk=providerexpense.pk%}">
-                        Gasto Proveedor ({{providerexpense.pk}})
+                <li class="active"><a href="{% url 'organizer_refund_detail' pk=organizerrefund.pk%}">
+                        Reintegro Organizador ({{organizerrefund.pk}})
                 </a></li>
             </ol>
     </div>
-    <h2>Gasto Proveedor</h2>
+    <h2>Gasto Organizador</h2>
     <div class="row">
         <div class="col-md-6">
             <div class="row">
                 <div class="col-md-12">
                     <h4 style="margin-bottom: 5px;">Factura</h4>
-                    <strong>Proveedor:</strong> {{ providerexpense.provider }}<br/>
-                    <strong>Tipo:</strong> {{providerexpense.get_invoice_type_display}}<br/>
-                    <strong>Monto:</strong> ${{providerexpense.amount}}<br/>
-                    <strong>Fecha:</strong> {{providerexpense.invoice_date}}<br/>
-                    {% if providerexpense.invoice %}
-                    <strong>Documento:</strong> <a href="{{providerexpense.invoice.url}}" target="_blank"> descargar <i class="fa fa-download"></i></a>
+                    <strong>Organizador:</strong> {{ organizerrefund.organizer.user.username }}<br/>
+                    <strong>Tipo:</strong> {{organizerrefund.get_invoice_type_display}}<br/>
+                    <strong>Monto:</strong> ${{organizerrefund.amount}}<br/>
+                    <strong>Fecha:</strong> {{organizerrefund.invoice_date}}<br/>
+                    {% if organizerrefund.invoice %}
+                    <strong>Documento:</strong> <a href="{{organizerrefund.invoice.url}}" target="_blank"> descargar <i class="fa fa-download"></i></a>
                     {% endif %}
                 </div>    
             </div>
             <div class="row">
-            {% if providerexpense.invoice %}
+            {% if organizerrefund.invoice %}
             
-                {% if providerexpense.invoice_extension == ".pdf" %}
-                <div id="invoice-pdf-div" class="col-md-12 text-left" invoice-url={{providerexpense.invoice.url}}>   
+                {% if organizerrefund.invoice_extension == ".pdf" %}
+                <div id="invoice-pdf-div" class="col-md-12 text-left" invoice-url={{organizerrefund.invoice.url}}>   
                     <canvas id="pdf-canvas"></canvas> 
                 </div>
-                {% elif providerexpense.is_image_document %}
+                {% elif organizerrefund.is_image_document %}
                 <div class="col-md-12">
-                    <img src="{{providerexpense.invoice.url}}" style="width: 400px;">
+                    <img src="{{organizerrefund.invoice.url}}" style="width: 400px;">
                 </div>
                 {% else %}
                 <div class="col-md-12">
@@ -62,8 +62,8 @@
                     <strong>Descripción</strong>
                 </div>
                 <div class="col-md-12">
-                    {% if providerexpense.description %}
-                    {{ providerexpense.description }}
+                    {% if organizerrefund.description %}
+                    {{ organizerrefund.description }}
                     {% else %}
                     Gasto sin descripción adjunta
                     {% endif %}
@@ -75,32 +75,32 @@
                     <h4>Comprobante Pago</h4> 
                 </div> 
                 <div class="col-md-7 text-left" style="padding: 10px">
-                    {% if providerexpense.payment %}
-                    <a href="{{providerexpense.payment.document.url}}" target="_blank"> descargar <i class="fa fa-download"></i></a>
+                    {% if organizerrefund.payment %}
+                    <a href="{{organizerrefund.payment.document.url}}" target="_blank"> descargar <i class="fa fa-download"></i></a>
                     {% elif perms.events.add_payment %}
-                    <a class="btn btn-primary" onclick="return open_modal('{% url 'provider_expense_payment_create' providerexpense.pk %}')"><i class="fa fa-plus"> Agregar</i></a>
+                    <!--a class="btn btn-primary" onclick="return open_modal('{% url 'provider_expense_payment_create' organizerrefund.pk %}')"><i class="fa fa-plus"> Agregar</i></a-->
                     {% endif %}
                 </div>
             </div>
-            {% if providerexpense.payment %}
+            {% if organizerrefund.payment %}
             <div class="row">
-                    {% if providerexpense.payment.extension == ".pdf" %}
-                    <div class="col-md-5" id="pdf-payment" payment-url={{providerexpense.payment.document.url}}>
+                    {% if organizerrefund.payment.extension == ".pdf" %}
+                    <div class="col-md-5" id="pdf-payment" payment-url={{organizerrefund.payment.document.url}}>
                         <canvas></canvas>
                     </div>
-                    {% elif providerexpense.payment.is_image_document %}
-                    <div class="col-md-5 img-payment" payment-url={{providerexpense.payment.document.url}}>
-                            <img src="{{providerexpense.payment.document.url}}" style="width: 200px;">
+                    {% elif organizerrefund.payment.is_image_document %}
+                    <div class="col-md-5 img-payment" payment-url={{organizerrefund.payment.document.url}}>
+                            <img src="{{organizerrefund.payment.document.url}}" style="width: 200px;">
                     </div>
                     {% else %}
-                    <div class="col-md-5" payment-url={{providerexpense.payment.document.url}}>
+                    <div class="col-md-5" payment-url={{organizerrefund.payment.document.url}}>
                         <img src="{% static 'images/not_document.svg' %}" style="width: 200px;">
                     </div>
                     {% endif %}
             </div>
             {% else %}
             <div class="alert alert-info" role="alert">
-                Sin pago cargado.
+                Sin comprobante de pago cargado.
             </div>
             {% endif %}
         </div>

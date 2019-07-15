@@ -26,7 +26,7 @@
                         <th scope="row">Origen</th>
                         <th scope="row">Monto</th>
                         <th scope="row">Descripcion</th>
-                        <th scope="row">Factura</th>
+                        <th scope="row">Pagado</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -35,7 +35,7 @@
                     {% if expense.category == "Prv" %}
                     <tr onclick="window.location='{% url 'provider_expense_detail' pk=expense.pk %}';" class="clikeable">
                     {% else %}
-                    <tr onclick="window.location='{% url 'event_detail' pk=expense.event.pk %}';" class="clikeable"></tr>
+                    <tr onclick="window.location='{% url 'organizer_refund_detail' pk=expense.pk %}';" class="clikeable">
                     {% endif %}
                         
                         <td>{{ expense.get_category_display }}</td>
@@ -49,13 +49,13 @@
                         
                         <td>{{ expense.amount }}</td>
                         <td>{{ expense.description }}</td>
-                        <td>
-                            <span class="text-center">
+                        <td class="text-center">
+                            <span>
                             
-                            {% if expense.invoice %}
-                            <i class="fa fa-check-circle"></i>
+                            {% if expense.payment %}
+                            <i class="fa fa-check-circle text-success"></i>
                             {% else %}
-                            <i class="fa fa-times-circle"></i>
+                            <i class="fa fa-times-circle text-danger"></i>
                             {% endif %}
                             
                             </span>
@@ -77,10 +77,10 @@
     <div class="row sponsors-list-actions">
         <div class="col-md-12 text-right">
             {% if perms.events.add_providerexpense %}
-            <a class="btn btn-primary" href="{% url 'provider_expense_create' event_pk=event.pk %}"><i class="fa fa-plus"></i> Gasto Proveedor</a>
+            <a class="btn btn-primary" href="{% url 'provider_expense_create' event_pk=event.pk %}"><i class="fa fa-plus"></i> Pago Proveedor</a>
             {% endif %}
-            {% if organizer and perms.events.add_organizerrefund %}
-            <a class="btn btn-primary" href="{% url 'organizer_refund_create' event_pk=event.pk %}"><i class="fa fa-plus"></i> Gasto Propio</a>
+            {% if perms.events.add_organizerrefund %}
+            <a class="btn btn-primary" href="{% url 'organizer_refund_create' event_pk=event.pk %}"><i class="fa fa-plus"></i> Reintegro</a>
             {% endif %}
         </div>
     </div>

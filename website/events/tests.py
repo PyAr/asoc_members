@@ -874,6 +874,11 @@ class ProviderViewsTest(TestCase, CustomAssertMethods):
 
     def test_create_provider_redirects_without_perms(self):
         url = reverse('provider_create')
+        perm = Permission.objects.get(
+            content_type__app_label='events',
+            codename='add_provider')
+        user = User.objects.get(username='organizer01')
+        user.user_permissions.remove(perm)
         self.client.login(username='organizer01', password='organizer01')
         response = self.client.post(url, data=self.provider_data)
 

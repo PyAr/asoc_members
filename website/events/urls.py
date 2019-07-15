@@ -63,6 +63,11 @@ urlpatterns = [
         name='provider_expense_detail'
     ),
     path(
+        'eventos/reintegro/<pk>/',
+        views.organizer_refund_detail,
+        name='organizer_refund_detail'
+    ),
+    path(
         'eventos/gasto_proveedor/<pk>/pago/crear/',
         views.provider_expense_payment_create,
         name='provider_expense_payment_create'

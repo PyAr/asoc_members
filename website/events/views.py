@@ -839,7 +839,9 @@ class ExpensesListView(PermissionRequiredMixin, generic.ListView):
     permission_required = 'events.view_expenses'
     paginate_by = 10
     search_fields = {
-        'description': 'icontains'
+        'description': 'icontains',
+        'providerexpense__provider__organization_name': 'icontains',
+        'organizerrefund__organizer__user__username': 'icontains',
     }
 
     def get_queryset(self):
@@ -898,21 +900,6 @@ class ProviderExpenseCreateView(PermissionRequiredMixin, generic.edit.CreateView
         form.instance.event = self._get_event()
         return super(ProviderExpenseCreateView, self).form_valid(form)
 
-    '''def form_valid(self, form):
-        ret = super(ProviderExpenseCreateView, self).form_valid(form)
-        current_site = get_current_site(self.request)
-        context = {
-            'domain': current_site.domain,
-            'protocol': 'https' if self.request.is_secure() else 'http'
-        }
-        sponsoring = form.instance
-        email_notifier.send_new_sponsoring_created(
-            sponsoring,
-            self.request.user,
-            context
-        )
-        return ret'''
-
     def get(self, request, *args, **kwargs):
         event = self._get_event()
         exists_provider = (Provider.objects.count() > 0)
@@ -959,10 +946,20 @@ class OrganizerRefundCreateView(PermissionRequiredMixin, generic.edit.CreateView
         context['event'] = event
         return context
 
+    def get_form(self, form_class=None):
+        event = self._get_event()
+        if form_class is None:
+            form_class = self.get_form_class()
+        return form_class(event, **self.get_form_kwargs())
+
+    def get_initial(self, *args, **kwargs):
+        initial = super(OrganizerRefundCreateView, self).get_initial(**kwargs)
+        if Organizer.objects.filter(user=self.request.user).exists():
+            initial['organizer'] = Organizer.objects.get(user=self.request.user)
+        return initial
+
     def form_valid(self, form):
         form.instance.event = self._get_event()
-        if Organizer.objects.filter(user=self.request.user).exists():
-            form.instance.organizer = Organizer.objects.get(user=self.request.user)
         return super(OrganizerRefundCreateView, self).form_valid(form)
 
     '''def form_valid(self, form):
@@ -1005,9 +1002,6 @@ class OrganizerRefundCreateView(PermissionRequiredMixin, generic.edit.CreateView
         # Must be event organizer.
         event = self._get_event()
         if ret and not is_event_organizer(self.request.user, event):
-            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
-            return False
-        if not is_organizer_user(self.request.user):
             self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
             return False
         return ret
@@ -1080,6 +1074,38 @@ class ProviderExpensePaymentCreateView(PermissionRequiredMixin, generic.edit.Cre
         return get_object_or_404(ProviderExpense, pk=self.kwargs['pk'])
 
 
+class OrganizerRefundDetailView(PermissionRequiredMixin, generic.DetailView):
+    model = OrganizerRefund
+    template_name = 'events/expenses/organizer_refund_detail.html'
+    permission_required = 'events.view_expenses'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context.
+        context = super(OrganizerRefundDetailView, self).get_context_data(**kwargs)
+        event = self._get_event()
+        context['event'] = event
+        return context
+
+    def has_permission(self):
+        ret = super(OrganizerRefundDetailView, self).has_permission()
+        # Must be event organizer.
+        event = self._get_event()
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
+        return ret
+
+    def _get_event(self):
+        return self.get_object().event
+
+    def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+            return redirect('event_list')
+        else:
+            return super(OrganizerRefundDetailView, self).handle_no_permission()
+
+
 events_list = EventsListView.as_view()
 event_detail = EventDetailView.as_view()
 event_change = EventChangeView.as_view()
@@ -1119,3 +1145,4 @@ provider_expense_create = ProviderExpenseCreateView.as_view()
 organizer_refund_create = OrganizerRefundCreateView.as_view()
 provider_expense_detail = ProviderExpenseDetailView.as_view()
 provider_expense_payment_create = ProviderExpensePaymentCreateView.as_view()
+organizer_refund_detail = OrganizerRefundDetailView.as_view()

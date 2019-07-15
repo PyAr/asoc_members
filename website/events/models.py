@@ -498,14 +498,14 @@ class Expense(SaveReversionMixin, AuditUserTime):
     INVOICE_TYPE_A = 'A'
     INVOICE_TYPE_B = 'B'
     INVOICE_TYPE_C = 'C'
-    INVOICE_TYPE_RECEIPT = 'Rec'
     INVOICE_TYPE_TICKET = 'Tic'
+    INVOICE_TYPE_OTHER = 'Otr'
     INVOICE_TYPES = (
         (INVOICE_TYPE_A, 'Factura A'),
         (INVOICE_TYPE_B, 'Factura B'),
         (INVOICE_TYPE_C, 'Factura C'),
-        (INVOICE_TYPE_RECEIPT, 'Recibo'),
-        (INVOICE_TYPE_TICKET, 'Ticket')
+        (INVOICE_TYPE_TICKET, 'Ticket'),
+        (INVOICE_TYPE_OTHER, 'Otro')
     )
 
     description = models.CharField(
@@ -520,7 +520,7 @@ class Expense(SaveReversionMixin, AuditUserTime):
         _('tipo factura'), max_length=5, choices=INVOICE_TYPES
     )
     invoice_date = models.DateField(_('fecha factura'))
-    invoice = models.FileField(_('factura'), upload_to=expense_upload_path, blank=True)
+    invoice = models.FileField(_('factura'), upload_to=expense_upload_path)
     event = models.ForeignKey(
         'Event',
         verbose_name=_('Evento'),
@@ -537,6 +537,12 @@ class Expense(SaveReversionMixin, AuditUserTime):
         else:
             return self.organizerrefund.organizer
 
+    def payment(self):
+        if self.category == self.PROVIDER_EXENSE_TYPE:
+            return self.providerexpense.payment
+        else:
+            return self.organizerrefund.payment
+
     def invoice_extension(self):
         name, extension = os.path.splitext(self.invoice.name)
         return extension
@@ -551,7 +557,40 @@ class Expense(SaveReversionMixin, AuditUserTime):
 
 
 @reversion.register
-class Provider(BankAccountData):
+class Provider(SaveReversionMixin, AuditUserTime):
+    """Provider data, is similar to AccountData except some retriction."""
+    CC = 'CC'
+    CA = 'CA'
+    ACCOUNT_TYPE_CHOICES = (
+        (CC, 'Cuenta corriente'),
+        (CA, 'Caja de ahorros')
+    )
+    document_number = models.CharField(
+        _('CUIT'),
+        max_length=13,
+        help_text=_('CUIT del propietario de la cuenta, formato ##-########-#'),
+        validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto.'))],
+        unique=True
+    )
+
+    bank_entity = models.CharField(
+        _('entidad bancaria'),
+        max_length=DEFAULT_MAX_LEN,
+        help_text=_('Nombre de la entiedad bancaria.')
+    )
+    account_number = models.CharField(
+        _('número de cuenta'),
+        max_length=13,
+        help_text=_('Número de cuenta.')
+    )
+    account_type = models.CharField(_('Tipo cuenta'), max_length=3, choices=ACCOUNT_TYPE_CHOICES)
+
+    organization_name = models.CharField(
+        _('razón social'),
+        max_length=DEFAULT_MAX_LEN,
+        help_text=_('Razón social o nombre del propietario de la cuenta.')
+    )
+    cbu = models.CharField(_('CBU'), max_length=DEFAULT_MAX_LEN, help_text=_('CBU de la cuenta'))
 
     def __str__(self):
         return f"{self.organization_name} - {self.document_number}"
@@ -622,3 +661,6 @@ class OrganizerRefund(Expense):
         verbose_name=_('pago'),
         on_delete=models.SET_NULL,
         null=True)
+
+    def get_absolute_url(self):
+        return reverse('organizer_refund_detail', args=[str(self.pk)])
