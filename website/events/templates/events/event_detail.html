@@ -58,7 +58,7 @@
                         </div>
                         <div class="card-body">
                             <h2 class="text-center">${{ sponsor_category.amount }}</h2>
-                            {% if forloop.counter|divisibleby:2 %}
+                            {% if not sponsor_category.sponsors.count %}
                             <p>No se han registrado sponsors asociados a esta categoria</p>
                             {% else %}
                             <p>Se han registrado un total de {{ sponsor_category.sponsors.count }} sponsors, para esta categoría</p>

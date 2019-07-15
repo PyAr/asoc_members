@@ -103,8 +103,23 @@ class Organizer(SaveReversionMixin, AuditUserTime):
     def __str__(self):
         return f"{ self.user.username } - {self.email}"
 
+    def get_associate_events(self, show_closed=False):
+        if show_closed:
+            return self.events
+        else:
+            return self.events.filter(close=False)
+
     def get_absolute_url(self):
         return reverse('organizer_detail', args=[str(self.pk)])
+
+    def has_account_data(self):
+        return self.account_data is not None
+
+    def has_complete_personal_data(self):
+        if self.first_name and self.last_name:
+            return True
+        else:
+            return False
 
     class Meta:
         permissions = (
@@ -158,6 +173,9 @@ class Event(SaveReversionMixin, AuditUserTime):
             f"- {self.name} "
             f"({self.place})"
         )
+
+    def has_complete_data(self):
+        return self.place and self.start_date and self.category
 
     class Meta:
         permissions = (
@@ -366,6 +384,9 @@ class Invoice(SaveReversionMixin, AuditUserTime):
         on_delete=models.SET_NULL,
         null=True
     )
+
+    def __str__(self):
+        return f"Factura por {self.amount} a {self.sponsoring}"
 
     def invoice_affects_total_sum(self):
         sum = self.invoice_affects.all().aggregate(total=Sum('amount'))

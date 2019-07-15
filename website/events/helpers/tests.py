@@ -12,6 +12,7 @@ from events.models import (
     Event,
     EventOrganizer,
     Invoice,
+    InvoiceAffect,
     Organizer,
     Sponsor,
     SponsorCategory,
@@ -99,7 +100,7 @@ def create_user_set():
 def create_event_set(user):
     """Create events set to test.
 
-    Keyword arguments:
+    Args:
     user -- existing User
 
     Postcondition:
@@ -117,7 +118,7 @@ def create_event_set(user):
 def create_organizer_set(auto_create_user_set=False):
     """Create organizers set to test.
 
-    Keyword arguments:
+    Args:
     auto_create_user_set -- flag tindicating that create_user_set function must be executed
 
     Precondition:
@@ -178,7 +179,7 @@ def create_sponsors_set():
 def create_sponsoring_set(auto_create_sponsors_set=False):
     """Create sponsoring set to test.
 
-    Keyword arguments:
+    Args:
     auto_create_sponsors_set -- flag tindicating that create_sponsors_set function must be executed
 
     Precondition:
@@ -200,7 +201,7 @@ def create_sponsoring_set(auto_create_sponsors_set=False):
 def create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=False):
     """Create sponsoring invoice to test.
 
-    Keyword arguments:
+    Args:
     auto_create_sponsoring_and_sponsor -- flag tindicating that create_sponsoring_set function
     must be executed
 
@@ -228,6 +229,13 @@ def create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=False):
         invoice.save()
 
     return invoice
+
+
+def create_invoice_affect_set(invoice, total_amount=False):
+    InvoiceAffect.objects.create(amount=1000, invoice=invoice, category='Pay')
+    InvoiceAffect.objects.create(amount=1000, invoice=invoice, category='Hold')
+    if total_amount:
+        InvoiceAffect.objects.create(amount=invoice.amount, invoice=invoice, category='Hold')
 
 
 def get_response_wsgi_messages(response):

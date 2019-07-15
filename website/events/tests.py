@@ -4,6 +4,7 @@ from django.core import mail
 from django.template.loader import render_to_string
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from events.constants import (
     CANT_CHANGE_CLOSE_EVENT_MESSAGE,
@@ -30,12 +31,19 @@ from events.helpers.permissions import (
     ORGANIZER_GROUP_NAME,
     organizer_permissions
 )
+from events.helpers.task import (
+    _not_approved_invoices,
+    calculate_organizer_task,
+    calculate_super_user_task,
+    Task
+)
 from events.helpers.tests import (
     associate_events_organizers,
     CustomAssertMethods,
     sponsor_data,
     create_user_set,
     create_event_set,
+    create_invoice_affect_set,
     create_organizer_set,
     create_sponsors_set,
     create_sponsoring_set,
@@ -55,6 +63,7 @@ from io import StringIO
 from unittest.mock import patch
 
 User = get_user_model()
+test_task = Task('descripcion', 'url', timezone.now())
 
 
 class MockSuperUser:
@@ -109,6 +118,16 @@ class EmailTest(TestCase, CustomAssertMethods):
         self.assertEqual(mail.outbox[0].subject,
                          render_to_string('mails/sponsor_just_created_subject.txt'))
 
+    def test_send_email_after_enable_sponsor(self):
+        self.client.login(username='administrator', password='administrator')
+        create_sponsors_set()
+        sponsor = Sponsor.objects.filter(enabled=False).first()
+        response = self.client.post(reverse('sponsor_set_enabled', kwargs={'pk': sponsor.pk}))
+        self.assertEqual(response.status_code, 302)
+
+        self.assertEqual(mail.outbox[0].subject,
+                         render_to_string('mails/sponsor_just_enabled_subject.txt'))
+
     @patch('django.core.files.storage.FileSystemStorage.save')
     def test_send_email_after_create_invoice(self, mock_save):
         mock_save.return_value = 'invoice.pdf'
@@ -155,6 +174,32 @@ class EmailTest(TestCase, CustomAssertMethods):
         self.assertEqual(len(mail.outbox), count)
         self.assertEqual(mail.outbox[0].subject,
                          render_to_string('mails/invoice_affect_just_created_subject.txt'))
+
+    def test_send_email_after_create_sponsoring(self):
+        create_organizer_set()
+        associate_events_organizers()
+        create_sponsors_set()
+        sponsor = Sponsor.objects.filter(enabled=True).first()
+        event = Event.objects.filter(name='MyTest01').first()
+        sponsor_category = SponsorCategory.objects.filter(event=event).first()
+        url = reverse('sponsoring_create', kwargs={'event_pk': event.pk})
+        # To complete the test we need, an event, an enabled sponsor, event_category
+        self.client.login(username='organizer02', password='organizer02')
+
+        data = {
+            'comments': ''
+        }
+        data['sponsorcategory'] = sponsor_category.pk
+        data['sponsor'] = sponsor.pk
+        response = self.client.post(url, data)
+
+        sponsoring = Sponsoring.objects.last()
+        redirect_url = reverse('sponsoring_detail', kwargs={'pk': sponsoring.pk})
+        self.assertRedirects(response, redirect_url)
+        count = User.objects.filter(is_superuser=True).exclude(email__exact='').count()
+        self.assertEqual(len(mail.outbox), count)
+        self.assertEqual(mail.outbox[0].subject,
+                         render_to_string('mails/sponsoring_just_created_subject.txt'))
 
     def test_send_email_after_register_organizer(self):
         # Login client with super user
@@ -701,3 +746,99 @@ class SponsoringViewsTest(TestCase, CustomAssertMethods):
         self.assertRedirects(response, redirect_url)
         invoice.sponsoring.refresh_from_db()
         self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_CHECKED)
+
+
+class PendindTaskTest(TestCase, CustomAssertMethods):
+
+    def setUp(self):
+        create_organizer_set(auto_create_user_set=True)
+        user = User.objects.first()
+        create_event_set(user)
+        associate_events_organizers()
+        self.invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+
+    def test_organizer_get_associate_events_not_include_close(self):
+        organizer = Organizer.objects.get(user__username='organizer01')
+        events = organizer.get_associate_events()
+        event01 = Event.objects.filter(name='MyTest01').first()
+        self.assertIn(event01, events)
+        event01.close = True
+        event01.save()
+        events = organizer.get_associate_events()
+        self.assertNotIn(event01, events)
+
+    def test_not_approved_invoices(self):
+        organizer = Organizer.objects.get(user__username='organizer01')
+        invoices = _not_approved_invoices(organizer)
+        self.assertIn(self.invoice, invoices)
+        # After approve is not
+        self.invoice.invoice_ok = True
+        self.invoice.save()
+        invoices = _not_approved_invoices(organizer)
+        self.assertNotIn(self.invoice, invoices)
+
+    def test_orgnizer_complete_data(self):
+        organizer = Organizer.objects.get(user__username='organizer01')
+        self.assertFalse(organizer.has_complete_personal_data())
+        # True after complete first and last name
+        organizer.first_name = "TestFirstName"
+        organizer.last_name = "TestLastName"
+        organizer.save()
+        self.assertTrue(organizer.has_complete_personal_data())
+
+    @patch('events.helpers.task._incomoplete_events', return_value=[])
+    @patch('events.helpers.task._not_sponsor_category', return_value=[])
+    @patch('events.helpers.task._not_approved_invoices', return_value=[])
+    @patch('events.models.Organizer.has_complete_personal_data', return_value=True)
+    @patch('events.models.Organizer.has_account_data', return_value=False)
+    def test_calculate_organizer_tasks(
+        self,
+        organizer_has_account_data_function,
+        organizer_has_complete_personal_data_function,
+        not_approved_invoices_function,
+        not_sponsor_category_function,
+        incomplete_events_function
+    ):
+        # Some test that can be do it, are
+        # The functions _incomoplete_events, _not_sponsor_category, _not_approved_invoices
+        # organizer.has_complete_personal_data and has_account_data are called
+        # incomplete_events_function.return_value = [Event.objects.filter(name='MyTest01').first()]
+        organizer = Organizer.objects.get(user__username='organizer01')
+        tasks = calculate_organizer_task(organizer.user)
+        incomplete_events_function.assert_called_once_with(organizer)
+        not_sponsor_category_function.assert_called_once_with(organizer, [])
+        not_approved_invoices_function.assert_called_once_with(organizer)
+        organizer_has_complete_personal_data_function.assert_called_once()
+        organizer_has_account_data_function.assert_called_once()
+
+        self.assertEqual(len(tasks), 1)
+
+    @patch('events.helpers.task.not_enabled_sponsor_task_builder', return_value=test_task)
+    def test_not_enabled_sponsors_called(self, not_enabled_sponsor_function):
+        calculate_super_user_task()
+        sponsors = Sponsor.objects.filter(enabled=False)
+
+        for sponsor in sponsors:
+            not_enabled_sponsor_function.assert_called_with(sponsor)
+
+    @patch('events.helpers.task.unpayment_invoices_task_builder', return_value=test_task)
+    def test_invoice_on_unpayment_invoice_task(self, unpayment_task_builder_function):
+        self.invoice.invoice_ok = True
+        self.invoice.save()
+        create_invoice_affect_set(self.invoice)
+        calculate_super_user_task()
+        unpayment_task_builder_function.assert_called_once_with(self.invoice)
+
+    @patch('events.helpers.task.unpayment_invoices_task_builder', return_value=test_task)
+    @patch('events.helpers.task.invoices_to_complete_task_builder', return_value=test_task)
+    def test_invoice_on_to_complete_invoice_task(
+        self,
+        invoices_to_complete_builder_function,
+        unpayment_task_builder_function
+    ):
+        self.invoice.invoice_ok = True
+        self.invoice.save()
+        create_invoice_affect_set(self.invoice, total_amount=True)
+        calculate_super_user_task()
+        invoices_to_complete_builder_function.assert_called_once_with(self.invoice)
+        self.assertFalse(unpayment_task_builder_function.called)
