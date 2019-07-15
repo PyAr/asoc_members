@@ -1,0 +1,33 @@
+<div class="modal-dialog modal-md">
+    <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">x</button>
+                
+                <h3>Confirmación de cierre de patrocinio</h3>
+                
+            </div>
+            <div class="modal-body">
+            
+                <div class="panel panel-default">
+                        <div class="panel-body">
+                            ¿Esta seguro que desea cerrar el patrocinio actual?. Esto bloqueará todas las acciones sobre el mismo.
+                        </div>
+                </div>
+            </div>
+            <form action="{% url 'sponsoring_set_close' sponsoring.pk %}" method="post">
+                    {% csrf_token %}
+            <div class="modal-footer">
+                    <div class="col-lg-12 text-right">
+                            
+                            <a class="btn btn-default" onclick="return close_confirm_dialog()">Cancelar</a>
+                            {% if perms.events.close_sponsoring %}
+                            <input type="submit" class="btn btn-primary " value="Aceptar"/>
+                            {% endif %}
+                            
+                    </div>
+            </div>
+
+        </form>
+
+    </div>
+</div>

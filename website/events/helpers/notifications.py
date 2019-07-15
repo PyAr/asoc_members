@@ -7,14 +7,19 @@ User = get_user_model()
 
 
 class EmailNotification():
-    EMAIL_TEMPLATES = {
-        'organizer_associated_to_event': 'mails/organizer_associated_to_event_email.html',
-        'sponsor_just_created': 'mails/sponsor_just_created_email.html'
-    }
-    EMAIL_SUBJECTS = {
-        'organizer_associated_to_event': 'mails/organizer_associated_to_event_subject.txt',
-        'sponsor_just_created': 'mails/sponsor_just_created_subject.txt'
-    }
+    ORGANIZER_ASSOCIATED_TO_EVENT = 'organizer_associated_to_event'
+    SPONSOR_JUST_CREATED = 'sponsor_just_created'
+    INVOICE_JUST_CREATED = 'invoice_just_created'
+    INVOICE_AFFECT_JUST_CREATED = 'invoice_affect_just_created'
+    SPONSOR_JUST_ENABLED = 'sponsor_just_enabled'
+    SPONSORING_JUST_CREATED = 'sponsoring_just_created'
+
+    def _get_email_template(self, email_type):
+        # TODO: check that the type is one of the email_types
+        return f'mails/{email_type}_email.html'
+
+    def _get_email_subject(self, email_type):
+        return f'mails/{email_type}_subject.txt'
 
     def send_organizer_associated_to_event(self, event, organizers, context):
         """Send email notifiying new organizer user association with event.
@@ -23,11 +28,12 @@ class EmailNotification():
             organizers: List of organizers to notify association
             context: Context to compleate at less 'domain' and 'protocol'
         """
-        template = self.EMAIL_TEMPLATES.get('organizer_associated_to_event')
-        subject = render_to_string(self.EMAIL_SUBJECTS.get('organizer_associated_to_event'))
+        email_type = self.ORGANIZER_ASSOCIATED_TO_EVENT
+        template = self._get_email_template(email_type)
+        subject = render_to_string(self._get_email_subject(email_type))
         messages = []
+        context['event'] = event
         for organizer in organizers:
-            context['event'] = event
             context['organizer'] = organizer
             body = render_to_string(template, context)
             recipients = organizer.user.email
@@ -48,15 +54,97 @@ class EmailNotification():
             created_by: User whos create the sponsor
             context: Context to compleate at less 'domain' and 'protocol'
         """
-        template = self.EMAIL_TEMPLATES.get('sponsor_just_created')
-        subject = render_to_string(self.EMAIL_SUBJECTS.get('sponsor_just_created'))
+        email_type = self.SPONSOR_JUST_CREATED
+        recipients = self._get_superusers_emails()
+        context['sponsor'] = sponsor
+        context['user'] = created_by
+
+        self._send_emails(email_type, recipients, context)
+
+    def send_new_invoice_created(self, invoice, context):
+        """Send email notifiying new invoice was created.
+        Args:
+            invoice: Invoice just created
+            context: Context to compleate at less 'domain' and 'protocol'
+        """
+        email_type = self.INVOICE_JUST_CREATED
+
+        event = invoice.sponsoring.sponsorcategory.event
+        recipients = self._get_event_organizers_emails(event)
+        context['event'] = event
+        context['invoice'] = invoice
+        self._send_emails(email_type, recipients, context)
+
+    def send_new_invoice_affect_created(self, invoice_affect, created_by, context):
+        """Send email notifiying new invoice affect was created.
+        Args:
+            invoice_affect: InvoiceAffect just created
+            created_by: User whos create the sponsor
+            context: Context to compleate at less 'domain' and 'protocol'
+        """
+        email_type = self.INVOICE_AFFECT_JUST_CREATED
+
+        recipients = self._get_superusers_emails()
+        context['invoice_affect'] = invoice_affect
+        context['user'] = created_by
+
+        self._send_emails(email_type, recipients, context)
+
+    def send_sponsor_enabled(self, sponsor, context):
+        """Send email notifiying that a sponsor was enabled.
+        Args:
+            sponsor: Sponsor just enabled
+            context: Context to compleate at less 'domain' and 'protocol'
+        """
+        email_type = self.SPONSOR_JUST_ENABLED
+        if sponsor.created_by.email:
+            recipients = [sponsor.created_by.email]
+            context['sponsor'] = sponsor
+            self._send_emails(email_type, recipients, context)
+
+    def send_new_sponsoring_created(self, sponsoring, created_by, context):
+        """Send email notifiying new sponsor was created.
+        Args:
+            sponsoring: Sponsoring just created
+            created_by: User whos create the sponsor
+            context: Context to compleate at less 'domain' and 'protocol'
+        """
+        email_type = self.SPONSORING_JUST_CREATED
+
+        recipients = self._get_superusers_emails()
+        context['sponsoring'] = sponsoring
+        context['user'] = created_by
+        self._send_emails(email_type, recipients, context)
+
+    def _get_superusers_emails(self):
+        recipients = []
+        users = User.objects.filter(is_superuser=True).exclude(email__exact='')
+        for user in users.all():
+            recipients.append(user.email)
+        return recipients
+
+    def _get_event_organizers_emails(self, event):
+        recipients = []
+        for organizer in event.organizers.all():
+            recipients.append(organizer.user.email)
+        return recipients
+
+    def _contruct_message(self, subject, body, recipients):
+        return mail.EmailMessage(subject, body, settings.EMAIL_FROM, [recipients])
+
+    def _send_emails(self, email_type, recipients, context):
+        """ Send the same email to all recipients.
+        Args:
+            email_type: One of the self constants.
+            recipients: List of emails to send messages
+            context: Context to compleate at less 'domain' and 'protocol'
+        """
+        template = self._get_email_template(email_type)
+        subject = render_to_string(self._get_email_subject(email_type))
+        body = render_to_string(template, context)
 
         messages = []
-        recipients = self._get_superusers_emails()
         for recipient in recipients:
-            context['sponsor'] = sponsor
-            context['user'] = created_by
-            body = render_to_string(template, context)
             message = self._contruct_message(subject, body, recipient)
             messages.append(message)
 
@@ -66,16 +154,6 @@ class EmailNotification():
         # The connection was already open so send_messages() doesn't close it.
         # We need to manually close the connection.
         connection.close()
-
-    def _get_superusers_emails(self):
-        recipients = []
-        users = User.objects.filter(is_superuser=True).exclude(email__exact='')
-        for user in users.all():
-            recipients.append(user.email)
-        return recipients
-
-    def _contruct_message(self, subject, body, recipients):
-        return mail.EmailMessage(subject, body, settings.EMAIL_FROM, [recipients])
 
 
 email_notifier = EmailNotification()

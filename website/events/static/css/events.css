@@ -73,3 +73,11 @@
     background-color: #ff7259;
     color: black;
 }
+
+.task-description {
+    font-weight: bold;
+}
+
+.task-action {
+    text-align: right;
+}
