@@ -42,6 +42,7 @@ from events.forms import (
     SponsoringForm
 )
 from events.helpers.notifications import email_notifier
+from events.helpers.task import calculate_organizer_task, calculate_super_user_task
 from events.helpers.views import seach_filterd_queryset
 from events.helpers.permissions import is_event_organizer, ORGANIZER_GROUP_NAME
 from events.models import (
@@ -59,7 +60,15 @@ from pyar_auth.forms import PasswordResetForm
 
 @login_required()
 def events_home(request):
-    return render(request, 'events_home.html')
+    user = request.user
+    tasks = []
+    if Organizer.objects.filter(user=user).exists():
+        tasks = calculate_organizer_task(user)
+    else:
+        if user.is_superuser:
+            tasks = calculate_super_user_task()
+
+    return render(request, 'events_home.html', {'tasks': tasks})
 
 
 @permission_required('events.add_organizer')
@@ -431,6 +440,15 @@ class SponsorSetEnabled(PermissionRequiredMixin, View):
             messages.SUCCESS,
             _('Patrocinador habilitado exitosamente ')
         )
+        current_site = get_current_site(self.request)
+        context = {
+            'domain': current_site.domain,
+            'protocol': 'https' if self.request.is_secure() else 'http'
+        }
+        email_notifier.send_sponsor_enabled(
+            sponsor,
+            context
+        )
         return redirect('sponsor_detail', pk=kwargs['pk'])
 
 
@@ -484,6 +502,21 @@ class SponsoringCreateView(PermissionRequiredMixin, generic.edit.CreateView):
         event = self._get_event()
         context['event'] = event
         return context
+
+    def form_valid(self, form):
+        ret = super(SponsoringCreateView, self).form_valid(form)
+        current_site = get_current_site(self.request)
+        context = {
+            'domain': current_site.domain,
+            'protocol': 'https' if self.request.is_secure() else 'http'
+        }
+        sponsoring = form.instance
+        email_notifier.send_new_sponsoring_created(
+            sponsoring,
+            self.request.user,
+            context
+        )
+        return ret
 
     def get(self, request, *args, **kwargs):
         event = self._get_event()

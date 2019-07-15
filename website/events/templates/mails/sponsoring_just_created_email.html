@@ -1,0 +1,13 @@
+{% autoescape off %}
+
+El usuario "{{ user.username }}" ha creado un nuevo patrocinio con la siguiente información:
+
+Evento Categoria: {{sponsoring.sponsorcategory}}
+Patrocinador:{{ sponsoring.sponsor}}
+
+
+Por favor ingrese al mismo para facturar.
+{{ protocol }}://{{ domain }}{% url 'sponsoring_detail' pk=sponsoring.pk %}
+
+
+{% endautoescape %}

@@ -1,0 +1,11 @@
+{% autoescape off %}
+
+El sponsor, con la informacion adjunta, creado por su usuario fue recientemente habilitado
+
+Razón social: {{ sponsor.organization_name }}
+CUIT: {{ sponsor.document_number }}
+Condición frente al IVA: {{ sponsor.get_vat_condition_display }}
+Dirección: {{ sponsor.address }}
+Información de contacto: {{ sponsor.contact_info }}
+
+{% endautoescape %}
