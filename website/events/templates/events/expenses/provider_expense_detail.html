@@ -55,6 +55,7 @@
                 </div-->
             {% endif %}
             </div>
+
         </div>
         <div class="col-md-6">
             <div class="row">
@@ -71,10 +72,10 @@
             </div>
 
             <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-7">
                     <h4>Comprobante Pago</h4> 
                 </div> 
-                <div class="col-md-7 text-left" style="padding: 10px">
+                <div class="col-md-5 text-left" style="padding: 10px">
                     {% if providerexpense.payment %}
                     <a href="{{providerexpense.payment.document.url}}" target="_blank"> descargar <i class="fa fa-download"></i></a>
                     {% elif perms.events.add_payment %}
@@ -104,7 +105,13 @@
             </div>
             {% endif %}
         </div>
+        <div class="col-md-12 text-right">
+            {% if perms.events.change_providerexpense and not providerexpense.payment %}
+            <a class="btn btn-primary" href="{% url 'provider_expense_update' pk=providerexpense.pk %}">Editar Gasto </a>
+            {% endif %}
+        </div>
     </div>
+    
 </div>
 
 

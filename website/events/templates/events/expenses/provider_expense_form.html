@@ -9,7 +9,12 @@
                     <li><a href="{% url 'event_list' %}">Eventos</a></li>
                     <li><a href="{% url 'event_detail' pk=event.pk %}">{{event.name}}</a></li>
                     <li><a href="{% url 'expenses_list' event_pk=event.pk %}">Gastos</a></li>
+                    {% if form.instance.pk %}
+                    <li><a href="{% url 'provider_expense_detail' pk=form.instance.pk %}">Gasto Proveedor (form.instance.pk)</a></li>
+                    <li class="active"><a href="{% url 'provider_expense_create' event_pk=event.pk %}">Acturalizar (gasto proveedor)</a></li>
+                    {% else %}
                     <li class="active"><a href="{% url 'provider_expense_create' event_pk=event.pk %}">Crear (gasto proveedor)</a></li>
+                    {% endif %}
                 </ol>
         </div>
     
@@ -17,7 +22,7 @@
         {% csrf_token %}
         {% crispy form %}
         {% if form.instance.pk %}
-        <a class="btn btn-default" href="{% url 'sponsoring_detail' form.instance.pk %}">Volver</a>
+        <a class="btn btn-default" href="{% url 'provider_expense_detail' pk=form.instance.pk %}">Volver</a>
         <input type="submit" class="btn btn-success" value="Actualizar!">
         {% else %}
         <a class="btn btn-default" href="{% url 'expenses_list' event_pk=event.pk %}">Volver</a>

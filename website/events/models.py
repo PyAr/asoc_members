@@ -123,6 +123,9 @@ class Organizer(SaveReversionMixin, AuditUserTime):
         else:
             return False
 
+    def has_unpayment_refunds(self):
+        return OrganizerRefund.objects.filter(organizer=self, payment__isnull=True).exists()
+
     class Meta:
         permissions = (
             (CAN_VIEW_ORGANIZERS_CODENAME, _('puede ver organizadores')),

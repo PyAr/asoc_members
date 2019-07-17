@@ -71,14 +71,12 @@
             </div>
 
             <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-7">
                     <h4>Comprobante Pago</h4> 
                 </div> 
-                <div class="col-md-7 text-left" style="padding: 10px">
+                <div class="col-md-5 text-left" style="padding: 10px">
                     {% if organizerrefund.payment %}
                     <a href="{{organizerrefund.payment.document.url}}" target="_blank"> descargar <i class="fa fa-download"></i></a>
-                    {% elif perms.events.add_payment %}
-                    <!--a class="btn btn-primary" onclick="return open_modal('{% url 'provider_expense_payment_create' organizerrefund.pk %}')"><i class="fa fa-plus"> Agregar</i></a-->
                     {% endif %}
                 </div>
             </div>
@@ -100,7 +98,11 @@
             </div>
             {% else %}
             <div class="alert alert-info" role="alert">
-                Sin comprobante de pago cargado.
+                Sin comprobante de pago.
+                {% if perms.events.add_payment %}
+                <p>Para agregar un comprobante de pagos para reintegros del organizador ingrese aquí</p> <br/>
+                <a class="btn btn-primary" href="{% url 'organizer_refund_payment_create' pk=organizerrefund.organizer.pk %}?next={% url 'organizer_refund_detail' pk=organizerrefund.pk %}"><i class="fa fa-plus"> Comprobante de pago</i></a>
+                {% endif %}
             </div>
             {% endif %}
         </div>

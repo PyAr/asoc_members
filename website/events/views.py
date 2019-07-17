@@ -5,6 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib.auth.models import Group
 from django.contrib.sites.shortcuts import get_current_site
 
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.http import HttpResponseRedirect, JsonResponse
 
@@ -1063,7 +1064,7 @@ class ProviderExpensePaymentCreateView(PermissionRequiredMixin, generic.edit.Cre
         with transaction.atomic():
             ret = super(ProviderExpensePaymentCreateView, self).form_valid(form)
             expense = self._get_expense()
-            expense.payment = self.get_object()
+            expense.payment = form.instance
             expense.save()
             return ret
 
@@ -1106,6 +1107,97 @@ class OrganizerRefundDetailView(PermissionRequiredMixin, generic.DetailView):
             return super(OrganizerRefundDetailView, self).handle_no_permission()
 
 
+class OrganizerRefundPaymentCreateView(PermissionRequiredMixin, generic.edit.CreateView):
+    model = Payment
+    form_class = PaymentForm
+    template_name = 'events/expenses/organizer_refunds_payment_form.html'
+    permission_required = 'events.add_payment'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context.
+        context = super(OrganizerRefundPaymentCreateView, self).get_context_data(**kwargs)
+        go_to = self.request.GET.get('next', None)
+        organizer = self._get_organizer()
+        context['organizer'] = organizer
+        refunds = OrganizerRefund.objects.filter(organizer=organizer, payment__isnull=True).all()
+        context['refunds'] = refunds
+        context['go_to'] = go_to
+        return context
+
+    def form_valid(self, form):
+        if 'refunds' in self.request.POST:
+            refunds = []
+            refunds_ids = self.request.POST.getlist('refunds')
+            for refund_id in refunds_ids:
+                try:
+                    refund = OrganizerRefund.objects.get(pk=refund_id)
+                except OrganizerRefund.DoesNotExist:
+                    form.add_error(
+                        None,
+                        ValidationError(_("Uno de los reintegros pasados no existe")))
+                    return super(OrganizerRefundPaymentCreateView, self).form_invalid(form)
+                if refund.payment:
+                    message = _(
+                        f"El reintegro {refund.pk} con monto "
+                        f"{refund.amount} ya tiene pago adjunto")
+                    form.add_error(
+                        None,
+                        ValidationError(message))
+                    return super(OrganizerRefundPaymentCreateView, self).form_invalid(form)
+                refunds.append(refund)
+        else:
+            form.add_error(
+                None,
+                ValidationError(_("No se puede adjuntar sin seleccionar reintegros")))
+            return super(OrganizerRefundPaymentCreateView, self).form_invalid(form)
+
+        with transaction.atomic():
+            ret = super(OrganizerRefundPaymentCreateView, self).form_valid(form)
+            for refund in refunds:
+                refund.payment = form.instance
+                refund.save()
+            return ret
+
+    def get_success_url(self):
+        go_to = self.request.GET.get('next', None)
+        if go_to:
+            return go_to
+        return self._get_organizer().get_absolute_url()
+
+    def _get_organizer(self):
+        return get_object_or_404(Organizer, pk=self.kwargs['pk'])
+
+
+class ProviderExpenseUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
+    model = ProviderExpense
+    form_class = ProviderExpenseForm
+    template_name = 'events/expenses/provider_expense_form.html'
+    permission_required = 'events.change_providerexpense'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context.
+        context = super(ProviderExpenseUpdateView, self).get_context_data(**kwargs)
+        event = self.get_object().event
+        context['event'] = event
+        return context
+
+    def has_permission(self):
+        ret = super(ProviderExpenseUpdateView, self).has_permission()
+        # Must be event organizer.
+        event = self.get_object().event
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
+        return ret
+
+    def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+            return redirect('event_list')
+        else:
+            return super(ProviderExpenseUpdateView, self).handle_no_permission()
+
+
 events_list = EventsListView.as_view()
 event_detail = EventDetailView.as_view()
 event_change = EventChangeView.as_view()
@@ -1142,7 +1234,9 @@ provider_create = ProviderCreateView.as_view()
 
 expenses_list = ExpensesListView.as_view()
 provider_expense_create = ProviderExpenseCreateView.as_view()
+provider_expense_update = ProviderExpenseUpdateView.as_view()
 organizer_refund_create = OrganizerRefundCreateView.as_view()
 provider_expense_detail = ProviderExpenseDetailView.as_view()
 provider_expense_payment_create = ProviderExpensePaymentCreateView.as_view()
 organizer_refund_detail = OrganizerRefundDetailView.as_view()
+organizer_refund_payment_create = OrganizerRefundPaymentCreateView.as_view()
