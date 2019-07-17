@@ -18,6 +18,7 @@ COPY . /code/
 
 # Set working dir
 WORKDIR /code/website
+RUN rm -rf db.sqlite3
 
 # Bring pyafipws branch and install it's dependencies
 RUN wget https://github.com/PyAr/pyafipws/archive/py3k.zip && unzip py3k.zip && mv pyafipws-py3k pyafipws
