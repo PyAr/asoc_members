@@ -5,7 +5,6 @@ volumes:
 
 services:
   postgres:
-    hostname: postgres
     image: postgres:latest
     restart: always
     environment:
@@ -14,8 +13,6 @@ services:
       - POSTGRES_PASSWORD=secret
     volumes:
       - pgdata:/var/lib/postgresql/data/
-    ports:
-      - "5432:5432"
 
   web:
     build: .
