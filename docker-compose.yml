@@ -5,6 +5,7 @@ volumes:
 
 services:
   postgres:
+    hostname: postgres
     image: postgres:latest
     restart: always
     environment:
@@ -23,6 +24,7 @@ services:
     volumes:
       - .:/code
     command: "tail -f /dev/null"
+
   mail:
     image: mailhog/mailhog
     ports:
