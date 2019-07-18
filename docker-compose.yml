@@ -1,6 +1,21 @@
 version: '2'
 
+volumes:
+  pgdata:
+
 services:
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_DB=memberships
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - pgdata:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+
   web:
     build: .
     ports:
