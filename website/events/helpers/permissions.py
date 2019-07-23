@@ -6,7 +6,9 @@ from events.constants import (
     CAN_SET_PARTIAL_PAYMENT_CODENAME,
     CAN_SET_SPONSORS_ENABLED_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
+    CAN_VIEW_EXPENSES_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
+    CAN_VIEW_PROVIDERS_CODENAME,
     CAN_VIEW_SPONSORS_CODENAME
 )
 from events.models import Organizer
@@ -28,10 +30,20 @@ ORGANIZER_PERMISSIONS_CODENAMES = [
     'change_sponsoring',
     'delete_sponsoring',
     CAN_VIEW_SPONSORS_CODENAME,
+    CAN_VIEW_PROVIDERS_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
+    CAN_VIEW_EXPENSES_CODENAME,
     'add_invoiceaffect',
     'delete_invoiceaffect',
     CAN_SET_APPROVED_INVOICE_CODENAME,
+    'add_expense',
+    'add_provider',
+    'change_provider',
+    'add_providerexpense',
+    'change_providerexpense',
+    'change_expense',
+    'add_organizerrefund',
+    'change_organizerrefund'
 ]
 
 # Initial only superuser has these permissions. But each perm check on view is added here to test
@@ -48,7 +60,9 @@ SUPER_ORGANIZER_PERMISSIONS_CODENAMES = [
     CAN_CLOSE_SPONSORING_CODENAME,
     'add_invoice',
     CAN_SET_COMPLETE_PAYMENT_CODENAME,
-    CAN_SET_PARTIAL_PAYMENT_CODENAME
+    CAN_SET_PARTIAL_PAYMENT_CODENAME,
+    'add_payment',
+    'change_payment'
 ]
 
 
@@ -120,3 +134,10 @@ def is_event_organizer(user, event):
         return True
 
     return False
+
+
+def is_organizer_user(user):
+    if Organizer.objects.filter(user=user).exists():
+        return True
+    else:
+        return False

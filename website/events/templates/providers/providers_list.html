@@ -1,0 +1,60 @@
+{% extends "events_base_paginated_list.html" %}
+
+{% block route-navigator %}
+<div class="route-navigator" >
+        <ol class="breadcrumb">
+            <li><a href="{% url 'events_home' %}">Inicio</a></li>
+            <li class="active"><a href="{% url 'provider_list' %}">Proveedores</a></li>
+        </ol>
+</div>
+{% endblock %}
+{% block list_title %}
+<h1>Proveedores</h1>
+{%endblock%}
+
+{% block list_content %}
+    <div class="row sponsors-list">
+        <div class="col-md-12">
+            <table class="table table-striped row-clickeable-table">
+                <thead>
+                    <tr>
+                        <th scope="row">Nombre/Razón social</th>
+                        <th scope="row">CUIT</th>
+                        <th scope="row">Banco</th>
+                        <th scope="row">Tipo Cuenta</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for provider in provider_list %}
+                
+                    <tr onclick="window.location='{% url 'provider_detail' pk=provider.pk %}';" class="clikeable">
+                        
+                        <td >{{ provider.organization_name }}</td>
+                        <td>{{ provider.document_number }}</td>
+                        <td> {{ provider.bank_entity}}</td>
+                        <td> {{ provider.get_account_type_display}}</td>
+                    </tr>
+                
+                {% empty %}
+                    <tr>
+                        <td colspan="100%" class="empty-list">
+                            <strong>No hay proveedores activos.</strong>
+                        </td>
+                    </tr>
+                {% endfor %}
+                
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row sponsors-list-actions">
+        <div class="col-md-12 text-right">
+            {% if perms.events.add_provider %}
+            <a class="btn btn-primary" href="{% url 'provider_create' %}">Crear</a>
+            {% endif %}
+        </div>
+    </div>
+    
+
+
+{% endblock %}

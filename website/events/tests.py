@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.core import mail
 from django.template.loader import render_to_string
 from django.test import TestCase
@@ -55,6 +55,7 @@ from events.models import (
     BankAccountData,
     Event,
     Organizer,
+    Provider,
     Sponsor,
     SponsorCategory,
     Sponsoring
@@ -477,6 +478,7 @@ class EventViewsTest(TestCase, CustomAssertMethods):
 
 class SponsorViewsTest(TestCase, CustomAssertMethods):
     def setUp(self):
+        super().setUp()
         create_organizer_set(auto_create_user_set=True)
 
     def test_organizer_cant_set_sponsors_enabled(self):
@@ -842,3 +844,48 @@ class PendindTaskTest(TestCase, CustomAssertMethods):
         calculate_super_user_task()
         invoices_to_complete_builder_function.assert_called_once_with(self.invoice)
         self.assertFalse(unpayment_task_builder_function.called)
+
+
+class ProviderViewsTest(TestCase, CustomAssertMethods):
+    provider_data = {
+        'organization_name': 'Pablo',
+        'document_number': '20-21321265-7',
+        'bank_entity': 'Banco Rio',
+        'account_type': 'CC',
+        'account_number': '4',
+        'cbu': '456548789'
+    }
+
+    def setUp(self):
+        create_organizer_set(auto_create_user_set=True)
+
+    def test_can_create_provider_with_perms(self):
+        perm = Permission.objects.get(
+            content_type__app_label='events',
+            codename='add_provider')
+        user = User.objects.get(username='organizer01')
+        user.user_permissions.add(perm)
+
+        providers_count = Provider.objects.all().count()
+        url = reverse('provider_create')
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url, data=self.provider_data)
+        self.assertEqual(Provider.objects.all().count(), providers_count+1)
+        self.assertEqual(response.status_code, 302)
+
+    def test_create_provider_redirects_without_perms(self):
+        url = reverse('provider_create')
+        perm = Permission.objects.get(
+            content_type__app_label='events',
+            codename='add_provider')
+        user = User.objects.get(username='organizer01')
+        user.user_permissions.remove(perm)
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url, data=self.provider_data)
+
+        # View redirect.
+        self.assertEqual(response.status_code, 302)
+
+        # And redirect to login.
+        redirect_to_login_url = reverse('login') + '?next=' + reverse('provider_create')
+        self.assertEqual(response.url, redirect_to_login_url)

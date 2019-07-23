@@ -1,0 +1,77 @@
+{% extends "events_base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+
+        <div class="route-navigator" >
+            <ol class="breadcrumb">
+                <li><a href="{% url 'events_home' %}">Inicio</a></li>
+                {% if perms.events.view_organizers %}
+                <li><a href="{% url 'organizer_list' %}" >Organizadores</a></li>
+                {% endif %}
+                <li><a href="{% url 'organizer_detail' pk=organizer.pk %}">{{organizer.user.username}}</a></li>
+                <li class="active"><a href="{% url 'organizer_detail' pk=organizer.pk %}">Pagar Reintegros</a></li>
+            </ol>
+        </div>
+    
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <h4>Reintegros impagos: {{organizer}}</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="row"></th>
+                    <th scope="row">Monto</th>
+                    <th scope="row">Fecha</th>
+                    <th scope="row">Descripcion</th>
+                    <th scope="row">Evento</th>
+                    <th scope="row">Comprobante</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for refund in refunds %}
+            
+                
+                <tr>
+                    <td>
+                        <input type="checkbox" name="refunds" value="{{ refund.pk }}" amount="{{ refund.amount }}" />
+                    </td> 
+                    <td>
+                        ${{ refund.amount }}
+                    </td>
+                    <td>{{ refund.invoice_date }}</td>
+                    <td>{{ refund.description }}</td>
+                    <td>{{ refund.event}}</td>
+                    <td>{{ refund.get_invoice_type_display }}</td>
+                </tr>
+            
+            {% empty %}
+                <tr>
+                    <td colspan="100%" class="empty-list">
+                        <strong>No hay reintegros impagos para el organizador</strong>
+                    </td>
+                </tr>
+            {% endfor %}
+            
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th scope="row" colspan="5" class="text-right">Total seleccionado</th>
+                    <td>$0</td>
+                </tr>
+            </tfoot>
+        </table>
+
+
+
+        {% crispy form %}
+        {% if go_to %}
+        <a class="btn btn-default" href="{{ go_to }}">Volver</a>
+        {% else %}
+        <a class="btn btn-default" href="{% url 'organizer_detail' pk=organizer.pk %}">Volver</a>
+        {% endif %}
+        <input type="submit" class="btn btn-success" value="Cargar">
+    </form>
+       
+</div>       
+{% endblock %}

@@ -15,8 +15,10 @@ from events.constants import (
     CAN_SET_PARTIAL_PAYMENT_CODENAME,
     CAN_SET_SPONSORS_ENABLED_CODENAME,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
+    CAN_VIEW_EXPENSES_CODENAME,
     CAN_VIEW_ORGANIZERS_CODENAME,
     CAN_VIEW_SPONSORS_CODENAME,
+    CAN_VIEW_PROVIDERS_CODENAME,
     IMAGE_FORMATS,
     SPONSOR_STATE_CHECKED,
     SPONSOR_STATE_CLOSED,
@@ -120,6 +122,9 @@ class Organizer(SaveReversionMixin, AuditUserTime):
             return True
         else:
             return False
+
+    def has_unpayment_refunds(self):
+        return OrganizerRefund.objects.filter(organizer=self, payment__isnull=True).exists()
 
     class Meta:
         permissions = (
@@ -463,3 +468,202 @@ class InvoiceAffect(SaveReversionMixin, AuditUserTime):
 
     def is_image_document(self):
         return self.extension() in IMAGE_FORMATS
+
+
+def expense_upload_path(instance, filename):
+    """
+    Customize the expenses upload path to
+    MEDIA_ROOT/events/expenses/invoiceType_Amount(event_name).ext.
+    """
+    ext = filename.split('.')[-1]
+    event_name = lower_non_spaces(instance.event.name)
+
+    return (
+        f"media/events/expenses/"
+        f"{instance.invoice_type}_{instance.amount}({event_name}).{ext}"
+    )
+
+
+@reversion.register
+class Expense(SaveReversionMixin, AuditUserTime):
+    """
+    Expense:
+    Represents events expenses. Can be providers payments or refunds
+    to organizers.
+    """
+    PROVIDER_EXENSE_TYPE = 'Prv'
+    REFUND_EXPENSE_TYPE = 'Ref'
+    EXPENSE_TYPES = (
+        (PROVIDER_EXENSE_TYPE, 'Gasto proveedor'),
+        (REFUND_EXPENSE_TYPE, 'Reintegro organizador')
+    )
+
+    INVOICE_TYPE_A = 'A'
+    INVOICE_TYPE_B = 'B'
+    INVOICE_TYPE_C = 'C'
+    INVOICE_TYPE_TICKET = 'Tic'
+    INVOICE_TYPE_OTHER = 'Otr'
+    INVOICE_TYPES = (
+        (INVOICE_TYPE_A, 'Factura A'),
+        (INVOICE_TYPE_B, 'Factura B'),
+        (INVOICE_TYPE_C, 'Factura C'),
+        (INVOICE_TYPE_TICKET, 'Ticket'),
+        (INVOICE_TYPE_OTHER, 'Otro')
+    )
+
+    description = models.CharField(
+        _('descripción'),
+        max_length=DEFAULT_MAX_LEN,
+        blank=True,
+        default='',
+        help_text=_('Descripción del gasto'),
+    )
+    amount = models.DecimalField(_('monto'), max_digits=18, decimal_places=2)
+    invoice_type = models.CharField(
+        _('tipo factura'), max_length=5, choices=INVOICE_TYPES
+    )
+    invoice_date = models.DateField(_('fecha factura'))
+    invoice = models.FileField(_('factura'), upload_to=expense_upload_path)
+    event = models.ForeignKey(
+        'Event',
+        verbose_name=_('Evento'),
+        on_delete=models.CASCADE,
+        related_name='expenses'
+    )
+    category = models.CharField(
+        _('tipo gasto'), max_length=5, choices=EXPENSE_TYPES
+    )
+
+    def origin(self):
+        if self.category == self.PROVIDER_EXENSE_TYPE:
+            return self.providerexpense.provider
+        else:
+            return self.organizerrefund.organizer
+
+    def payment(self):
+        if self.category == self.PROVIDER_EXENSE_TYPE:
+            return self.providerexpense.payment
+        else:
+            return self.organizerrefund.payment
+
+    def invoice_extension(self):
+        name, extension = os.path.splitext(self.invoice.name)
+        return extension
+
+    def is_image_document(self):
+        return self.invoice_extension() in IMAGE_FORMATS
+
+    class Meta:
+        permissions = (
+            (CAN_VIEW_EXPENSES_CODENAME, _('puede ver gastos')),
+        )
+
+
+@reversion.register
+class Provider(SaveReversionMixin, AuditUserTime):
+    """Provider data, is similar to AccountData except some retriction."""
+    CC = 'CC'
+    CA = 'CA'
+    ACCOUNT_TYPE_CHOICES = (
+        (CC, 'Cuenta corriente'),
+        (CA, 'Caja de ahorros')
+    )
+    document_number = models.CharField(
+        _('CUIT'),
+        max_length=13,
+        help_text=_('CUIT del propietario de la cuenta, formato ##-########-#'),
+        validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto.'))],
+        unique=True
+    )
+
+    bank_entity = models.CharField(
+        _('entidad bancaria'),
+        max_length=DEFAULT_MAX_LEN,
+        help_text=_('Nombre de la entiedad bancaria.')
+    )
+    account_number = models.CharField(
+        _('número de cuenta'),
+        max_length=13,
+        help_text=_('Número de cuenta.')
+    )
+    account_type = models.CharField(_('Tipo cuenta'), max_length=3, choices=ACCOUNT_TYPE_CHOICES)
+
+    organization_name = models.CharField(
+        _('razón social'),
+        max_length=DEFAULT_MAX_LEN,
+        help_text=_('Razón social o nombre del propietario de la cuenta.')
+    )
+    cbu = models.CharField(_('CBU'), max_length=DEFAULT_MAX_LEN, help_text=_('CBU de la cuenta'))
+
+    def __str__(self):
+        return f"{self.organization_name} - {self.document_number}"
+
+    def get_absolute_url(self):
+        return reverse('provider_detail', args=[str(self.pk)])
+
+    class Meta:
+        permissions = (
+            (CAN_VIEW_PROVIDERS_CODENAME, _('puede ver proveedores')),
+        )
+        ordering = ['-created']
+
+
+@reversion.register
+class Payment(SaveReversionMixin, AuditUserTime):
+    document = models.FileField(_('comprobante'), upload_to='media/events/payments/')
+
+    def extension(self):
+        name, extension = os.path.splitext(self.document.name)
+        return extension
+
+    def is_image_document(self):
+        return self.extension() in IMAGE_FORMATS
+
+
+@reversion.register
+class ProviderExpense(Expense):
+
+    def __init__(self, *args, **kwargs):
+        super(ProviderExpense, self).__init__(*args, **kwargs)
+        self.category = Expense.PROVIDER_EXENSE_TYPE
+
+    payment = models.OneToOneField(
+        'Payment',
+        verbose_name=_('pago'),
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True)
+
+    provider = models.ForeignKey(
+        'Provider',
+        verbose_name=_('Proveedor'),
+        on_delete=models.CASCADE,
+        related_name='expenses'
+    )
+
+    def get_absolute_url(self):
+        return reverse('provider_expense_detail', args=[str(self.pk)])
+
+
+@reversion.register
+class OrganizerRefund(Expense):
+
+    def __init__(self, *args, **kwargs):
+        super(OrganizerRefund, self).__init__(*args, **kwargs)
+        self.category = Expense.REFUND_EXPENSE_TYPE
+
+    organizer = models.ForeignKey(
+        'Organizer',
+        verbose_name=_('Organizador'),
+        on_delete=models.CASCADE,
+        related_name='refunds'
+    )
+
+    payment = models.ForeignKey(
+        'Payment',
+        verbose_name=_('pago'),
+        on_delete=models.SET_NULL,
+        null=True)
+
+    def get_absolute_url(self):
+        return reverse('organizer_refund_detail', args=[str(self.pk)])

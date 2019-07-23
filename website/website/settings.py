@@ -93,11 +93,14 @@ class Base(Configuration):
 
     # Database
     # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
-
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('POSTGRES_DB', "memberships"),
+            'USER': os.environ.get('POSTGRES_USER', "postgres"),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', "secret"),
+            'HOST': os.environ.get('POSTGRES_HOST', "postgres"),
+            'PORT': os.environ.get('POSTGRES_PORT', 5432),
         }
     }
 
@@ -206,17 +209,6 @@ class Dev(LocalSettings, Base):
 
 class Staging(Base):
     """Staging configuration."""
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('POSTGRES_DB', "memberships"),
-            'USER': os.environ.get('POSTGRES_USER', "postgres"),
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', "secret"),
-            'HOST': os.environ.get('POSTGRES_HOST', "localhost"),
-            'PORT': os.environ.get('POSTGRES_PORT', 5432),
-        }
-    }
-
     DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
     STATICFILES_STORAGE = "storages.backends.azure_storage.AzureStorage"
 
@@ -231,17 +223,6 @@ class Prod(Base):
     ALLOWED_HOSTS = [os.getenv('APP_DOMAIN')]
     # Database
     # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
-
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('POSTGRES_DB', "memberships"),
-            'USER': os.environ.get('POSTGRES_USER', "postgres"),
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', "secret"),
-            'HOST': os.environ.get('POSTGRES_HOST', "localhost"),
-            'PORT': os.environ.get('POSTGRES_PORT', 5432),
-        }
-    }
 
     EMAIL_HOST = os.environ.get('EMAIL_HOST')
     EMAIL_PORT = os.environ.get('EMAIL_PORT', '587')

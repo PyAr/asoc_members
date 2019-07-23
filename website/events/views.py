@@ -5,11 +5,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib.auth.models import Group
 from django.contrib.sites.shortcuts import get_current_site
 
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.http import HttpResponseRedirect, JsonResponse
 
 from django.shortcuts import get_object_or_404, redirect, render
 
+from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from django.views import generic, View
@@ -27,6 +29,7 @@ from events.constants import (
     MUST_BE_ORGANIZER_MESSAGE,
     MUST_EXISTS_SPONSOR_CATEGORY_MESSAGE,
     MUST_EXISTS_SPONSOR_MESSAGE,
+    MUST_EXISTS_PROVIDERS_MESSAGE,
     ORGANIZER_MAIL_NOTOFICATION_MESSAGE,
     SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE
 )
@@ -35,8 +38,12 @@ from events.forms import (
     EventUpdateForm,
     InvoiceForm,
     InvoiceAffectForm,
+    OrganizerRefundForm,
     OrganizerUpdateForm,
     OrganizerUserSignupForm,
+    PaymentForm,
+    ProviderForm,
+    ProviderExpenseForm,
     SponsorForm,
     SponsorCategoryForm,
     SponsoringForm
@@ -44,13 +51,18 @@ from events.forms import (
 from events.helpers.notifications import email_notifier
 from events.helpers.task import calculate_organizer_task, calculate_super_user_task
 from events.helpers.views import seach_filterd_queryset
-from events.helpers.permissions import is_event_organizer, ORGANIZER_GROUP_NAME
+from events.helpers.permissions import is_event_organizer, ORGANIZER_GROUP_NAME, is_organizer_user
 from events.models import (
     BankAccountData,
     Event,
+    Expense,
     Invoice,
     InvoiceAffect,
     Organizer,
+    OrganizerRefund,
+    Payment,
+    Provider,
+    ProviderExpense,
     Sponsor,
     SponsorCategory,
     Sponsoring
@@ -454,7 +466,7 @@ class SponsorSetEnabled(PermissionRequiredMixin, View):
 
 class SponsoringDetailView(PermissionRequiredMixin, generic.DetailView):
     model = Sponsoring
-    template_name = 'events/sponsoring_detail.html'
+    template_name = 'events/sponsorings/sponsoring_detail.html'
     permission_required = 'events.change_event'
 
     def get_context_data(self, **kwargs):
@@ -487,7 +499,7 @@ class SponsoringDetailView(PermissionRequiredMixin, generic.DetailView):
 class SponsoringCreateView(PermissionRequiredMixin, generic.edit.CreateView):
     model = Sponsoring
     form_class = SponsoringForm
-    template_name = 'events/sponsoring_form.html'
+    template_name = 'events/sponsorings/sponsoring_form.html'
     permission_required = 'events.add_sponsoring'
 
     def get_form(self, form_class=None):
@@ -563,7 +575,7 @@ class SponsoringCreateView(PermissionRequiredMixin, generic.edit.CreateView):
 class SponsoringListView(PermissionRequiredMixin, generic.ListView):
     model = Sponsoring
     context_object_name = 'sponsoring_list'
-    template_name = 'events/sponsoring_list.html'
+    template_name = 'events/sponsorings/sponsoring_list.html'
     permission_required = 'events.change_event'
     paginate_by = 10
 
@@ -617,7 +629,7 @@ class SponsoringSetClose(PermissionRequiredMixin, View):
 class InvoiceCreateView(PermissionRequiredMixin, generic.edit.CreateView):
     model = Invoice
     form_class = InvoiceForm
-    template_name = 'events/sponsoring_invoice_form.html'
+    template_name = 'events/sponsorings/sponsoring_invoice_form.html'
     permission_required = 'events.add_invoice'
 
     def get_initial(self, *args, **kwargs):
@@ -726,7 +738,7 @@ class InvoiceSetPartialPayment(PermissionRequiredMixin, View):
 class InvoiceAffectCreateView(PermissionRequiredMixin, generic.edit.CreateView):
     model = InvoiceAffect
     form_class = InvoiceAffectForm
-    template_name = 'events/sponsoring_invoice_affect_form.html'
+    template_name = 'events/sponsorings/sponsoring_invoice_affect_form.html'
     permission_required = 'events.add_invoiceaffect'
 
     def form_valid(self, form):
@@ -783,6 +795,409 @@ class InvoiceAffectCreateView(PermissionRequiredMixin, generic.edit.CreateView):
             return super(InvoiceAffectCreateView, self).handle_no_permission()
 
 
+class ProvidersListView(LoginRequiredMixin, generic.ListView):
+    model = Provider
+    context_object_name = 'provider_list'
+    template_name = 'providers/providers_list.html'
+    paginate_by = 5
+    search_fields = {
+        'organization_name': 'icontains',
+        'document_number': 'icontains'
+    }
+
+    def get_queryset(self):
+        queryset = super(ProvidersListView, self).get_queryset()
+        # queryset = Sponsor.objects.all()
+        search_value = self.request.GET.get('search', None)
+        if search_value and search_value != '':
+            queryset = seach_filterd_queryset(queryset, self.search_fields, search_value)
+        return queryset
+
+
+class ProviderCreateView(PermissionRequiredMixin, generic.edit.CreateView):
+    model = Provider
+    form_class = ProviderForm
+    template_name = 'providers/provider_form.html'
+    permission_required = 'events.add_provider'
+
+
+class ProviderChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
+    model = Provider
+    form_class = ProviderForm
+    template_name = 'providers/provider_form.html'
+    permission_required = 'events.change_provider'
+
+
+class ProviderDetailView(LoginRequiredMixin, generic.DetailView):
+    model = Provider
+    template_name = 'providers/provider_detail.html'
+
+
+class ExpensesListView(PermissionRequiredMixin, generic.ListView):
+    model = Expense
+    context_object_name = 'expenses_list'
+    template_name = 'events/expenses/expenses_list.html'
+    permission_required = 'events.view_expenses'
+    paginate_by = 10
+    search_fields = {
+        'description': 'icontains',
+        'providerexpense__provider__organization_name': 'icontains',
+        'organizerrefund__organizer__user__username': 'icontains',
+    }
+
+    def get_queryset(self):
+        queryset = super(ExpensesListView, self).get_queryset()
+        event = self._get_event()
+        queryset = queryset.filter(event=event)
+
+        search_value = self.request.GET.get('search', None)
+        if search_value and search_value != '':
+            queryset = seach_filterd_queryset(queryset, self.search_fields, search_value)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context.
+        context = super(ExpensesListView, self).get_context_data(**kwargs)
+        event = self._get_event()
+        context['event'] = event
+        if is_organizer_user(self.request.user):
+            context['organizer'] = Organizer.objects.get(user=self.request.user)
+        return context
+
+    def _get_event(self):
+        return get_object_or_404(Event, pk=self.kwargs['event_pk'])
+
+    def has_permission(self):
+        ret = super(ExpensesListView, self).has_permission()
+        # Must be event organizer.
+        event = self._get_event()
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
+        return ret
+
+    def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+            return redirect('event_list')
+        else:
+            return super(ExpensesListView, self).handle_no_permission()
+
+
+class ProviderExpenseCreateView(PermissionRequiredMixin, generic.edit.CreateView):
+    model = ProviderExpense
+    form_class = ProviderExpenseForm
+    template_name = 'events/expenses/provider_expense_form.html'
+    permission_required = 'events.add_providerexpense'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context.
+        context = super(ProviderExpenseCreateView, self).get_context_data(**kwargs)
+        event = self._get_event()
+        context['event'] = event
+        return context
+
+    def form_valid(self, form):
+        form.instance.event = self._get_event()
+        return super(ProviderExpenseCreateView, self).form_valid(form)
+
+    def get(self, request, *args, **kwargs):
+        event = self._get_event()
+        exists_provider = (Provider.objects.count() > 0)
+
+        if not exists_provider:
+            messages.add_message(
+                request,
+                messages.WARNING,
+                MUST_EXISTS_PROVIDERS_MESSAGE
+            )
+            return redirect('expenses_list', event_pk=event.pk)
+        return super(ProviderExpenseCreateView, self).get(request, *args, **kwargs)
+
+    def _get_event(self):
+        return get_object_or_404(Event, pk=self.kwargs['event_pk'])
+
+    def has_permission(self):
+        ret = super(ProviderExpenseCreateView, self).has_permission()
+        # Must be event organizer.
+        event = self._get_event()
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
+        return ret
+
+    def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+            return redirect('event_list')
+        else:
+            return super(ProviderExpenseCreateView, self).handle_no_permission()
+
+
+class OrganizerRefundCreateView(PermissionRequiredMixin, generic.edit.CreateView):
+    model = OrganizerRefund
+    form_class = OrganizerRefundForm
+    template_name = 'events/expenses/organizer_refund_form.html'
+    permission_required = 'events.add_organizerrefund'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context.
+        context = super(OrganizerRefundCreateView, self).get_context_data(**kwargs)
+        event = self._get_event()
+        context['event'] = event
+        return context
+
+    def get_form(self, form_class=None):
+        event = self._get_event()
+        if form_class is None:
+            form_class = self.get_form_class()
+        return form_class(event, **self.get_form_kwargs())
+
+    def get_initial(self, *args, **kwargs):
+        initial = super(OrganizerRefundCreateView, self).get_initial(**kwargs)
+        if Organizer.objects.filter(user=self.request.user).exists():
+            initial['organizer'] = Organizer.objects.get(user=self.request.user)
+        return initial
+
+    def form_valid(self, form):
+        form.instance.event = self._get_event()
+        return super(OrganizerRefundCreateView, self).form_valid(form)
+
+    '''def form_valid(self, form):
+        ret = super(ProviderExpenseCreateView, self).form_valid(form)
+        current_site = get_current_site(self.request)
+        context = {
+            'domain': current_site.domain,
+            'protocol': 'https' if self.request.is_secure() else 'http'
+        }
+        sponsoring = form.instance
+        email_notifier.send_new_sponsoring_created(
+            sponsoring,
+            self.request.user,
+            context
+        )
+        return ret'''
+
+    def get(self, request, *args, **kwargs):
+        event = self._get_event()
+        exists_provider = (Provider.objects.count() > 0)
+
+        if not exists_provider:
+            messages.add_message(
+                request,
+                messages.WARNING,
+                MUST_EXISTS_SPONSOR_CATEGORY_MESSAGE
+            )
+            return redirect('expenses_list', event_pk=event.pk)
+        return super(OrganizerRefundCreateView, self).get(request, *args, **kwargs)
+
+    def get_success_url(self):
+        url = reverse('expenses_list', kwargs={'event_pk': self._get_event().pk})
+        return url
+
+    def _get_event(self):
+        return get_object_or_404(Event, pk=self.kwargs['event_pk'])
+
+    def has_permission(self):
+        ret = super(OrganizerRefundCreateView, self).has_permission()
+        # Must be event organizer.
+        event = self._get_event()
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
+        return ret
+
+    def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+            return redirect('event_list')
+        else:
+            return super(OrganizerRefundCreateView, self).handle_no_permission()
+
+
+class ProviderExpenseDetailView(PermissionRequiredMixin, generic.DetailView):
+    model = ProviderExpense
+    template_name = 'events/expenses/provider_expense_detail.html'
+    permission_required = 'events.view_expenses'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context.
+        context = super(ProviderExpenseDetailView, self).get_context_data(**kwargs)
+        event = self._get_event()
+        context['event'] = event
+        return context
+
+    def has_permission(self):
+        ret = super(ProviderExpenseDetailView, self).has_permission()
+        # Must be event organizer.
+        event = self._get_event()
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
+        return ret
+
+    def _get_event(self):
+        return self.get_object().event
+
+    def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+            return redirect('event_list')
+        else:
+            return super(ProviderExpenseDetailView, self).handle_no_permission()
+
+
+class ProviderExpensePaymentCreateView(PermissionRequiredMixin, generic.edit.CreateView):
+    model = Payment
+    form_class = PaymentForm
+    template_name = 'events/expenses/provider_expense_payment_form.html'
+    permission_required = 'events.add_payment'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context.
+        context = super(ProviderExpensePaymentCreateView, self).get_context_data(**kwargs)
+        expense = self._get_expense()
+        context['expense'] = expense
+        return context
+
+    def form_valid(self, form):
+        with transaction.atomic():
+            ret = super(ProviderExpensePaymentCreateView, self).form_valid(form)
+            expense = self._get_expense()
+            expense.payment = form.instance
+            expense.save()
+            return ret
+
+    def get_success_url(self):
+        return self._get_expense().get_absolute_url()
+
+    def _get_expense(self):
+        return get_object_or_404(ProviderExpense, pk=self.kwargs['pk'])
+
+
+class OrganizerRefundDetailView(PermissionRequiredMixin, generic.DetailView):
+    model = OrganizerRefund
+    template_name = 'events/expenses/organizer_refund_detail.html'
+    permission_required = 'events.view_expenses'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context.
+        context = super(OrganizerRefundDetailView, self).get_context_data(**kwargs)
+        event = self._get_event()
+        context['event'] = event
+        return context
+
+    def has_permission(self):
+        ret = super(OrganizerRefundDetailView, self).has_permission()
+        # Must be event organizer.
+        event = self._get_event()
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
+        return ret
+
+    def _get_event(self):
+        return self.get_object().event
+
+    def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+            return redirect('event_list')
+        else:
+            return super(OrganizerRefundDetailView, self).handle_no_permission()
+
+
+class OrganizerRefundPaymentCreateView(PermissionRequiredMixin, generic.edit.CreateView):
+    model = Payment
+    form_class = PaymentForm
+    template_name = 'events/expenses/organizer_refunds_payment_form.html'
+    permission_required = 'events.add_payment'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context.
+        context = super(OrganizerRefundPaymentCreateView, self).get_context_data(**kwargs)
+        go_to = self.request.GET.get('next', None)
+        organizer = self._get_organizer()
+        context['organizer'] = organizer
+        refunds = OrganizerRefund.objects.filter(organizer=organizer, payment__isnull=True).all()
+        context['refunds'] = refunds
+        context['go_to'] = go_to
+        return context
+
+    def form_valid(self, form):
+        if 'refunds' in self.request.POST:
+            refunds = []
+            refunds_ids = self.request.POST.getlist('refunds')
+            for refund_id in refunds_ids:
+                try:
+                    refund = OrganizerRefund.objects.get(pk=refund_id)
+                except OrganizerRefund.DoesNotExist:
+                    form.add_error(
+                        None,
+                        ValidationError(_("Uno de los reintegros pasados no existe")))
+                    return super(OrganizerRefundPaymentCreateView, self).form_invalid(form)
+                if refund.payment:
+                    message = _(
+                        f"El reintegro {refund.pk} con monto "
+                        f"{refund.amount} ya tiene pago adjunto")
+                    form.add_error(
+                        None,
+                        ValidationError(message))
+                    return super(OrganizerRefundPaymentCreateView, self).form_invalid(form)
+                refunds.append(refund)
+        else:
+            form.add_error(
+                None,
+                ValidationError(_("No se puede adjuntar sin seleccionar reintegros")))
+            return super(OrganizerRefundPaymentCreateView, self).form_invalid(form)
+
+        with transaction.atomic():
+            ret = super(OrganizerRefundPaymentCreateView, self).form_valid(form)
+            for refund in refunds:
+                refund.payment = form.instance
+                refund.save()
+            return ret
+
+    def get_success_url(self):
+        go_to = self.request.GET.get('next', None)
+        if go_to:
+            return go_to
+        return self._get_organizer().get_absolute_url()
+
+    def _get_organizer(self):
+        return get_object_or_404(Organizer, pk=self.kwargs['pk'])
+
+
+class ProviderExpenseUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
+    model = ProviderExpense
+    form_class = ProviderExpenseForm
+    template_name = 'events/expenses/provider_expense_form.html'
+    permission_required = 'events.change_providerexpense'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context.
+        context = super(ProviderExpenseUpdateView, self).get_context_data(**kwargs)
+        event = self.get_object().event
+        context['event'] = event
+        return context
+
+    def has_permission(self):
+        ret = super(ProviderExpenseUpdateView, self).has_permission()
+        # Must be event organizer.
+        event = self.get_object().event
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
+        return ret
+
+    def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+            return redirect('event_list')
+        else:
+            return super(ProviderExpenseUpdateView, self).handle_no_permission()
+
+
 events_list = EventsListView.as_view()
 event_detail = EventDetailView.as_view()
 event_change = EventChangeView.as_view()
@@ -811,3 +1226,17 @@ sponsoring_invoice_affect_create = InvoiceAffectCreateView.as_view()
 invoice_set_approved = InvoiceSetAproved.as_view()
 invoice_set_complete_payment = InvoiceSetCompletePayment.as_view()
 invoice_set_partial_payment = InvoiceSetPartialPayment.as_view()
+
+providers_list = ProvidersListView.as_view()
+provider_detail = ProviderDetailView.as_view()
+provider_change = ProviderChangeView.as_view()
+provider_create = ProviderCreateView.as_view()
+
+expenses_list = ExpensesListView.as_view()
+provider_expense_create = ProviderExpenseCreateView.as_view()
+provider_expense_update = ProviderExpenseUpdateView.as_view()
+organizer_refund_create = OrganizerRefundCreateView.as_view()
+provider_expense_detail = ProviderExpenseDetailView.as_view()
+provider_expense_payment_create = ProviderExpensePaymentCreateView.as_view()
+organizer_refund_detail = OrganizerRefundDetailView.as_view()
+organizer_refund_payment_create = OrganizerRefundPaymentCreateView.as_view()
