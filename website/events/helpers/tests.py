@@ -131,6 +131,8 @@ def create_organizer_set(auto_create_user_set=False):
     if auto_create_user_set:
         create_user_set()
 
+    set_current_user(User.objects.get(username="administrator"))
+
     Organizer.objects.bulk_create([
         Organizer(user=User.objects.get(username="organizer01"), first_name="Organizer01"),
         Organizer(user=User.objects.get(username="organizer02"), first_name="Organizer02"),

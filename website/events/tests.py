@@ -478,6 +478,7 @@ class EventViewsTest(TestCase, CustomAssertMethods):
 
 class SponsorViewsTest(TestCase, CustomAssertMethods):
     def setUp(self):
+        super().setUp()
         create_organizer_set(auto_create_user_set=True)
 
     def test_organizer_cant_set_sponsors_enabled(self):
