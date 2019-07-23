@@ -37,10 +37,13 @@
                     <td>{{ event.place }}</td>
                     <td>
                         <a title="editar evento" href="{% url 'event_detail' pk=event.pk %}">
-                            <i class="fa fa-cog"></i> Editar
+                            <i class="fa fa-cog"></i> General
                         </a>
                         <a title="administrar evento" href="{% url 'sponsoring_list' event_pk=event.pk %}">
-                                <i class="fa fa-dollar"></i> Administrar
+                            <i class="fa fa-dollar"></i> Patrocinios
+                        </a>
+                        <a title="administrar evento" href="{% url 'expenses_list' event_pk=event.pk %}">
+                            <i class="fa fa-dollar"></i> Gastos
                         </a>
                     </td>
                 </tr>

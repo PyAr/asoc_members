@@ -33,7 +33,7 @@ createsuperuser:
 	${MANAGE} createsuperuser
 
 up-dev:
-	docker-compose up -d	
+	docker-compose up -d
 
 up-prod:
 	${COMPOSE_PROD} up -d
