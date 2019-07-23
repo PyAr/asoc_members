@@ -12,6 +12,10 @@ from events.models import (
     Invoice,
     InvoiceAffect,
     Organizer,
+    OrganizerRefund,
+    Payment,
+    Provider,
+    ProviderExpense,
     Sponsor,
     SponsorCategory,
     Sponsoring
@@ -180,5 +184,90 @@ class InvoiceAffectForm(forms.ModelForm):
             'category',
             'amount',
             'observations',
+            'document',
+        ]
+
+
+class ProviderForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(ProviderForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+    class Meta:
+        model = Provider
+        fields = [
+            'organization_name', 'document_number', 'bank_entity',
+            'account_type', 'account_number', 'cbu'
+            ]
+
+
+class ProviderExpenseForm(forms.ModelForm):
+    invoice_date = forms.DateField(
+        label=_('Fecha factura'),
+        input_formats=settings.DATE_INPUT_FORMATS, help_text=_('Formato: DD/MM/AAAA'),
+        widget=forms.widgets.DateInput(format=settings.DATE_INPUT_FORMATS[0]),
+        required=True
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(ProviderExpenseForm, self).__init__(*args, **kwargs)
+        # Pre-filter sponsorcategory by event
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+    class Meta:
+        model = ProviderExpense
+        fields = [
+            'provider',
+            'amount',
+            'invoice_type',
+            'invoice_date',
+            'invoice',
+            'description',
+        ]
+
+
+class OrganizerRefundForm(forms.ModelForm):
+    invoice_date = forms.DateField(
+        label=_('Fecha factura'),
+        input_formats=settings.DATE_INPUT_FORMATS, help_text=_('Formato: DD/MM/AAAA'),
+        widget=forms.widgets.DateInput(format=settings.DATE_INPUT_FORMATS[0]),
+        required=True
+    )
+
+    def __init__(self, event, *args, **kwargs):
+        super(OrganizerRefundForm, self).__init__(*args, **kwargs)
+        # Pre-filter sponsorcategory by event
+        self.fields['organizer'].queryset = event.organizers.all()
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+    class Meta:
+        model = OrganizerRefund
+        fields = [
+            'organizer',
+            'amount',
+            'invoice_type',
+            'invoice_date',
+            'invoice',
+            'description',
+        ]
+
+
+class PaymentForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(PaymentForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+    class Meta:
+        model = Payment
+        fields = [
             'document',
         ]

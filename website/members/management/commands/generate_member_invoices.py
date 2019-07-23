@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Max
 
 from members import logic
-from members.models import Quota, Person, Payment
+from members.models import Quota, Person, Payment, Member
 
 from . import _afip, _gdrive
 
@@ -81,6 +81,19 @@ class Command(BaseCommand):
             }
             records.append(record)
 
+            # get the related member (if None, or multiple, still not supported!)
+            _members = Member.objects.filter(patron=payment.strategy.patron).all()
+            assert len(_members) == 1, "multiple or no members for the patron is not supported"
+            member = _members[0]
+
+            # only process payments for normal members (benefactor members get invoices done
+            # by hand)
+            person = member.entity
+            if isinstance(person, Person):
+                print("    person found", person)
+            else:
+                print("    IGNORING payment, member {} is not a person: {}".format(member, person))
+
             # if payment still doesn't have a number, add one to latest and save;
             # in any case, use it
             if not payment.invoice_number:
@@ -98,12 +111,7 @@ class Command(BaseCommand):
             record['amount'] = payment.amount
             record['quantity'] = 1
 
-            # get all billing data from the person matching the member (if None, or multiple,
-            # still not supported!)
-            _persons = Person.objects.filter(membership__patron=payment.strategy.patron).all()
-            assert len(_persons) == 1, "multiple or no persons for the patron is not supported"
-            person = _persons[0]
-            print("    person found", person)
+            # get all billing data from the person
             persons_per_invoice[payment.invoice_number] = person
             record['dni'] = person.document_number
             record['fullname'] = person.full_name
@@ -135,7 +143,11 @@ class Command(BaseCommand):
             print("    found {} quota(s) ({} - {})".format(
                 len(quotas), record['service_date_from'], record['service_date_to']))
 
-        results = _afip.generate_invoices(records)
+        try:
+            results = _afip.generate_invoices(records)
+        except Exception:
+            print("PROBLEMS generating invoices with records", records)
+            raise
 
         # save the results for the generated ok invoices and send the proper mails
         for invoice_number, result in sorted(results.items()):

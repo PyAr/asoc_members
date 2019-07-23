@@ -1,0 +1,55 @@
+{% extends "events_base.html" %}
+{% load static %}
+{% block content %}
+<div class="container">
+
+    <div class="route-navigator" >
+            <ol class="breadcrumb">
+                <li><a href="{% url 'events_home' %}">Inicio</a></li>
+                <li><a href="{% url 'provider_list' %}" >Proveedores</a></li>
+                <li class="active"><a href="{% url 'provider_detail' pk=provider.pk %}">{{provider.organization_name}}</a></li>
+            </ol>
+    </div>
+    
+    <div class="row provider-detail">
+        <div class="col-md-8">
+            <h3>Datos del proveedor </h3>
+            
+            <table class="table table-striped">
+                <tbody>
+                    <tr>
+                        <th scope="row">Nombre/Razón social</th>
+                        <td>{{ provider.organization_name }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Banco</th>
+                        <td>{{ provider.bank_entity }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Tipo Cuenta</th>
+                        <td>{{ provider.get_account_type_display }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Número Cuenta</th>
+                        <td>{{ provider.account_number }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">CBU</th>
+                        <td>{{ provider.cbu }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">CUIT</th>
+                        <td>{{ provider.document_number }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            {% if perms.events.change_provider %}
+            <a class="btn btn-primary btn-block text-uppercase" href="{% url 'provider_change' provider.pk %}">Editar</a>
+            {% endif %}
+        </div>
+        
+    </div>
+</div>
+
+{% endblock %}
