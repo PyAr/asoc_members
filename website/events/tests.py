@@ -502,7 +502,7 @@ class SponsorViewsTest(TestCase, CustomAssertMethods):
         url = reverse('sponsor_create')
         self.client.login(username='organizer01', password='organizer01')
         response = self.client.post(url, data=sponsor_data)
-        self.assertEqual(Sponsor.objects.all().count(), sponsors_count+1)
+        self.assertEqual(Sponsor.objects.all().count(), sponsors_count + 1)
         self.assertEqual(response.status_code, 302)
 
 
@@ -870,7 +870,7 @@ class ProviderViewsTest(TestCase, CustomAssertMethods):
         url = reverse('provider_create')
         self.client.login(username='organizer01', password='organizer01')
         response = self.client.post(url, data=self.provider_data)
-        self.assertEqual(Provider.objects.all().count(), providers_count+1)
+        self.assertEqual(Provider.objects.all().count(), providers_count + 1)
         self.assertEqual(response.status_code, 302)
 
     def test_create_provider_redirects_without_perms(self):

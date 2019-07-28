@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container">
+        {% block heading %}
+        <h1 class="text-center">Reportes</h1>
+        <h2 class="text-center">Personas con documentación completa para ser socios</h2>
+        {% endblock %}
+        <div class="inner-content">
+            {% block inner-content %}
+                <div>
+                <form method="post" action"{% url 'report_complete' %}">
+                    {% csrf_token %}
+                    ¿Aprobar los seleccionados?
+                    <button id="selected" type="submit">Mandar</button>
+                <table class="table">
+                <tr> 
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>DNI</th>
+                    <th>Mail</th>
+                    <th>¿Aprobar?</th>
+                </tr>
+                {% for item in completes %}
+                    <tr> 
+                        <td>{{ item.nombre }}</td>
+                        <td>{{ item.apellido }}</td>
+                        <td>{{ item.dni }}</td>
+                        <td>{{ item.email }}</td>
+                        <td>
+                            <input type="checkbox" name="approve" value="{{ item.member.id }}" />
+                        </td>
+                    </tr>
+                {% endfor %}
+                </table>
+                </form>
+                </div>
+            {% endblock %}
+        </div>
+    </div>
+
+{% endblock %}

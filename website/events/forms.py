@@ -114,7 +114,7 @@ class BankAccountDataForm(forms.ModelForm):
         fields = [
             'organization_name', 'document_number', 'bank_entity',
             'account_type', 'account_number', 'cbu'
-            ]
+        ]
 
 
 class SponsorForm(forms.ModelForm):
@@ -201,7 +201,7 @@ class ProviderForm(forms.ModelForm):
         fields = [
             'organization_name', 'document_number', 'bank_entity',
             'account_type', 'account_number', 'cbu'
-            ]
+        ]
 
 
 class ProviderExpenseForm(forms.ModelForm):

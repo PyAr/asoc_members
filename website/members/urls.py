@@ -13,6 +13,7 @@ urlpatterns = [
 
     path('reportes/', views.reports_main, name='reports_main'),
     path('reportes/deudas', views.report_debts, name='report_debts'),
+    path('reportes/completos', views.report_complete, name='report_complete'),
     path('reportes/incompletos', views.report_missing, name='report_missing'),
     path('reportes/ingcuotas', views.report_income_quotas, name='report_income_quotas'),
     path('reportes/ingdinero', views.report_income_money, name='report_income_money'),
