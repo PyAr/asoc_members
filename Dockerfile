@@ -22,3 +22,7 @@ WORKDIR /code/website
 # Bring pyafipws branch and install it's dependencies
 RUN wget https://github.com/PyAr/pyafipws/archive/py3k.zip && unzip py3k.zip && mv pyafipws-py3k pyafipws
 RUN pip install --no-cache-dir -r /code/website/pyafipws/requirements.txt
+
+# Django preparation work
+RUN python manage.py collectstatic --noinput 
+RUN python manage.py migrate
