@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Max
 
 from members import logic
-from members.models import Quota, Person, Payment, Member
+from members.models import Quota, Person, Payment, Member, PaymentStrategy
 
 from . import _afip, _gdrive
 
@@ -66,6 +66,7 @@ class Command(BaseCommand):
         persons_per_invoice = {}
         payments = (
             Payment.objects.filter(timestamp__gte=INVOICES_FROM, invoice_ok=False)
+            .exclude(strategy__platform=PaymentStrategy.CREDIT)
             .order_by('timestamp').all()
         )
         print("Found {} payments to process".format(len(payments)))
@@ -125,7 +126,7 @@ class Command(BaseCommand):
 
             # get quotas for the payment; we don't show the period in the description
             # as there's a specific field for that
-            quotas = list(Quota.objects.filter(payment=payment).all())
+            quotas = list(Quota.objects.filter(payment=payment).order_by('year', 'month').all())
             assert quotas
             if len(quotas) == 1:
                 description = "1 cuota social"
