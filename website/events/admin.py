@@ -183,11 +183,12 @@ class ExpenseAdmin(CompareVersionAdmin):
 
     list_display = ('category', 'event', 'description', 'invoice')
     list_filter = ('category',)
-    
+
     list_select_related = (
         'event',
     )
     readonly_fields = fields
+
     # To create or delete must be from ProviderExpense or OrganizerRefund
     def has_add_permission(self, request, obj=None):
         return False
@@ -215,7 +216,7 @@ class OrganizerRefundAdmin(CompareVersionAdmin):
     )
 
     list_display = ('event', 'description', 'invoice', 'organizer_name')
-    
+
     list_select_related = (
         'event',
         'organizer'
@@ -244,7 +245,7 @@ class ProviderExpenseAdmin(CompareVersionAdmin):
     )
 
     list_display = ('event', 'description', 'invoice', 'provider_name')
-    
+
     list_select_related = (
         'event',
         'provider'
@@ -267,7 +268,7 @@ class ProviderAdmin(CompareVersionAdmin):
         'account_type',
         'account_number',
         'cbu'
-        )
+    )
 
     search_fields = (
         'organization_name',
@@ -289,4 +290,3 @@ admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(Event, EventAdmin)
 # TODO: unregister just to develop.
 admin.site.register(Organizer, OrganizerAdmin)
-
