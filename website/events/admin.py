@@ -9,7 +9,13 @@ from events.models import (
     InvoiceAffect,
     Organizer,
     Sponsor,
-    Sponsoring
+    Sponsoring,
+    OrganizerRefund,
+    ProviderExpense,
+    Payment,
+    Provider,
+    Expense
+
 )
 from reversion_compare.admin import CompareVersionAdmin
 
@@ -101,7 +107,7 @@ class SponsorAdmin(CompareVersionAdmin):
         'organization_name',
         'document_number',
         'vat_condition',
-        'other_vat_condition_text'
+        'other_vat_condition_text',
         'contact_info',
         'address',
         'enabled',
@@ -158,6 +164,124 @@ class SponsoringAdmin(CompareVersionAdmin):
         return f"{obj.sponsorcategory.event.name}({obj.sponsorcategory.name})"
 
 
+class ExpenseAdmin(CompareVersionAdmin):
+    fields = (
+        'event',
+        'description',
+        'amount',
+        'category',
+        'invoice_type',
+        'invoice',
+        'invoice_date'
+    )
+
+    search_fields = (
+        'category',
+        'description',
+        'event__name',
+    )
+
+    list_display = ('category', 'event', 'description', 'invoice')
+    list_filter = ('category',)
+    
+    list_select_related = (
+        'event',
+    )
+    readonly_fields = fields
+    # To create or delete must be from ProviderExpense or OrganizerRefund
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class OrganizerRefundAdmin(CompareVersionAdmin):
+    fields = (
+        'organizer',
+        'event',
+        'description',
+        'amount',
+        'invoice_type',
+        'invoice',
+        'invoice_date',
+        'payment'
+    )
+
+    search_fields = (
+        'description',
+        'event__name',
+        'organizer__user__username',
+    )
+
+    list_display = ('event', 'description', 'invoice', 'organizer_name')
+    
+    list_select_related = (
+        'event',
+        'organizer'
+    )
+
+    def organizer_name(self, obj):
+        return obj.organizer.user.username
+
+
+class ProviderExpenseAdmin(CompareVersionAdmin):
+    fields = (
+        'provider',
+        'event',
+        'description',
+        'amount',
+        'invoice_type',
+        'invoice',
+        'invoice_date',
+        'payment'
+    )
+
+    search_fields = (
+        'description',
+        'event__name',
+        'provider__organization_name',
+    )
+
+    list_display = ('event', 'description', 'invoice', 'provider_name')
+    
+    list_select_related = (
+        'event',
+        'provider'
+    )
+
+    def provider_name(self, obj):
+        return obj.provider.organization_name
+
+
+class PaymentAdmin(CompareVersionAdmin):
+    fields = ('document',)
+    list_display = ('pk', 'document')
+
+
+class ProviderAdmin(CompareVersionAdmin):
+    fields = (
+        'organization_name',
+        'document_number',
+        'bank_entity',
+        'account_type',
+        'account_number',
+        'cbu'
+        )
+
+    search_fields = (
+        'organization_name',
+        'document_number',
+    )
+
+    list_display = ('organization_name', 'document_number')
+
+
+admin.site.register(Provider, ProviderAdmin)
+admin.site.register(Payment, PaymentAdmin)
+admin.site.register(ProviderExpense, ProviderExpenseAdmin)
+admin.site.register(OrganizerRefund, OrganizerRefundAdmin)
+admin.site.register(Expense, ExpenseAdmin)
 admin.site.register(Sponsoring, SponsoringAdmin)
 admin.site.register(InvoiceAffect, InvoiceAffectAdmin)
 admin.site.register(Sponsor, SponsorAdmin)
@@ -165,3 +289,4 @@ admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(Event, EventAdmin)
 # TODO: unregister just to develop.
 admin.site.register(Organizer, OrganizerAdmin)
+
