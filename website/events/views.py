@@ -19,6 +19,7 @@ from django.views import generic, View
 from events.constants import (
     CANT_CHANGE_CLOSE_EVENT_MESSAGE,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
+    DEFAULT_PAGINATION,
     DUPLICATED_SPONSOR_CATEGORY_MESSAGE,
     INVOICE_APPOVED_MESSAGE,
     INVOICE_SET_COMPLETE_PAYMENT_MESSAGE,
@@ -123,7 +124,7 @@ class EventsListView(LoginRequiredMixin, generic.ListView):
     model = Event
     context_object_name = 'event_list'
     template_name = 'events/event_list.html'
-    paginate_by = 5
+    paginate_by = DEFAULT_PAGINATION
     search_fields = {
         'name': 'icontains',
         'place': 'icontains'
@@ -338,7 +339,7 @@ class OrganizersListView(PermissionRequiredMixin, generic.ListView):
     model = Organizer
     context_object_name = 'organizer_list'
     template_name = 'organizers/organizers_list.html'
-    paginate_by = 5
+    paginate_by = DEFAULT_PAGINATION
     permission_required = 'events.view_organizers'
     search_fields = {
         'first_name': 'icontains',
@@ -390,7 +391,7 @@ class SponsorsListView(LoginRequiredMixin, generic.ListView):
     model = Sponsor
     context_object_name = 'sponsor_list'
     template_name = 'sponsors/sponsors_list.html'
-    paginate_by = 5
+    paginate_by = DEFAULT_PAGINATION
     search_fields = {
         'organization_name': 'icontains',
         'document_number': 'icontains'
@@ -577,7 +578,7 @@ class SponsoringListView(PermissionRequiredMixin, generic.ListView):
     context_object_name = 'sponsoring_list'
     template_name = 'events/sponsorings/sponsoring_list.html'
     permission_required = 'events.change_event'
-    paginate_by = 10
+    paginate_by = DEFAULT_PAGINATION
 
     def get_queryset(self):
         queryset = super(SponsoringListView, self).get_queryset()
@@ -799,7 +800,7 @@ class ProvidersListView(LoginRequiredMixin, generic.ListView):
     model = Provider
     context_object_name = 'provider_list'
     template_name = 'providers/providers_list.html'
-    paginate_by = 5
+    paginate_by = DEFAULT_PAGINATION
     search_fields = {
         'organization_name': 'icontains',
         'document_number': 'icontains'
@@ -838,7 +839,7 @@ class ExpensesListView(PermissionRequiredMixin, generic.ListView):
     context_object_name = 'expenses_list'
     template_name = 'events/expenses/expenses_list.html'
     permission_required = 'events.view_expenses'
-    paginate_by = 10
+    paginate_by = DEFAULT_PAGINATION
     search_fields = {
         'description': 'icontains',
         'providerexpense__provider__organization_name': 'icontains',

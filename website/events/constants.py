@@ -78,3 +78,5 @@ SPONSOR_STATE_CLOSED = _('cerrado')
 
 # The idea is have formats supported by img tag
 IMAGE_FORMATS = ['.jpeg', '.jpg', '.gif', '.png', '.svg', '.bmp']
+DEFAULT_PAGINATION = 15
+BIG_PAGINATION = 20
