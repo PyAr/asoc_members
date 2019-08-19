@@ -32,7 +32,8 @@ from events.constants import (
     MUST_EXISTS_SPONSOR_MESSAGE,
     MUST_EXISTS_PROVIDERS_MESSAGE,
     ORGANIZER_MAIL_NOTOFICATION_MESSAGE,
-    SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE
+    SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE,
+    CANT_CHANGE_PROVIDER_EXPENSE_WITH_PAYMENT
 )
 from events.forms import (
     BankAccountDataForm,
@@ -1189,12 +1190,25 @@ class ProviderExpenseUpdateView(PermissionRequiredMixin, generic.edit.UpdateView
         if ret and not is_event_organizer(self.request.user, event):
             self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
             return False
+        # Cant change expense with payment
+        if self.get_object().payment:
+            self.permission_denied_message = CANT_CHANGE_PROVIDER_EXPENSE_WITH_PAYMENT
+            return False
         return ret
 
     def handle_no_permission(self):
-        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+        message = self.get_permission_denied_message()
+        if message == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
             messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
             return redirect('event_list')
+        elif message == CANT_CHANGE_PROVIDER_EXPENSE_WITH_PAYMENT:
+            messages.add_message(
+                self.request,
+                messages.WARNING,
+                CANT_CHANGE_PROVIDER_EXPENSE_WITH_PAYMENT
+            )
+            return redirect('provider_expense_detail', pk=self.get_object().pk)
+            return False
         else:
             return super(ProviderExpenseUpdateView, self).handle_no_permission()
 
