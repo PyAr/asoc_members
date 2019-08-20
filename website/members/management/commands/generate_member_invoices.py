@@ -67,7 +67,7 @@ class Command(BaseCommand):
         payments = (
             Payment.objects.filter(timestamp__gte=INVOICES_FROM, invoice_ok=False)
             .exclude(strategy__platform=PaymentStrategy.CREDIT)
-            .order_by('timestamp').all()
+            .order_by('timestamp', 'pk').all()
         )
         print("Found {} payments to process".format(len(payments)))
         if len(payments) > limit:
