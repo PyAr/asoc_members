@@ -10,6 +10,7 @@ from events.models import (
     Organizer,
     Sponsor,
     Sponsoring,
+    SponsorCategory,
     OrganizerRefund,
     ProviderExpense,
     Payment,
@@ -100,6 +101,18 @@ class InvoiceAdmin(CompareVersionAdmin):
 
     def sponsor(self, obj):
         return obj.sponsor.organization_name
+
+
+class SponsorCategoryAdmin(CompareVersionAdmin):
+    fields = ('name', 'amount', 'event')
+    list_display = ('name', 'amount', 'event', 'sponsoring_number')
+    search_fields = ('name', 'event__name')
+    list_select_related = (
+        'event',
+    )
+
+    def sponsoring_number(self, obj):
+        return obj.sponsors.count()
 
 
 class SponsorAdmin(CompareVersionAdmin):
@@ -286,6 +299,7 @@ admin.site.register(Expense, ExpenseAdmin)
 admin.site.register(Sponsoring, SponsoringAdmin)
 admin.site.register(InvoiceAffect, InvoiceAffectAdmin)
 admin.site.register(Sponsor, SponsorAdmin)
+admin.site.register(SponsorCategory, SponsorCategoryAdmin)
 admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(Event, EventAdmin)
 # TODO: unregister just to develop.
