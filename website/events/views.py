@@ -19,6 +19,7 @@ from django.views import generic, View
 from events.constants import (
     CANT_CHANGE_CLOSE_EVENT_MESSAGE,
     CAN_VIEW_EVENT_ORGANIZERS_CODENAME,
+    DEFAULT_PAGINATION,
     DUPLICATED_SPONSOR_CATEGORY_MESSAGE,
     INVOICE_APPOVED_MESSAGE,
     INVOICE_SET_COMPLETE_PAYMENT_MESSAGE,
@@ -31,7 +32,8 @@ from events.constants import (
     MUST_EXISTS_SPONSOR_MESSAGE,
     MUST_EXISTS_PROVIDERS_MESSAGE,
     ORGANIZER_MAIL_NOTOFICATION_MESSAGE,
-    SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE
+    SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE,
+    CANT_CHANGE_PROVIDER_EXPENSE_WITH_PAYMENT
 )
 from events.forms import (
     BankAccountDataForm,
@@ -123,7 +125,7 @@ class EventsListView(LoginRequiredMixin, generic.ListView):
     model = Event
     context_object_name = 'event_list'
     template_name = 'events/event_list.html'
-    paginate_by = 5
+    paginate_by = DEFAULT_PAGINATION
     search_fields = {
         'name': 'icontains',
         'place': 'icontains'
@@ -338,7 +340,7 @@ class OrganizersListView(PermissionRequiredMixin, generic.ListView):
     model = Organizer
     context_object_name = 'organizer_list'
     template_name = 'organizers/organizers_list.html'
-    paginate_by = 5
+    paginate_by = DEFAULT_PAGINATION
     permission_required = 'events.view_organizers'
     search_fields = {
         'first_name': 'icontains',
@@ -390,7 +392,7 @@ class SponsorsListView(LoginRequiredMixin, generic.ListView):
     model = Sponsor
     context_object_name = 'sponsor_list'
     template_name = 'sponsors/sponsors_list.html'
-    paginate_by = 5
+    paginate_by = DEFAULT_PAGINATION
     search_fields = {
         'organization_name': 'icontains',
         'document_number': 'icontains'
@@ -577,7 +579,7 @@ class SponsoringListView(PermissionRequiredMixin, generic.ListView):
     context_object_name = 'sponsoring_list'
     template_name = 'events/sponsorings/sponsoring_list.html'
     permission_required = 'events.change_event'
-    paginate_by = 10
+    paginate_by = DEFAULT_PAGINATION
 
     def get_queryset(self):
         queryset = super(SponsoringListView, self).get_queryset()
@@ -799,7 +801,7 @@ class ProvidersListView(LoginRequiredMixin, generic.ListView):
     model = Provider
     context_object_name = 'provider_list'
     template_name = 'providers/providers_list.html'
-    paginate_by = 5
+    paginate_by = DEFAULT_PAGINATION
     search_fields = {
         'organization_name': 'icontains',
         'document_number': 'icontains'
@@ -838,7 +840,7 @@ class ExpensesListView(PermissionRequiredMixin, generic.ListView):
     context_object_name = 'expenses_list'
     template_name = 'events/expenses/expenses_list.html'
     permission_required = 'events.view_expenses'
-    paginate_by = 10
+    paginate_by = DEFAULT_PAGINATION
     search_fields = {
         'description': 'icontains',
         'providerexpense__provider__organization_name': 'icontains',
@@ -1188,12 +1190,25 @@ class ProviderExpenseUpdateView(PermissionRequiredMixin, generic.edit.UpdateView
         if ret and not is_event_organizer(self.request.user, event):
             self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
             return False
+        # Cant change expense with payment
+        if self.get_object().payment:
+            self.permission_denied_message = CANT_CHANGE_PROVIDER_EXPENSE_WITH_PAYMENT
+            return False
         return ret
 
     def handle_no_permission(self):
-        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+        message = self.get_permission_denied_message()
+        if message == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
             messages.add_message(self.request, messages.WARNING, MUST_BE_EVENT_ORGANIZAER_MESSAGE)
             return redirect('event_list')
+        elif message == CANT_CHANGE_PROVIDER_EXPENSE_WITH_PAYMENT:
+            messages.add_message(
+                self.request,
+                messages.WARNING,
+                CANT_CHANGE_PROVIDER_EXPENSE_WITH_PAYMENT
+            )
+            return redirect('provider_expense_detail', pk=self.get_object().pk)
+            return False
         else:
             return super(ProviderExpenseUpdateView, self).handle_no_permission()
 

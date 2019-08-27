@@ -16,7 +16,8 @@ from events.models import (
     Organizer,
     Sponsor,
     SponsorCategory,
-    Sponsoring
+    Sponsoring,
+    Provider
 )
 from unittest import TestCase, mock
 
@@ -33,6 +34,15 @@ sponsor_data = {
 
 invoice_data = {
     'amount': '20000'
+}
+
+provider_data = {
+    'organization_name': 'Pablo',
+    'document_number': '20-21321265-7',
+    'bank_entity': 'Banco Rio',
+    'account_type': 'CC',
+    'account_number': '4',
+    'cbu': '456548789'
 }
 
 
@@ -176,6 +186,10 @@ def create_sponsors_set():
         document_number='20-26456987-8',
         vat_condition='monotributo',
         enabled=True)
+
+
+def create_provider():
+    Provider.objects.create(**provider_data)
 
 
 def create_sponsoring_set(auto_create_sponsors_set=False):

@@ -41,13 +41,15 @@ from events.helpers.tests import (
     associate_events_organizers,
     CustomAssertMethods,
     sponsor_data,
+    provider_data,
     create_user_set,
     create_event_set,
     create_invoice_affect_set,
     create_organizer_set,
     create_sponsors_set,
     create_sponsoring_set,
-    create_sponsoring_invoice
+    create_sponsoring_invoice,
+    create_provider
 )
 
 from events.middleware import set_current_user
@@ -58,7 +60,8 @@ from events.models import (
     Provider,
     Sponsor,
     SponsorCategory,
-    Sponsoring
+    Sponsoring,
+    ProviderExpense
 )
 from io import StringIO
 from unittest.mock import patch
@@ -847,14 +850,6 @@ class PendindTaskTest(TestCase, CustomAssertMethods):
 
 
 class ProviderViewsTest(TestCase, CustomAssertMethods):
-    provider_data = {
-        'organization_name': 'Pablo',
-        'document_number': '20-21321265-7',
-        'bank_entity': 'Banco Rio',
-        'account_type': 'CC',
-        'account_number': '4',
-        'cbu': '456548789'
-    }
 
     def setUp(self):
         create_organizer_set(auto_create_user_set=True)
@@ -869,7 +864,7 @@ class ProviderViewsTest(TestCase, CustomAssertMethods):
         providers_count = Provider.objects.all().count()
         url = reverse('provider_create')
         self.client.login(username='organizer01', password='organizer01')
-        response = self.client.post(url, data=self.provider_data)
+        response = self.client.post(url, data=provider_data)
         self.assertEqual(Provider.objects.all().count(), providers_count + 1)
         self.assertEqual(response.status_code, 302)
 
@@ -881,11 +876,79 @@ class ProviderViewsTest(TestCase, CustomAssertMethods):
         user = User.objects.get(username='organizer01')
         user.user_permissions.remove(perm)
         self.client.login(username='organizer01', password='organizer01')
-        response = self.client.post(url, data=self.provider_data)
+        response = self.client.post(url, data=provider_data)
 
         # View redirect.
         self.assertEqual(response.status_code, 302)
 
         # And redirect to login.
         redirect_to_login_url = reverse('login') + '?next=' + reverse('provider_create')
+        self.assertEqual(response.url, redirect_to_login_url)
+
+
+class ProviderExpenseViewsTest(TestCase, CustomAssertMethods):
+
+    def setUp(self):
+        user = User.objects.first()
+        create_organizer_set(auto_create_user_set=True)
+        create_event_set(user)
+        associate_events_organizers()
+        create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        create_provider()
+
+    @patch('django.core.files.storage.FileSystemStorage.save')
+    def test_can_create_provider_expense_with_perms(self, mock_save):
+        mock_save.return_value = 'invoice.pdf'
+        perm = Permission.objects.get(
+            content_type__app_label='events',
+            codename='add_providerexpense')
+        user = User.objects.get(username='organizer01')
+        user.user_permissions.add(perm)
+
+        provider_expense_count = ProviderExpense.objects.all().count()
+        url = reverse(
+            'provider_expense_create',
+            kwargs={'event_pk': Event.objects.filter(name='MyTest01').first().pk}
+        )
+
+        provider_expense_data = {
+            'provider': Provider.objects.first().pk,
+            'amount': '1200',
+            'invoice_type': 'A',
+            'invoice_date': '12/01/2019',
+            'invoice': StringIO('test'),
+            'description': 'test'
+        }
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url, data=provider_expense_data)
+        self.assertEqual(ProviderExpense.objects.all().count(), provider_expense_count + 1)
+        self.assertEqual(response.status_code, 302)
+
+    def test_create_provider_expense_redirects_without_perms(self):
+        url = reverse(
+            'provider_expense_create',
+            kwargs={'event_pk': Event.objects.filter(name='MyTest01').first().pk}
+        )
+        perm = Permission.objects.get(
+            content_type__app_label='events',
+            codename='add_providerexpense')
+
+        provider_expense_data = {
+            'provider': Provider.objects.first().pk,
+            'amount': '1200',
+            'invoice_type': 'A',
+            'invoice_date': '12/01/2019',
+            'invoice': StringIO('test'),
+            'description': 'test'
+        }
+        user = User.objects.get(username='organizer01')
+        user.user_permissions.remove(perm)
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url, data=provider_expense_data)
+
+        # View redirect.
+        self.assertEqual(response.status_code, 302)
+
+        # And redirect to login.
+        redirect_to_login_url = reverse('login') + '?next=' + url
         self.assertEqual(response.url, redirect_to_login_url)

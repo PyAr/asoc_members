@@ -60,6 +60,10 @@ MUST_EXISTS_PROVIDERS_MESSAGE = _(
     'No se puede crear un gasto de proveedor sin antes dar de alta proveedores'
 )
 
+CANT_CHANGE_PROVIDER_EXPENSE_WITH_PAYMENT = _(
+    'No se puede modificar un gasto con pago asociado al mismo'
+)
+
 INVOICE_APPOVED_MESSAGE = _('Factura aprobada exitosamente ')
 
 INVOICE_SET_COMPLETE_PAYMENT_MESSAGE = _('Factura marcada como pago completo ')
@@ -78,3 +82,5 @@ SPONSOR_STATE_CLOSED = _('cerrado')
 
 # The idea is have formats supported by img tag
 IMAGE_FORMATS = ['.jpeg', '.jpg', '.gif', '.png', '.svg', '.bmp']
+DEFAULT_PAGINATION = 15
+BIG_PAGINATION = 20
