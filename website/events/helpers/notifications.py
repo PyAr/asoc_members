@@ -14,6 +14,9 @@ class EmailNotification():
     SPONSOR_JUST_ENABLED = 'sponsor_just_enabled'
     SPONSORING_JUST_CREATED = 'sponsoring_just_created'
 
+    EXPENSE_JUST_CREATED = 'expense_just_created'
+    PAYMENT_JUST_CREATED = 'payment_just_created'
+
     def _get_email_template(self, email_type):
         # TODO: check that the type is one of the email_types
         return f'mails/{email_type}_email.html'
@@ -113,6 +116,21 @@ class EmailNotification():
 
         recipients = self._get_superusers_emails()
         context['sponsoring'] = sponsoring
+        context['user'] = created_by
+        self._send_emails(email_type, recipients, context)
+
+    def send_new_expense_created(self, expense, created_by, context):
+        """Send email notifiying new expense was created.
+        New Payment flow started
+        Args:
+            expense: Expense just created
+            created_by: User whos create the sponsor
+            context: Context to compleate at less 'domain' and 'protocol'
+        """
+        email_type = self.EXPENSE_JUST_CREATED
+
+        recipients = self._get_superusers_emails()
+        context['expense'] = expense
         context['user'] = created_by
         self._send_emails(email_type, recipients, context)
 
