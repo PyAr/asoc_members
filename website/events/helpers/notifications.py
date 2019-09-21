@@ -15,7 +15,8 @@ class EmailNotification():
     SPONSORING_JUST_CREATED = 'sponsoring_just_created'
 
     EXPENSE_JUST_CREATED = 'expense_just_created'
-    PAYMENT_JUST_CREATED = 'payment_just_created'
+    PROVIDER_PAYMENT_JUST_CREATED = 'provider_payment_just_created'
+    ORGANIZER_PAYMENT_JUST_CREATED = 'organizer_payment_just_created'
 
     def _get_email_template(self, email_type):
         # TODO: check that the type is one of the email_types
@@ -103,6 +104,31 @@ class EmailNotification():
         if sponsor.created_by.email:
             recipients = [sponsor.created_by.email]
             context['sponsor'] = sponsor
+            self._send_emails(email_type, recipients, context)
+
+    def send_new_provider_payment_created(self, expense, context):
+        """Send email notifiying that a sponsor was enabled.
+        Args:
+            expense: Expense that was paid
+            context: Context to compleate at less 'domain' and 'protocol'
+        """
+        email_type = self.PROVIDER_PAYMENT_JUST_CREATED
+        if expense.created_by.email:
+            recipients = [expense.created_by.email]
+            context['expense'] = expense
+            self._send_emails(email_type, recipients, context)
+
+    def send_new_organizer_payment_created(self, expenses, organizer, context):
+        """Send email notifiying that a sponsor was enabled.
+        Args:
+            expenses: Expenses that were paid
+            organizer: Organizer to whom payments correspond
+            context: Context to compleate at less 'domain' and 'protocol'
+        """
+        email_type = self.ORGANIZER_PAYMENT_JUST_CREATED
+        if organizer.email:
+            recipients = [organizer.email]
+            context['expenses'] = expenses
             self._send_emails(email_type, recipients, context)
 
     def send_new_sponsoring_created(self, sponsoring, created_by, context):

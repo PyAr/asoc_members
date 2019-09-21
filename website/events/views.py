@@ -1079,6 +1079,15 @@ class ProviderExpensePaymentCreateView(PermissionRequiredMixin, generic.edit.Cre
             expense = self._get_expense()
             expense.payment = form.instance
             expense.save()
+            current_site = get_current_site(self.request)
+            context = {
+                'domain': current_site.domain,
+                'protocol': 'https' if self.request.is_secure() else 'http'
+            }
+            email_notifier.send_new_provider_payment_created(
+                expense,
+                context
+            )
             return ret
 
     def get_success_url(self):
@@ -1169,6 +1178,16 @@ class OrganizerRefundPaymentCreateView(PermissionRequiredMixin, generic.edit.Cre
             for refund in refunds:
                 refund.payment = form.instance
                 refund.save()
+            current_site = get_current_site(self.request)
+            context = {
+                'domain': current_site.domain,
+                'protocol': 'https' if self.request.is_secure() else 'http'
+            }
+            email_notifier.send_new_organizer_payment_created(
+                refunds,
+                self._get_organizer(),
+                context
+            )
             return ret
 
     def get_success_url(self):
