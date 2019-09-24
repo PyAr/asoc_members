@@ -96,14 +96,18 @@ def process_incomes(event):
 
 def process_expenses(event):
     """Process and show expenses."""
+    expense_totals = dict(base=0, iva=0)
     expenses = Expense.objects.filter(event=event).all()
+    if not expenses:
+        print("WARNING!!! expenses not found")
+        return expense_totals
+
     expense_data = []
-    expense_totals = {}
     for expense in expenses:
         description = "{} ({}, {})".format(
             expense.description, expense.invoice_date, expense.category)
         if expense.invoice_type == Expense.INVOICE_TYPE_A:
-            amount_base = round(expense.amount / Decimal(".21"), 2)
+            amount_base = round(expense.amount / Decimal("1.21"), 2)
             amount_iva = expense.amount - amount_base
         else:
             amount_base = expense.amount
@@ -113,12 +117,12 @@ def process_expenses(event):
             'amount': expense.amount,
             'base': amount_base,
             'IVA': amount_iva,
-            'inv. type': expense.invoice_type,
-            'descrption': description,
+            'invoice': expense.invoice_type,
+            'description': description,
         })
 
-        expense_totals['base'] = expense_totals.get('base', 0) + amount_base
-        expense_totals['iva'] = expense_totals.get('iva', 0) + amount_iva
+        expense_totals['base'] = expense_totals['base'] + amount_base
+        expense_totals['iva'] = expense_totals['iva'] + amount_iva
 
     show_table("Detailed expenses:", expense_data)
     return expense_totals
