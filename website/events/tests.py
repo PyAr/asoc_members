@@ -179,6 +179,31 @@ class EmailTest(TestCase, CustomAssertMethods):
         self.assertEqual(mail.outbox[0].subject,
                          render_to_string('mails/invoice_affect_just_created_subject.txt'))
 
+    @patch('django.core.files.storage.FileSystemStorage.save')
+    def test_send_email_after_create_provider_expense(self, mock_save):
+        create_organizer_set()
+        associate_events_organizers()
+        create_provider()
+        mock_save.return_value = 'expense.pdf'
+        provider_expense_data = {
+            'provider': Provider.objects.first().pk,
+            'amount': '1200',
+            'invoice_type': 'A',
+            'invoice_date': '12/01/2019',
+            'invoice': StringIO('test'),
+            'description': 'test'
+        }
+        url = reverse(
+            'provider_expense_create',
+            kwargs={'event_pk': Event.objects.filter(name='MyTest01').first().pk}
+        )
+        self.client.login(username='organizer01', password='organizer01')
+        self.client.post(url, data=provider_expense_data)
+        count = User.objects.filter(is_superuser=True).exclude(email__exact='').count()
+        self.assertEqual(len(mail.outbox), count)
+        self.assertEqual(mail.outbox[0].subject,
+                         render_to_string('mails/expense_just_created_subject.txt'))
+
     def test_send_email_after_create_sponsoring(self):
         create_organizer_set()
         associate_events_organizers()

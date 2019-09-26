@@ -1,0 +1,12 @@
+{% autoescape off %}
+
+Se ha finalizado el pago de sus siguientes reintegros:
+
+{% for expense in expenses %}
+    Tipo: Reintegro #{{expense.pk}}
+    Evento: {{expense.event}}
+    Descripcion: {{ expense.description}}
+    Monto: {{ expense.amount}}
+    Detalle:{{ protocol }}://{{ domain }}{% url 'organizer_refund_detail' pk=expense.pk %}
+{% endfor %}
+{% endautoescape %}

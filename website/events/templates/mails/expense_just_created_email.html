@@ -1,0 +1,22 @@
+{% autoescape off %}
+
+El usuario "{{ user.username }}" ha iniciado el siguiente pago:
+{% if expense.category == "Prv" %}
+Tipo: Pago a proveedor
+Proveedor: {{expense.provider}}
+{% else %}
+Tipo: Reintegro
+Organizador: {{expense.organizer}}
+{% endif %}
+Evento: {{expense.event}}
+Descripcion: {{ expense.description}}
+Monto: {{ expense.amount}}
+
+Por favor ingrese al mismo para finalizar el pago.
+{% if expense.category == "Prv" %}
+{{ protocol }}://{{ domain }}{% url 'provider_expense_detail' pk=expense.pk %}
+{% else %}
+{{ protocol }}://{{ domain }}{% url 'organizer_refund_detail' pk=expense.pk %}
+{% endif %}
+
+{% endautoescape %}

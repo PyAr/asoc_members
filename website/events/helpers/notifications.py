@@ -14,6 +14,10 @@ class EmailNotification():
     SPONSOR_JUST_ENABLED = 'sponsor_just_enabled'
     SPONSORING_JUST_CREATED = 'sponsoring_just_created'
 
+    EXPENSE_JUST_CREATED = 'expense_just_created'
+    PROVIDER_PAYMENT_JUST_CREATED = 'provider_payment_just_created'
+    ORGANIZER_PAYMENT_JUST_CREATED = 'organizer_payment_just_created'
+
     def _get_email_template(self, email_type):
         # TODO: check that the type is one of the email_types
         return f'mails/{email_type}_email.html'
@@ -102,6 +106,31 @@ class EmailNotification():
             context['sponsor'] = sponsor
             self._send_emails(email_type, recipients, context)
 
+    def send_new_provider_payment_created(self, expense, context):
+        """Send email notifiying that a sponsor was enabled.
+        Args:
+            expense: Expense that was paid
+            context: Context to compleate at less 'domain' and 'protocol'
+        """
+        email_type = self.PROVIDER_PAYMENT_JUST_CREATED
+        if expense.created_by.email:
+            recipients = [expense.created_by.email]
+            context['expense'] = expense
+            self._send_emails(email_type, recipients, context)
+
+    def send_new_organizer_payment_created(self, expenses, organizer, context):
+        """Send email notifiying that a sponsor was enabled.
+        Args:
+            expenses: Expenses that were paid
+            organizer: Organizer to whom payments correspond
+            context: Context to compleate at less 'domain' and 'protocol'
+        """
+        email_type = self.ORGANIZER_PAYMENT_JUST_CREATED
+        if organizer.email:
+            recipients = [organizer.email]
+            context['expenses'] = expenses
+            self._send_emails(email_type, recipients, context)
+
     def send_new_sponsoring_created(self, sponsoring, created_by, context):
         """Send email notifiying new sponsor was created.
         Args:
@@ -113,6 +142,21 @@ class EmailNotification():
 
         recipients = self._get_superusers_emails()
         context['sponsoring'] = sponsoring
+        context['user'] = created_by
+        self._send_emails(email_type, recipients, context)
+
+    def send_new_expense_created(self, expense, created_by, context):
+        """Send email notifiying new expense was created.
+        New Payment flow started
+        Args:
+            expense: Expense just created
+            created_by: User whos create the sponsor
+            context: Context to compleate at less 'domain' and 'protocol'
+        """
+        email_type = self.EXPENSE_JUST_CREATED
+
+        recipients = self._get_superusers_emails()
+        context['expense'] = expense
         context['user'] = created_by
         self._send_emails(email_type, recipients, context)
 

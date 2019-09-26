@@ -1,0 +1,14 @@
+{% autoescape off %}
+
+Se ha finalizado el siguiente pago iniciado por su usuario:
+
+Tipo: Pago a proveedor
+Proveedor: {{expense.provider}}
+Evento: {{expense.event}}
+Descripcion: {{ expense.description}}
+Monto: {{ expense.amount}}
+
+Para ver mas informacion del mismo ingrese a la siguiente url.
+{{ protocol }}://{{ domain }}{% url 'provider_expense_detail' pk=expense.pk %}
+
+{% endautoescape %}
