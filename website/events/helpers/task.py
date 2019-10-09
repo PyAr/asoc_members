@@ -13,11 +13,21 @@ The idea is represents the next set of task types:
         * Invoice without set complete or partial payment
         * Sponsoring without invoice attached
         * Sponsoring with invoice affect that sum total invoice and not complete flag setted
+        * End provider payment
+        * End organizer refund payment
 """
-from django.db.models import Max, Sum
+from django.db.models import Max, Sum, Count
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from events.models import Invoice, Organizer, Sponsor, Sponsoring, SponsorCategory
+from events.models import (
+    Invoice,
+    Organizer,
+    Sponsor,
+    Sponsoring,
+    SponsorCategory,
+    ProviderExpense,
+    OrganizerRefund
+)
 
 INCOMPLETE_EVENT = 'incomplete_event'
 NOT_SPONSOR_CAEGORY = 'not_sponsor_category'
@@ -139,6 +149,24 @@ def invoices_to_complete_task_builder(invoice):
     return Task(description, url, time)
 
 
+def provider_payment_unfinish_task_builder(expense):
+    description = _(
+        f'El pago al proovedor: "{expense.provider}", perteneciente al evento: '
+        f'"{expense.event}" se ecuentra sin finalizar'
+    )
+    url = reverse('provider_expense_detail', kwargs={'pk': expense.pk})
+    time = expense.created
+    return Task(description, url, time)
+
+
+def unpaid_organizer_refund_task_builder(organizer, count, time):
+    description = _(
+        f'El organizador: "{organizer}", tiene {count} reintegros sin pagar '
+    )
+    url = reverse('organizer_refund_payment_create', kwargs={'pk': organizer.pk})
+    return Task(description, url, time)
+
+
 def calculate_super_user_task():
     """Calculates superuser pending tasks.
     The user is not an argument because is the same for all superusers
@@ -173,15 +201,35 @@ def calculate_super_user_task():
 
     # Invoice without set complete or partial payment
     # TODO: move query into manager
-    unpayment_invoices = Invoice.objects.filter(
+    unpaid_invoices = Invoice.objects.filter(
         invoice_affects__isnull=False,
         partial_payment=False,
         complete_payment=False,
         sponsoring__close=False
     ).distinct().all()
-    for invoice in unpayment_invoices:
+    for invoice in unpaid_invoices:
         if invoice not in not_complete_with_affects_sum:
             tasks.append(unpayment_invoices_task_builder(invoice))
+
+    unpaid_provider_expense = ProviderExpense.objects.filter(
+        payment__isnull=True
+    ).all()
+    for expense in unpaid_provider_expense:
+        tasks.append(provider_payment_unfinish_task_builder(expense))
+
+    # Unpaid organizer refunds
+    unpaid_organizer_refunds = OrganizerRefund.objects.filter(
+        payment__isnull=True
+    ).values('organizer').annotate(
+        Sum('amount'),
+        Count('pk'),
+        Max('created')
+    )
+    for data in unpaid_organizer_refunds:
+        organizer = Organizer.objects.get(pk=data['organizer'])
+        time = data['created__max']
+        count = data['pk__count']
+        tasks.append(unpaid_organizer_refund_task_builder(organizer, count, time))
 
     tasks.sort(key=lambda x: x.time, reverse=True)
     return tasks
