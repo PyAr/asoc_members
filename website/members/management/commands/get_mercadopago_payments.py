@@ -57,6 +57,9 @@ class Command(BaseCommand):
         for item in mercadopago_response['response']['results']:
             info = item['collection']
 
+            if info['operation_type'] != 'recurring_payment':
+                continue
+
             # needed information to record the payment
             timestamp = parse_datetime(info['date_approved'])
             amount = Decimal(info['total_paid_amount'])

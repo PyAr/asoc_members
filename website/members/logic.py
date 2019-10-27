@@ -71,7 +71,9 @@ def create_recurring_payments(recurring_records):
                 platform=PaymentStrategy.MERCADO_PAGO, id_in_platform=payer)
         except PaymentStrategy.DoesNotExist:
             payment = retrieved_payments[0]
-            logger.error("PaymentStrategy not found for payer %r: %s", payer, payment)
+            logger.error(
+                "PaymentStrategy not found for payer %r: %s (%d payments)",
+                payer, payment, len(retrieved_payments))
             continue
 
         # get latest payment done with this strategy

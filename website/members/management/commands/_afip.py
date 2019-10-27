@@ -20,6 +20,8 @@ CONFIG_PDF = {
 
 PDF_PATH = "/tmp"
 
+INVOICE_TYPE = 6
+
 
 def generate_invoices(records):
     """Generate the invoices in PDF using AFIP API resources."""
@@ -39,6 +41,12 @@ def generate_invoices(records):
     wsfev1.Cuit = settings.AFIP['cuit']
     wsfev1.SetTicketAcceso(ta)
     wsfev1.Conectar(CACHE, settings.AFIP['url_wsfev1'])
+
+    # basic initial check
+    last_auth_invoice = wsfev1.CompUltimoAutorizado(INVOICE_TYPE, settings.AFIP['selling_point'])
+    print("Last authorized invoice", last_auth_invoice)
+    # res = wsfev1.CompConsultar(INVOICE_TYPE, last_auth_invoice, settings.AFIP['selling_point'])
+    # print("======== AFIP current status", res)
 
     # init PDF builder
     fepdf = FEPDF()
@@ -103,7 +111,7 @@ class MemberInvoice:
 
         self.header = dict(
             # defaults for this invoice type
-            tipo_cbte=6,
+            tipo_cbte=INVOICE_TYPE,
             tipo_doc=96,
             punto_vta=settings.AFIP['selling_point'],
             concepto=3,  # servicios
