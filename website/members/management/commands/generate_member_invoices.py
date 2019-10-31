@@ -65,6 +65,9 @@ class Command(BaseCommand):
             print("Forcing invoice date to {} (also limit=1)".format(invoice_date))
         records = []
 
+        # check AFIP
+        _afip.verify_service()
+
         # get the greatest invoice number used (once, will keep updated later)
         _max_invoice_number_query = Payment.objects.aggregate(Max('invoice_number'))
         max_invoice_number = _max_invoice_number_query['invoice_number__max']
