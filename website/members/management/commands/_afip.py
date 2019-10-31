@@ -23,8 +23,8 @@ PDF_PATH = "/tmp"
 INVOICE_TYPE = 6
 
 
-def generate_invoices(records):
-    """Generate the invoices in PDF using AFIP API resources."""
+def _get_afip():
+    """Build and authenticate AFIP structure."""
     # AFIP init
     wsaa = WSAA()
     wsfev1 = WSFEv1()
@@ -41,12 +41,21 @@ def generate_invoices(records):
     wsfev1.Cuit = settings.AFIP['cuit']
     wsfev1.SetTicketAcceso(ta)
     wsfev1.Conectar(CACHE, settings.AFIP['url_wsfev1'])
+    return wsfev1
 
-    # basic initial check
+
+def verify_service():
+    """Basic initial check that everything works with AFIP."""
+    wsfev1 = _get_afip()
     last_auth_invoice = wsfev1.CompUltimoAutorizado(INVOICE_TYPE, settings.AFIP['selling_point'])
     print("Last authorized invoice", last_auth_invoice)
-    # res = wsfev1.CompConsultar(INVOICE_TYPE, last_auth_invoice, settings.AFIP['selling_point'])
-    # print("======== AFIP current status", res)
+    res = wsfev1.CompConsultar(INVOICE_TYPE, last_auth_invoice, settings.AFIP['selling_point'])
+    print("Current status", repr(res))
+
+
+def generate_invoices(records):
+    """Generate the invoices in PDF using AFIP API resources."""
+    wsfev1 = _get_afip()
 
     # init PDF builder
     fepdf = FEPDF()
