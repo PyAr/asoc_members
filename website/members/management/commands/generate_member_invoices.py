@@ -50,11 +50,23 @@ class Command(BaseCommand):
     help = "Generate the missing invoices"
 
     def add_arguments(self, parser):
-        parser.add_argument('limit', type=int, nargs='?', default=1)
+        parser.add_argument('--limit', type=int, nargs='?', default=1)
+        parser.add_argument(
+            '--invoice-date', type=str, nargs='?', help="Invoice date (%Y-%m-%d), forces limit=1")
 
     def handle(self, *args, **options):
         limit = options['limit']
+        invoice_date = options['invoice_date']
+        if invoice_date is None:
+            invoice_date = datetime.date.today()
+        else:
+            invoice_date = datetime.datetime.strptime(invoice_date, "%Y-%m-%d").date()
+            limit = 1
+            print("Forcing invoice date to {} (also limit=1)".format(invoice_date))
         records = []
+
+        # check AFIP
+        _afip.verify_service()
 
         # get the greatest invoice number used (once, will keep updated later)
         _max_invoice_number_query = Payment.objects.aggregate(Max('invoice_number'))
@@ -74,11 +86,10 @@ class Command(BaseCommand):
             payments = payments[:limit]
             print("    truncating to {}".format(limit))
 
-        today = datetime.date.today()
         for payment in payments:
             print("Generating invoice for payment", payment)
             record = {
-                'invoice_date': today,
+                'invoice_date': invoice_date,
             }
             records.append(record)
 
@@ -94,6 +105,7 @@ class Command(BaseCommand):
                 print("    person found", person)
             else:
                 print("    IGNORING payment, member {} is not a person: {}".format(member, person))
+                continue
 
             # if payment still doesn't have a number, add one to latest and save;
             # in any case, use it
@@ -102,6 +114,9 @@ class Command(BaseCommand):
                 payment.invoice_number = max_invoice_number
                 payment.invoice_spoint = settings.AFIP['selling_point']
                 payment.save()
+                print("    using new invoice number", payment.invoice_number)
+            else:
+                print("    using already stored invoice number", payment.invoice_number)
             assert payment.invoice_spoint == settings.AFIP['selling_point']
             payments_per_invoice[payment.invoice_number] = payment
             record['invoice'] = payment.invoice_number
@@ -163,7 +178,7 @@ class Command(BaseCommand):
             payment.save()
 
             # upload the invoice to google drive
-            _gdrive.upload_invoice(result['pdf_path'], today)
+            _gdrive.upload_invoice(result['pdf_path'], invoice_date)
             print("    uploaded to gdrive OK")
 
             # send the invoice by mail
