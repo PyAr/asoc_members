@@ -282,6 +282,7 @@ class Sponsoring(SaveReversionMixin, AuditUserTime):
         permissions = (
             (CAN_CLOSE_SPONSORING_CODENAME, _('puede cerrar patrocinio')),
         )
+        ordering = ['sponsor__organization_name']
 
 
 @reversion.register
@@ -349,7 +350,7 @@ class Sponsor(SaveReversionMixin, AuditUserTime):
             (CAN_SET_SPONSORS_ENABLED_CODENAME, _('puede habilitar patrocinadores')),
             (CAN_VIEW_SPONSORS_CODENAME, _('puede ver patrocinadores')),
         )
-        ordering = ['-created']
+        ordering = ['organization_name']
 
     def __str__(self):
         return f"{self.organization_name} - {self.document_number}"
