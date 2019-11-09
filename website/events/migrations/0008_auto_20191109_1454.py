@@ -7,7 +7,7 @@ import stdnum.ar.cbu
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('events', '0006_update_group_and_perms'),
+        ('events', '0007_auto_20191015_2145'),
     ]
 
     operations = [
