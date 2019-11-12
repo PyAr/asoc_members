@@ -362,7 +362,7 @@ class BankAccountDataTest(TestCase, CustomAssertMethods):
         'bank_entity': 'Banco Rio',
         'account_type': 'CC',
         'account_number': '4',
-        'cbu': '456548789'
+        'cbu': '2850590940090418135201'
     }
 
     def setUp(self):

@@ -1,3 +1,7 @@
+import os
+import stdnum
+import reversion
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
@@ -29,10 +33,10 @@ from events.constants import (
 )
 
 from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
-import os
-import reversion
+
 
 User = get_user_model()
+validation_module = stdnum.get_cc_module('ar', 'cbu')
 
 
 def lower_non_spaces(text):
@@ -62,7 +66,7 @@ class BankAccountData(SaveReversionMixin, AuditUserTime):
     )
     account_number = models.CharField(
         _('número de cuenta'),
-        max_length=13,
+        max_length=20,
         help_text=_('Número de cuenta.')
     )
     account_type = models.CharField(_('Tipo cuenta'), max_length=3, choices=ACCOUNT_TYPE_CHOICES)
@@ -72,7 +76,13 @@ class BankAccountData(SaveReversionMixin, AuditUserTime):
         max_length=DEFAULT_MAX_LEN,
         help_text=_('Razón social o nombre del propietario de la cuenta.')
     )
-    cbu = models.CharField(_('CBU'), max_length=DEFAULT_MAX_LEN, help_text=_('CBU de la cuenta'))
+    cbu = models.CharField(
+        _('CBU'),
+        max_length=DEFAULT_MAX_LEN,
+        help_text=_('CBU de la cuenta'),
+        validators=[validation_module.validate],
+        blank=True
+    )
 
     def is_owner(self, organizer):
         '''Returns if the organizer is the owner of the current account.'''
