@@ -31,7 +31,7 @@ Los errores se reportan en: https://github.com/PyAr/asoc_members/issues/
 Configurá tu entorno
 --------------------
 
-> DISCLAIMER: si ya tenés tu fork del proyecto, esta sección no hace falta. Solo asegurate de tener el branch `develop` actualizado con el _oficial_.
+> DISCLAIMER: si ya tenés tu fork del proyecto, esta sección no hace falta. Solo asegurate de tener el branch `master` actualizado con el _oficial_.
 
 - Asegurate de tener instalada la [última versión de git](https://git-scm.com/downloads).
 - Configurá git con tu [usuario](https://help.github.com/articles/setting-your-username-in-git/) y [email](https://help.github.com/articles/setting-your-email-in-git/)::
@@ -58,7 +58,7 @@ Configurá tu entorno
 Empeza a escribir código
 ------------------------
 
-> DISCLAIMER: si ya tenías tu fork del proyecto asegurate de tener el branch `develop` actualizado con el _oficial_.
+> DISCLAIMER: si ya tenías tu fork del proyecto asegurate de tener el branch `master` actualizado con el _oficial_.
 
 - Generá un nuevo branch que identifique el issue en el que vas a trabajar. (EJ: ``issue_24_nueva_funcionalidad``)
 - Escribí el código utilizando tu editor preferido.
