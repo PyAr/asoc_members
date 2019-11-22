@@ -155,3 +155,4 @@ class QuotaFactory(DjangoModelFactory):
     class Meta:
         model = Quota
         django_get_or_create = ("year", "month", "member")
+
