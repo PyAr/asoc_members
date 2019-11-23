@@ -18,8 +18,7 @@ from .models import (
     Quota,
 )
 
-fake = Faker("es_ES")
-fake.random
+fake = Faker("es_MX")
 
 
 class PatronFactory(DjangoModelFactory):
