@@ -7,7 +7,7 @@ import factory.fuzzy
 from factory.django import DjangoModelFactory
 from faker import Faker
 
-from members.models import (
+from .models import (
     Category,
     Member,
     Organization,
@@ -40,9 +40,10 @@ class MemberFactory(DjangoModelFactory):
     category = factory.Iterator(Category.objects.all())
     patron = factory.SubFactory(PatronFactory)
     registration_date = factory.LazyAttribute(lambda x: fake.past_date(start_date="-5y"))
-    payment_date = factory.LazyAttribute(lambda o: fake.date_between(start_date=o.registration_date, end_date="today"))
+    payment_date = factory.LazyAttribute(lambda o: fake.date_between(
+        start_date=o.registration_date, end_date="today"))
     first_payment_month = factory.SelfAttribute('payment_date.month')
-    first_payment_year =  factory.SelfAttribute('payment_date.year')
+    first_payment_year = factory.SelfAttribute('payment_date.year')
 
     class Meta:
         model = Member
