@@ -13,6 +13,15 @@ from members.models import (
     Member, Patron, Category, PaymentStrategy, Quota, Person,
     Organization)
 
+from .factories import (
+    PatronFactory,
+    QuotaFactory,
+    PaymentFactory,
+    PaymentStrategyFactory,
+    MemberFactory,
+    OrganizationFactory,
+    PersonFactory,
+)
 
 DEFAULT_FEE = 100
 
@@ -595,3 +604,24 @@ class BuildDebtStringTestCase(TestCase):
     def test_exceeding(self):
         result = views._build_debt_string([(2018, 8), (2018, 9), (2018, 10), (2018, 11)])
         self.assertEqual(result, "4 (2018-08, 2018-09, 2018-10, ...)")
+
+
+class MatchFactoryWithModelTestCase(TestCase):
+    """Tests for checking if factory match the model."""
+    def test_for_match_fields_with_factory(self):
+        patron = PatronFactory.build()
+        member = MemberFactory.build()
+        strategy = create_payment_strategy()
+        user = PersonFactory.build()
+        organization = OrganizationFactory.build()
+        payment_strategy = PaymentStrategyFactory.build(patron=patron)
+        payment = PaymentFactory.build(strategy=strategy, amount=DEFAULT_FEE)
+        quota = QuotaFactory.build(payment=payment, member=member)
+        self.assertTrue(patron)
+        self.assertTrue(member)
+        self.assertTrue(strategy)
+        self.assertTrue(user)
+        self.assertTrue(organization)
+        self.assertTrue(payment_strategy)
+        self.assertTrue(payment)
+        self.assertTrue(quota)
