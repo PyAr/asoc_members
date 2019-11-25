@@ -38,16 +38,17 @@ class MemberFactory(DjangoModelFactory):
     has_collaborator_acceptance = fake.pybool
     category = factory.Iterator(Category.objects.all())
     patron = factory.SubFactory(PatronFactory)
-    registration_date = factory.LazyAttribute(lambda x: fake.past_date(start_date="-5y"))
-    payment_date = factory.LazyAttribute(lambda o: fake.date_between(
-        start_date=o.registration_date, end_date="today"))
-    first_payment_month = factory.SelfAttribute('payment_date.month')
-    first_payment_year = factory.SelfAttribute('payment_date.year')
+    first_payment_month = fake.month
+    first_payment_year = factory.fuzzy.FuzzyInteger(2010, 2025)
+    
+    @factory.lazy_attribute
+    def registration_date(self):
+        date_start = fake.past_date(start_date="-5y", tzinfo=None)
+        return fake.date_between_dates(date_start=date_start)
 
     class Meta:
         model = Member
         django_get_or_create = ("legal_id",)
-        exclude = ('payment_date',)
 
 
 class OrganizationFactory(DjangoModelFactory):
