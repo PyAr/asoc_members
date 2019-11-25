@@ -81,7 +81,7 @@ class PaymentStrategyAdmin(admin.ModelAdmin):
 class PaymentAdmin(admin.ModelAdmin):
     list_filter = ('strategy', )
     list_display = ('timestamp', 'amount', 'comments')
-    search_fields = ('^patron__name', )
+    search_fields = ('^strategy__patron__name', )
     list_display_links = ('timestamp', )
 
 
