@@ -38,17 +38,16 @@ class MemberFactory(DjangoModelFactory):
     has_collaborator_acceptance = fake.pybool
     category = factory.Iterator(Category.objects.all())
     patron = factory.SubFactory(PatronFactory)
-    first_payment_month = fake.month
-    first_payment_year = factory.fuzzy.FuzzyInteger(2010, 2025)
+    registration_date = factory.LazyAttribute(lambda x: fake.past_date(start_date="-5y"))
+    payment_date = factory.LazyAttribute(lambda o: fake.date_between(
+        start_date=o.registration_date, end_date="today"))
+    first_payment_month = factory.SelfAttribute('payment_date.month')
+    first_payment_year = factory.SelfAttribute('payment_date.year')
 
     class Meta:
         model = Member
         django_get_or_create = ("legal_id",)
-
-    @factory.lazy_attribute
-    def registration_date(self):
-        date_start = fake.past_date(start_date="-365d", tzinfo=None)
-        return fake.date_between_dates(date_start=date_start)
+        exclude = ('payment_date',)
 
 
 class OrganizationFactory(DjangoModelFactory):
@@ -97,7 +96,7 @@ class PersonFactory(DjangoModelFactory):
 
 class PaymentStrategyFactory(DjangoModelFactory):
     platform = factory.LazyAttribute(lambda x: choice(PaymentStrategy.PLATFORM_CHOICES)[0])
-    id_in_platform = fake.text
+    id_in_platform = factory.fuzzy.FuzzyText(length=24)
     comments = fake.text
     patron = factory.Iterator(Patron.objects.all())
 
@@ -109,7 +108,7 @@ class PaymentStrategyFactory(DjangoModelFactory):
 class PaymentFactory(DjangoModelFactory):
     strategy = factory.Iterator(PaymentStrategy.objects.all())
     comments = fake.text
-    invoice_id = factory.fuzzy.FuzzyInteger(100, 99999)
+    invoice_number = factory.fuzzy.FuzzyInteger(100, 99999)
 
     @factory.lazy_attribute
     def timestamp(self):
@@ -122,7 +121,7 @@ class PaymentFactory(DjangoModelFactory):
 
     class Meta:
         model = Payment
-        django_get_or_create = ("invoice_id",)
+        django_get_or_create = ("invoice_number",)
 
 
 class QuotaFactory(DjangoModelFactory):
