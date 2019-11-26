@@ -11,7 +11,7 @@ from django.urls import reverse
 from members import logic, views
 from members.models import (
     Member, Patron, Category, PaymentStrategy, Quota, Person,
-    Organization)
+    Organization, Payment)
 from .factories import (
     PatronFactory,
     QuotaFactory,
@@ -608,19 +608,18 @@ class BuildDebtStringTestCase(TestCase):
 class MatchFactoryWithModelTestCase(TestCase):
     """Tests for checking if factory match the model."""
     def test_for_match_fields_with_factory(self):
+        ps = create_payment_strategy()
         patron = PatronFactory.build()
         member = MemberFactory.build()
-        strategy = create_payment_strategy()
-        user = PersonFactory.build()
+        person = PersonFactory.build()
         organization = OrganizationFactory.build()
         payment_strategy = PaymentStrategyFactory.build(patron=patron)
-        payment = PaymentFactory.build(strategy=strategy, amount=DEFAULT_FEE)
+        payment = PaymentFactory.build(strategy=ps, amount=DEFAULT_FEE)
         quota = QuotaFactory.build(payment=payment, member=member)
-        self.assertTrue(patron)
-        self.assertTrue(member)
-        self.assertTrue(strategy)
-        self.assertTrue(user)
-        self.assertTrue(organization)
-        self.assertTrue(payment_strategy)
-        self.assertTrue(payment)
-        self.assertTrue(quota)
+        assert isinstance(patron, Patron)
+        assert isinstance(member, Member)
+        assert isinstance(person, Person)
+        assert isinstance(organization, Organization)
+        assert isinstance(payment_strategy, PaymentStrategy)
+        assert isinstance(payment, Payment)
+        assert isinstance(quota, Quota)
