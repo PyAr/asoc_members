@@ -38,7 +38,7 @@ class MemberFactory(DjangoModelFactory):
     has_collaborator_acceptance = fake.pybool
     category = factory.Iterator(Category.objects.all())
     patron = factory.SubFactory(PatronFactory)
-    first_payment_month = factory.fuzzy.FuzzyInteger(1, 12) 
+    first_payment_month = factory.fuzzy.FuzzyInteger(1, 12)
     first_payment_year = factory.fuzzy.FuzzyInteger(2010, 2025)
 
     @factory.lazy_attribute
