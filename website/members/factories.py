@@ -40,7 +40,7 @@ class MemberFactory(DjangoModelFactory):
     patron = factory.SubFactory(PatronFactory)
     first_payment_month = fake.month
     first_payment_year = factory.fuzzy.FuzzyInteger(2010, 2025)
-    
+
     @factory.lazy_attribute
     def registration_date(self):
         date_start = fake.past_date(start_date="-5y", tzinfo=None)
