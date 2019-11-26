@@ -11,8 +11,16 @@ from django.urls import reverse
 from members import logic, views
 from members.models import (
     Member, Patron, Category, PaymentStrategy, Quota, Person,
-    Organization)
-
+    Organization, Payment)
+from .factories import (
+    PatronFactory,
+    QuotaFactory,
+    PaymentFactory,
+    PaymentStrategyFactory,
+    MemberFactory,
+    OrganizationFactory,
+    PersonFactory,
+)
 
 DEFAULT_FEE = 100
 
@@ -595,3 +603,23 @@ class BuildDebtStringTestCase(TestCase):
     def test_exceeding(self):
         result = views._build_debt_string([(2018, 8), (2018, 9), (2018, 10), (2018, 11)])
         self.assertEqual(result, "4 (2018-08, 2018-09, 2018-10, ...)")
+
+
+class MatchFactoryWithModelTestCase(TestCase):
+    """Tests for checking if factory match the model."""
+    def test_for_match_fields_with_factory(self):
+        ps = create_payment_strategy()
+        patron = PatronFactory.build()
+        member = MemberFactory.build()
+        person = PersonFactory.build()
+        organization = OrganizationFactory.build()
+        payment_strategy = PaymentStrategyFactory.build(patron=patron)
+        payment = PaymentFactory.build(strategy=ps, amount=DEFAULT_FEE)
+        quota = QuotaFactory.build(payment=payment, member=member)
+        assert isinstance(patron, Patron)
+        assert isinstance(member, Member)
+        assert isinstance(person, Person)
+        assert isinstance(organization, Organization)
+        assert isinstance(payment_strategy, PaymentStrategy)
+        assert isinstance(payment, Payment)
+        assert isinstance(quota, Quota)
