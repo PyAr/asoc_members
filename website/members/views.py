@@ -26,7 +26,7 @@ from members import logic
 from members.constants import (
     DEFAULT_PAGINATION,
 )
-from members.helpers.views import search_filtered_queryset
+from events.helpers.views import search_filtered_queryset
 from members.forms import SignupPersonForm, SignupOrganizationForm
 from members.models import Person, Organization, Category, Member, Quota, Payment
 

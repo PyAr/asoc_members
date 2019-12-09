@@ -3,7 +3,7 @@ import functools
 import operator
 
 
-def seach_filterd_queryset(base_queryset, search_fields, search_value):
+def search_filtered_queryset(base_queryset, search_fields, search_value):
     filters = []
     for key, value in search_fields.items():
         field_filter = key

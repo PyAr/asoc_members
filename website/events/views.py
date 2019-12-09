@@ -52,7 +52,7 @@ from events.forms import (
 )
 from events.helpers.notifications import email_notifier
 from events.helpers.task import calculate_organizer_task, calculate_super_user_task
-from events.helpers.views import seach_filterd_queryset
+from events.helpers.views import search_filtered_queryset
 from events.helpers.permissions import is_event_organizer, ORGANIZER_GROUP_NAME, is_organizer_user
 from events.models import (
     BankAccountData,
@@ -141,7 +141,7 @@ class EventsListView(LoginRequiredMixin, generic.ListView):
 
         search_value = self.request.GET.get('search', None)
         if search_value and search_value != '':
-            queryset = seach_filterd_queryset(queryset, self.search_fields, search_value)
+            queryset = search_filtered_queryset(queryset, self.search_fields, search_value)
         return queryset
 
 
@@ -352,7 +352,7 @@ class OrganizersListView(PermissionRequiredMixin, generic.ListView):
         queryset = Organizer.objects.all()
         search_value = self.request.GET.get('search', None)
         if search_value and search_value != '':
-            queryset = seach_filterd_queryset(queryset, self.search_fields, search_value)
+            queryset = search_filtered_queryset(queryset, self.search_fields, search_value)
         return queryset
 
 
@@ -403,7 +403,7 @@ class SponsorsListView(LoginRequiredMixin, generic.ListView):
         # queryset = Sponsor.objects.all()
         search_value = self.request.GET.get('search', None)
         if search_value and search_value != '':
-            queryset = seach_filterd_queryset(queryset, self.search_fields, search_value)
+            queryset = search_filtered_queryset(queryset, self.search_fields, search_value)
         return queryset
 
 
@@ -812,7 +812,7 @@ class ProvidersListView(LoginRequiredMixin, generic.ListView):
         # queryset = Sponsor.objects.all()
         search_value = self.request.GET.get('search', None)
         if search_value and search_value != '':
-            queryset = seach_filterd_queryset(queryset, self.search_fields, search_value)
+            queryset = search_filtered_queryset(queryset, self.search_fields, search_value)
         return queryset
 
 
@@ -854,7 +854,7 @@ class ExpensesListView(PermissionRequiredMixin, generic.ListView):
 
         search_value = self.request.GET.get('search', None)
         if search_value and search_value != '':
-            queryset = seach_filterd_queryset(queryset, self.search_fields, search_value)
+            queryset = search_filtered_queryset(queryset, self.search_fields, search_value)
         return queryset
 
     def get_context_data(self, **kwargs):
