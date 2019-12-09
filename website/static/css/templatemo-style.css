@@ -643,6 +643,10 @@ ul.fa-ul li {
     text-align: center;
 }
 
+.member-detail table tr {
+    cursor: default;
+}
+
 .member-detail table th {
     text-align: right;
 }
