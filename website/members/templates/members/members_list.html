@@ -1,0 +1,46 @@
+{% extends "members_base_paginated_list.html" %}
+
+{% block route-navigator %}
+<div class="route-navigator" >
+        <ol class="breadcrumb">
+            <li><a href="{% url 'reports_main' %}">Inicio</a></li>
+            <li class="active"><a href="{% url 'members_list' %}">Miembros</a></li>
+        </ol>
+</div>
+{% endblock %}
+{% block list_title %}
+<h1>Miembros</h1>
+{%endblock%}
+
+{% block list_content %}
+    <div class="row members-list">
+        <div class="col-md-12">
+            <table class="table table-striped row-clickeable-table">
+                <thead>
+                    <tr>
+                        <th scope="row">Legal ID</th>
+                        <th scope="row">Nombre/Razón social</th>
+                        <th scope="row">Documento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for member in members_list %}
+                    <tr onclick="window.location='{% url 'member_detail' pk=member.pk %}';" class="clikeable {% if member.shutdown_date %}shutdown{% endif %}">
+                        <td> {{ member.legal_id }}</td>
+                        <td> {{ member.entity }}</td>
+                        <td> {{ member.entity.document_number }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="100%" class="empty-list">
+                            <strong>No hay miembros para mostrar.</strong>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+{% endblock %}

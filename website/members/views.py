@@ -13,16 +13,20 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import EmailMessage
 from django.db.models import Q, Sum
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
 from django.views import View
-from django.views.generic import TemplateView, CreateView
+from django.views.generic import TemplateView, CreateView, ListView, DetailView
 
 import members
 from members import logic
+from members.constants import (
+    DEFAULT_PAGINATION,
+)
+from members.helpers.views import search_filtered_queryset
 from members.forms import SignupPersonForm, SignupOrganizationForm
 from members.models import Person, Organization, Category, Member, Quota, Payment
 
@@ -481,6 +485,52 @@ class ReportIncomeMoney(OnlyAdminsViewMixin, View):
         return render(request, 'members/report_income_money.html', context)
 
 
+class MembersListView(LoginRequiredMixin, ListView):
+    model = Member
+    context_object_name = 'members_list'
+    template_name = 'members/members_list.html'
+    paginate_by = DEFAULT_PAGINATION
+    search_fields = {
+        'person__first_name': 'icontains',
+        'person__last_name': 'icontains',
+        'person__email': 'icontains',
+        'person__document_number': 'icontains',
+        'organization__name': 'icontains',
+        'organization__document_number': 'icontains'
+    }
+
+    def get_queryset(self):
+        queryset = super(MembersListView, self).get_queryset()
+        search_value = self.request.GET.get('search', None)
+        if search_value and search_value != '':
+            queryset = search_filtered_queryset(queryset, self.search_fields, search_value)
+        return queryset
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        if len(queryset) == 1:
+            return redirect('member_detail', queryset.first().pk)
+        return super().get(request, *args, **kwargs)
+
+
+class MemberDetailView(LoginRequiredMixin, DetailView):
+    model = Member
+    template_name = 'members/member_detail.html'
+
+    def get_context_data(self, **kwargs):
+        # Get the context from base
+        context = super(MemberDetailView, self).get_context_data(**kwargs)
+        member = self.get_object()
+        today = datetime.date.today()
+        debt = logic.get_debt_state(member, today.year, today.month)
+        if len(debt) > 1 and member.category.fee > 0:
+            context['debtor'] = True
+        context['member'] = member
+        context['quotas'] = Quota.objects.filter(member=member)[:6]
+        context['missing_letter'] = not member.has_subscription_letter
+        return context
+
+
 # public
 signup_initial = SignupInitialView.as_view()
 signup_form_person = SignupPersonFormView.as_view()
@@ -493,3 +543,5 @@ report_missing = ReportMissing.as_view()
 report_complete = ReportComplete.as_view()
 report_income_quotas = ReportIncomeQuotas.as_view()
 report_income_money = ReportIncomeMoney.as_view()
+members_list = MembersListView.as_view()
+member_detail = MemberDetailView.as_view()
