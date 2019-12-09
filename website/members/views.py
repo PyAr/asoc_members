@@ -507,7 +507,7 @@ class MembersListView(LoginRequiredMixin, ListView):
         return queryset
 
     def get(self, request, *args, **kwargs):
-        """ 
+        """
             If get one result when call self.get_queryset() then
             redirect to member_detail view, else display the filtered
             list of members
