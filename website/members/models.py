@@ -101,7 +101,7 @@ def picture_upload_path(instance, filename):
 
 def validate_image_ratio(obj):
     width, height = get_image_dimensions(obj)
-    if width / height != 1:
+    if width != height:
         raise ValidationError("Por favor, utilice una imagen cuadrada")
 
 
