@@ -1,7 +1,11 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from django.core.exceptions import ValidationError
+from django.core.files.images import get_image_dimensions
+from django.contrib.staticfiles.templatetags.staticfiles import static
 
 DEFAULT_MAX_LEN = 317  # Almost random
 LONG_MAX_LEN = 2048  # Random but bigger
@@ -94,6 +98,12 @@ def picture_upload_path(instance, filename):
     return f"pictures/{lastname}_{instance.document_number}.{ext}"
 
 
+def validate_image_ratio(obj):
+    width, height = get_image_dimensions(obj)
+    if width != height:
+        raise ValidationError("Por favor, utilice una imagen cuadrada")
+
+
 class Person(TimeStampedModel):
     """Human being, member of PyAr ONG."""
 
@@ -115,8 +125,8 @@ class Person(TimeStampedModel):
     # picture in "False" means that the person doesn't want a photo (can not use Null as it's
     # swallowed by ImageField to disassociate from a filename)
     picture = models.ImageField(
-        _('avatar'), upload_to=picture_upload_path, null=True, blank=True,
-        help_text=_('Foto o imagen cuadrada para el carnet'))
+        _('avatar'), validators=[validate_image_ratio], upload_to=picture_upload_path,
+        null=True, blank=True, help_text=_('Foto o imagen cuadrada para el carnet'))
     nationality = models.CharField(_('nacionalidad'), max_length=DEFAULT_MAX_LEN, blank=True)
     marital_status = models.CharField(_('estado civil'), max_length=DEFAULT_MAX_LEN, blank=True)
     occupation = models.CharField(
@@ -134,6 +144,20 @@ class Person(TimeStampedModel):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
+
+    @property
+    def address(self):
+        return f"{self.street_address}, {self.city} ({self.zip_code}), {self.province}"
+
+    @property
+    def thumbnail(self):
+        if self.picture:
+            photo = self.picture.url
+        else:
+            photo = static("images/default_thumbnail.jpg")
+        return format_html(
+            f'<a href="{photo}"><img src="{photo}" \
+                    class="img-thumbnail" width="150"></a>')
 
     def __str__(self):
         return f"{self.last_name}, {self.first_name}"

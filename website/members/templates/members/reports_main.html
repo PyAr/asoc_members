@@ -7,15 +7,16 @@
         {% endblock %}
         <div class="inner-content">
             {% block inner-content %}
-                <div>
+            <div>
                 <ul>
-                <li> <a href="{% url 'report_debts' %}">Socios con deudas</a></li>
-                <li> <a href="{% url 'report_complete' %}">Personas en condiciones de ser socios</a></li>
-                <li> <a href="{% url 'report_missing' %}">Personas con pendientes para ser socios</a></li>
-                <li> <a href="{% url 'report_income_quotas' %}">Ingresos, cuotas</a></li>
-                <li> <a href="{% url 'report_income_money' %}">Ingresos, dinero</a></li>
+                    <li><a href="{% url 'members_list' %}">Miembros</a></li>
+                    <li><a href="{% url 'report_debts' %}">Socios con deudas</a></li>
+                    <li><a href="{% url 'report_complete' %}">Personas en condiciones de ser socios</a></li>
+                    <li><a href="{% url 'report_missing' %}">Personas con pendientes para ser socios</a></li>
+                    <li><a href="{% url 'report_income_quotas' %}">Ingresos, cuotas</a></li>
+                    <li><a href="{% url 'report_income_money' %}">Ingresos, dinero</a></li>
                 </ul>
-                </div>
+            </div>
             {% endblock %}
         </div>
     </div>

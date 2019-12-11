@@ -1,12 +1,14 @@
-import os
 import datetime
 import tempfile
-
 import logassert
-from django.conf import settings
+from io import BytesIO
+from PIL import Image
+
+from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 from django.utils.timezone import now, make_aware
 from django.urls import reverse
+from django.db.models.fields.files import ImageFieldFile
 
 from members import logic, views
 from members.models import (
@@ -57,9 +59,13 @@ def create_payment_strategy(platform=None, payer_id=None):
         platform=platform, id_in_platform=payer_id, patron=patron)
 
 
-def get_temporary_image():
-    image_path = os.path.join(settings.BASE_DIR, '..', 'test_media', 'test_image.png')
-    return open(image_path, 'rb')
+def create_image_file_in_memory(width=150, height=150):
+    file = BytesIO()
+    image = Image.new('RGB', size=(width, height), color=(155, 0, 0))
+    image.save(file, 'jpeg')
+    file.name = 'image.jpg'
+    file.seek(0)
+    return file
 
 
 @override_settings(MEDIA_ROOT=tempfile.gettempdir())
@@ -102,7 +108,7 @@ class SignupPagesTests(TestCase):
             'province': 'Córdoba',
             'country': 'Argentina',
             'nickname': 'pepepin',
-            'picture': get_temporary_image()
+            'picture': create_image_file_in_memory()
         }
         response = self.client.get(reverse('signup_person'))
         response = self.client.post(reverse('signup_person'), data=data)
@@ -114,6 +120,7 @@ class SignupPagesTests(TestCase):
         self.assertEqual(person.birth_date, datetime.date(1999, 12, 11))
         self.assertEqual(person.membership.category.pk, cat.pk)
         self.assertEqual(person.membership.patron.email, person.email)
+        assert isinstance(person.picture, ImageFieldFile)
 
     def test_signup_submit_success_without_optionals(self):
         # crear categoria
@@ -164,12 +171,13 @@ class SignupPagesTests(TestCase):
             'province': 'Córdoba',
             'country': 'Argentina',
             'nickname': 'pepepin',
-            'picture': get_temporary_image()
+            'picture': create_image_file_in_memory(150, 100),
         }
         response = self.client.get(reverse('signup_person'))
         response = self.client.post(reverse('signup_person'), data=data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue("last_name" in response.context["form"].errors)
+        self.assertTrue("picture" in response.context["form"].errors)
 
     def test_signup_org_submit_success(self):
         random_text = 'oihihepiuhsidufhaohfiubiufwieufh'
@@ -623,3 +631,24 @@ class MatchFactoryWithModelTestCase(TestCase):
         assert isinstance(payment_strategy, PaymentStrategy)
         assert isinstance(payment, Payment)
         assert isinstance(quota, Quota)
+
+
+class MembersReportTests(TestCase):
+    def setUp(self):
+        user = User.objects.create_user(
+            username='testuser', password='12345', email='1@1.com')
+        self.client.force_login(user)
+
+    def test_get_members_list_page(self):
+        response = self.client.get(reverse('members_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'members/members_list.html')
+
+    def test_get_member_detail_page(self):
+        member = create_member()
+        response = self.client.get(reverse('member_detail', kwargs={"pk": member.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'members/member_detail.html')
+
+    def tearDown(self):
+        self.client.logout()

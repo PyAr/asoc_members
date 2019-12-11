@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block content %}
+
+    <div class="container">
+        <div class="route-navigator" >
+                <ol class="breadcrumb">
+                    <li><a href="{% url 'reports_main' %}">Inicio</a></li>
+                    <li><a href="{% url 'members_list' %}" >Miembros</a></li>
+                    <li class="active"><a href="{% url 'member_detail' pk=member.pk %}">{{ member.entity }}</a></li>
+                </ol>
+        </div>
+
+        <div class="row member-detail">
+            {% if member.person %}
+            <h3>Datos Personales</h3>
+            <div class="col-sm-4">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <td colspan="2" class="text-center">
+                                {{ member.person.thumbnail }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">ID Legal:</th>
+                            <td>{{ member.legal_id }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Nombre:</th>
+                            <td>{{ member.entity }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Nickname:</th>
+                            <td>{{ member.entity.nickname }}</td>
+                        </tr>                        
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="col-sm-8">
+                <table class="table table-striped">
+                    <tbody>
+                        <tr>
+                            <th scope="row">Documento:</th>
+                            <td>{{ member.entity.document_number }}</td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">Membresía:</th>
+                            <td>{{ member.entity.membership }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Email:</th>
+                            <td>{{ member.entity.email }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Estado Civil:</th>
+                            <td>{{ member.entity.marital_status }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Profesión:</th>
+                            <td>{{ member.entity.occupation }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Nacimiento:</th>
+                            <td>{{ member.entity.birth_date }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Dirección:</th>
+                            <td>{{ member.entity.address }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Comentarios:</th>
+                            <td>{{ member.entity.comments }}</td>
+                        </tr>
+                    </tbody>
+                </table> 
+            </div>
+            {% endif %}
+
+            {% if member.organization %}
+            <h3>Datos de la Organización</h3> 
+            <div class="col-sm-12">
+                <table class="table table-striped">
+                    <tbody>
+                        <tr>
+                            <th scope="row">Nombre</th>
+                            <td>{{ member.entity }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Contacto</th>
+                            <td>{{ member.entity.contact_info }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">N° de Documento / CUIT</th>
+                            <td>{{ member.entity.document_number }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Membresía</th>
+                            <td>{{ member.entity.membership }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Dirección</th>
+                            <td>{{ member.entity.address }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Social Media</th>
+                            <td>{{ member.entity.social_media }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            {% if member.patron %}
+            <h3>Datos del Patron</h3> 
+            <div class="col-sm-12">
+                <table class="table table-striped">
+                    <tbody>
+                        <tr>
+                            <th scope="row">Nombre:</th>
+                            <td>{{ member.patron.name }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Email:</th>
+                            <td>{{ member.patron.email }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Comentarios:</th>
+                            <td>{{ member.patron.comments }}</td>
+                        </tr>                                                
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+                        
+            {% if quotas %}
+            <h3>Ultimos Pagos</h3>
+            <div class="col-sm-12">
+                <table class="table{% if debtor %} bg-danger{% else %} bg-success{% endif %}">
+                    <tbody>
+                    {% for quota in quotas reversed %}
+                        <tr>
+                            <th scope="row">{{ quota.code }}</th>
+                            <td>{{ quota.payment }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+                
+            {% if missing_letter %}
+            <div class="col-sm-12">
+                <h4>* El miembro necesita firmar la carta de asociación</h4>
+            </div>
+            {% endif %}
+
+                </div>
+            </div>
+        </div>
+
+{% endblock %}

@@ -261,10 +261,6 @@ img
     {
         padding-top: 10px;
     }
-#feature span
-    {
-      /*  float: left; */
-    }
 #feature .fa
     {
         background: #28a7e9;
@@ -288,10 +284,6 @@ img
 #feature1 p
     {
         padding-top: 10px;
-    }
-#feature1 span
-    {
-      /*  float: left; */
     }
 #feature1 .fa
     {
@@ -609,4 +601,52 @@ ul.fa-ul li {
 
 .navbar-right .pyar.dropdown-menu {
     left: 0;
+}
+
+ /* Customize Detailed Members Table  */
+ .shutdown {
+    background: red !important;
+    color: lightgray;
+    font-weight: bold;
+}
+
+.table tr {
+    cursor: pointer;
+}
+.hiddenRow {
+    padding: 0 4px !important;
+    font-size: 13px;
+}
+.details-row {
+    display: flex;
+    flex-direction: column;
+    background-color: #eeeeee;
+    padding: 10px;
+}
+
+.debtor {
+    background: crimson;
+    color: lightgray;
+    font-weight: bold;
+}
+
+.details-title {
+    text-align: center;
+    font-weight: bold;
+}
+
+.col {
+    flex: 4;
+}
+
+.col-centered {
+    text-align: center;
+}
+
+.member-detail table tr {
+    cursor: default;
+}
+
+.member-detail table th {
+    text-align: right;
 }

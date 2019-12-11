@@ -17,4 +17,8 @@ urlpatterns = [
     path('reportes/incompletos', views.report_missing, name='report_missing'),
     path('reportes/ingcuotas', views.report_income_quotas, name='report_income_quotas'),
     path('reportes/ingdinero', views.report_income_money, name='report_income_money'),
+
+
+    path('reportes/miembros', views.members_list, name="members_list"),
+    path('reportes/miembros/<pk>/', views.member_detail, name='member_detail'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
