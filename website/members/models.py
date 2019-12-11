@@ -19,8 +19,7 @@ class Quota(TimeStampedModel):
         _('mes'), validators=[MaxValueValidator(12), MinValueValidator(1)])
     year = models.PositiveSmallIntegerField(_('año'), validators=[MinValueValidator(2015)])
     member = models.ForeignKey(
-        'Member', verbose_name=_('miembro'),
-        on_delete=models.SET_NULL, null=True)
+        'Member', verbose_name=_('miembro'), on_delete=models.SET_NULL, null=True)
 
     class Meta:
         get_latest_by = ['year', 'month']
@@ -148,14 +147,14 @@ class Person(TimeStampedModel):
 
     @property
     def address(self):
-        return f"{self.street_address} - ({self.zip_code}) {self.city}, {self.province}"
+        return f"{self.street_address}, {self.city} ({self.zip_code}), {self.province}"
 
     @property
     def thumbnail(self):
         if self.picture:
             photo = self.picture.url
         else:
-            photo = static("images//default_thumbnail.jpg")
+            photo = static("images/default_thumbnail.jpg")
         return format_html(
             f'<a href="{photo}"><img src="{photo}" \
                     class="img-thumbnail" width="150"></a>')
