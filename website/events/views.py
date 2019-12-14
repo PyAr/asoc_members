@@ -1263,6 +1263,24 @@ class ProviderExpenseSwitchState(PermissionRequiredMixin, View):
         return redirect('expenses_list', event_pk=expense.event.pk)
 
 
+class OrganizerRefundSwitchState(PermissionRequiredMixin, View):
+    permission_required = 'events.change_organizerrefund'
+
+    def post(self, request, *args, **kwargs):
+        expense = get_object_or_404(Expense, pk=kwargs['pk'])
+        if expense.cancelled_date:
+            expense.cancelled_date = None 
+        else:
+            expense.cancelled_date = timezone.now() 
+        expense.save()
+        messages.add_message(
+            request,
+            messages.SUCCESS,
+            EXPENSE_MODIFIED
+        )
+        return redirect('expenses_list', event_pk=expense.event.pk)
+
+
 events_list = EventsListView.as_view()
 event_detail = EventDetailView.as_view()
 event_change = EventChangeView.as_view()
@@ -1306,3 +1324,4 @@ provider_expense_payment_create = ProviderExpensePaymentCreateView.as_view()
 organizer_refund_create = OrganizerRefundCreateView.as_view()
 organizer_refund_detail = OrganizerRefundDetailView.as_view()
 organizer_refund_payment_create = OrganizerRefundPaymentCreateView.as_view()
+organizer_refund_switch_state = OrganizerRefundSwitchState.as_view()
