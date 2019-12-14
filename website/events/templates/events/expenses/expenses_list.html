@@ -26,7 +26,7 @@
                         <th scope="row">Origen</th>
                         <th scope="row">Monto</th>
                         <th scope="row">Descripcion</th>
-                        <th scope="row">Pagado</th>
+                        <th class="text-center" scope="row">Pagado</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -38,7 +38,12 @@
                     <tr onclick="window.location='{% url 'organizer_refund_detail' pk=expense.pk %}';" class="clikeable">
                     {% endif %}
                         
-                        <td>{{ expense.get_category_display }}</td>
+                    {% if expense.is_cancelled %}
+                        <td class="text-danger">{{ expense.get_category_display }} (Cancelado)</td>
+                    {% else %}
+                        <td class="text-success">{{ expense.get_category_display }}</td>
+                    {% endif %}
+                    
                         <td>
                         {% if expense.category == "Prv"%}
                             {{ expense.origin.organization_name }}
@@ -50,15 +55,13 @@
                         <td>{{ expense.amount }}</td>
                         <td>{{ expense.description }}</td>
                         <td class="text-center">
-                            <span>
-                            
-                            {% if expense.payment %}
+                            {% if expense.is_cancelled %}
+                            <i class="fa fa-ban text-danger"></i>
+                            {% elif expense.payment %}
                             <i class="fa fa-check-circle text-success"></i>
                             {% else %}
                             <i class="fa fa-times-circle text-danger"></i>
                             {% endif %}
-                            
-                            </span>
                         </td>
                     </tr>
                 

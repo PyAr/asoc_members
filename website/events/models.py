@@ -544,6 +544,7 @@ class Expense(SaveReversionMixin, AuditUserTime):
     category = models.CharField(
         _('tipo gasto'), max_length=5, choices=EXPENSE_TYPES
     )
+    cancelled_date = models.DateField(_('Fecha de Cancelación'), null=True, blank=True)
 
     def origin(self):
         if self.category == self.PROVIDER_EXENSE_TYPE:
@@ -563,6 +564,12 @@ class Expense(SaveReversionMixin, AuditUserTime):
 
     def is_image_document(self):
         return self.invoice_extension() in IMAGE_FORMATS
+
+    @property
+    def is_cancelled(self):
+        if self.cancelled_date:
+            return self.cancelled_date
+        return False
 
     class Meta:
         permissions = (

@@ -12,6 +12,7 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from django.views import generic, View
@@ -33,7 +34,8 @@ from events.constants import (
     MUST_EXISTS_PROVIDERS_MESSAGE,
     ORGANIZER_MAIL_NOTOFICATION_MESSAGE,
     SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE,
-    CANT_CHANGE_PROVIDER_EXPENSE_WITH_PAYMENT
+    CANT_CHANGE_PROVIDER_EXPENSE_WITH_PAYMENT,
+    EXPENSE_MODIFIED
 )
 from events.forms import (
     BankAccountDataForm,
@@ -1243,6 +1245,24 @@ class ProviderExpenseUpdateView(PermissionRequiredMixin, generic.edit.UpdateView
             return super(ProviderExpenseUpdateView, self).handle_no_permission()
 
 
+class ProviderExpenseSwitchState(PermissionRequiredMixin, View):
+    permission_required = 'events.change_providerexpense'
+
+    def post(self, request, *args, **kwargs):
+        expense = get_object_or_404(Expense, pk=kwargs['pk'])
+        if expense.cancelled_date:
+            expense.cancelled_date = None
+        else:
+            expense.cancelled_date = timezone.now()
+        expense.save()
+        messages.add_message(
+            request,
+            messages.SUCCESS,
+            EXPENSE_MODIFIED
+        )
+        return redirect('expenses_list', event_pk=expense.event.pk)
+
+
 events_list = EventsListView.as_view()
 event_detail = EventDetailView.as_view()
 event_change = EventChangeView.as_view()
@@ -1280,8 +1300,9 @@ provider_create = ProviderCreateView.as_view()
 expenses_list = ExpensesListView.as_view()
 provider_expense_create = ProviderExpenseCreateView.as_view()
 provider_expense_update = ProviderExpenseUpdateView.as_view()
-organizer_refund_create = OrganizerRefundCreateView.as_view()
+provider_expense_switch_state = ProviderExpenseSwitchState.as_view()
 provider_expense_detail = ProviderExpenseDetailView.as_view()
 provider_expense_payment_create = ProviderExpensePaymentCreateView.as_view()
+organizer_refund_create = OrganizerRefundCreateView.as_view()
 organizer_refund_detail = OrganizerRefundDetailView.as_view()
 organizer_refund_payment_create = OrganizerRefundPaymentCreateView.as_view()
