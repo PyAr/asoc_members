@@ -1269,9 +1269,9 @@ class OrganizerRefundSwitchState(PermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         expense = get_object_or_404(Expense, pk=kwargs['pk'])
         if expense.cancelled_date:
-            expense.cancelled_date = None 
+            expense.cancelled_date = None
         else:
-            expense.cancelled_date = timezone.now() 
+            expense.cancelled_date = timezone.now()
         expense.save()
         messages.add_message(
             request,
