@@ -15,8 +15,7 @@ from events.models import (
     ProviderExpense,
     Payment,
     Provider,
-    Expense
-
+    Expense,
 )
 from reversion_compare.admin import CompareVersionAdmin
 
