@@ -84,14 +84,15 @@ class InvoiceAdmin(CompareVersionAdmin):
         'document',
         'invoice_ok',
         'partial_payment',
-        'complete_payment'
+        'complete_payment',
     )
     list_display = (
         'sponsoring',
         'amount',
         'partial_payment',
         'complete_payment',
-        'invoice_ok')
+        'invoice_ok',
+    )
     search_fields = ('sponsoring__sponsor__organization_name', )
     list_filter = ('invoice_ok', 'partial_payment', 'complete_payment')
     list_select_related = (
