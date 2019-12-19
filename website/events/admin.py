@@ -186,7 +186,7 @@ class ExpenseAdmin(CompareVersionAdmin):
         'invoice_type',
         'invoice',
         'invoice_date',
-        'cancelled_date'
+        'cancelled_date',
     )
 
     search_fields = (
