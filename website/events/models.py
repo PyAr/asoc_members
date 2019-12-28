@@ -47,11 +47,11 @@ def validate_cuit(cuit_to_validate):
             return True
     except InvalidChecksum:
         raise ValidationError(
-            _('%(cuit_to_validate)s El CUIT ingresado no es correcto')
+            _('El CUIT ingresado no es correcto')
         )
     else:
         raise ValidationError(
-            _('%(cuit_to_validate)s El CUIT ingresado no es correcto')
+            _('El CUIT ingresado no es correcto')
         )
 
 
