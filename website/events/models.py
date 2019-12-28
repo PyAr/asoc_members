@@ -2,6 +2,7 @@ import os
 import stdnum
 import reversion
 
+from stdnum.exceptions import InvalidChecksum
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
@@ -12,7 +13,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from events.helpers.models import AuditUserTime, SaveReversionMixin, ActiveManager
 from events.constants import (
-    CUIT_REGEX,
     CAN_CLOSE_SPONSORING_CODENAME,
     CAN_SET_APPROVED_INVOICE_CODENAME,
     CAN_SET_COMPLETE_PAYMENT_CODENAME,
@@ -39,6 +39,21 @@ User = get_user_model()
 validation_module = stdnum.get_cc_module('ar', 'cbu')
 
 
+def validate_cuit(cuit_to_validate):
+    try:
+        validator = stdnum.get_cc_module('ar', 'cuit')
+        if validator.validate(cuit_to_validate) and \
+                cuit_to_validate == validator.format(cuit_to_validate)
+        return True
+    except InvalidChecksum:
+        raise ValidationError(
+            _('%(cuit_to_validate)s El CUIT ingresado no es correcto')
+        )
+    else:
+        raise ValidationError(
+            _('%(cuit_to_validate)s El CUIT ingresado no es correcto')
+        )
+
 def lower_non_spaces(text):
     return text.lower().replace(' ', '')
 
@@ -56,7 +71,7 @@ class BankAccountData(SaveReversionMixin, AuditUserTime):
         _('CUIT'),
         max_length=13,
         help_text=_('CUIT del propietario de la cuenta, formato ##-########-#'),
-        validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto.'))]
+        validators=[validate_cuit]
     )
 
     bank_entity = models.CharField(
@@ -325,7 +340,7 @@ class Sponsor(SaveReversionMixin, AuditUserTime):
         _('CUIT'),
         max_length=13,
         help_text=_('CUIT, formato ##-########-#'),
-        validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto.'))],
+        validators=[validate_cuit],
         unique=True
     )
 
@@ -583,7 +598,7 @@ class Provider(SaveReversionMixin, AuditUserTime):
         _('CUIT'),
         max_length=13,
         help_text=_('CUIT del propietario de la cuenta, formato ##-########-#'),
-        validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto.'))],
+        validators=[validate_cuit],
         unique=True
     )
 
