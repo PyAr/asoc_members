@@ -43,8 +43,8 @@ def validate_cuit(cuit_to_validate):
     try:
         validator = stdnum.get_cc_module('ar', 'cuit')
         if validator.validate(cuit_to_validate) and \
-                cuit_to_validate == validator.format(cuit_to_validate)
-        return True
+           cuit_to_validate == validator.format(cuit_to_validate):
+            return True
     except InvalidChecksum:
         raise ValidationError(
             _('%(cuit_to_validate)s El CUIT ingresado no es correcto')
@@ -53,6 +53,7 @@ def validate_cuit(cuit_to_validate):
         raise ValidationError(
             _('%(cuit_to_validate)s El CUIT ingresado no es correcto')
         )
+
 
 def lower_non_spaces(text):
     return text.lower().replace(' ', '')
