@@ -68,6 +68,11 @@ urlpatterns = [
         name='provider_expense_update'
     ),
     path(
+        'eventos/gasto_proveedor/<pk>/switch/',
+        views.provider_expense_switch_state,
+        name='provider_expense_switch_state'
+    ),
+    path(
         'eventos/reintegro/<pk>/',
         views.organizer_refund_detail,
         name='organizer_refund_detail'
