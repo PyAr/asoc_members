@@ -35,7 +35,7 @@ from events.constants import (
     ORGANIZER_MAIL_NOTOFICATION_MESSAGE,
     SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE,
     CANT_CHANGE_PROVIDER_EXPENSE_WITH_PAYMENT,
-    EXPENSE_MODIFIED
+    EXPENSE_MODIFIED,
 )
 from events.forms import (
     BankAccountDataForm,

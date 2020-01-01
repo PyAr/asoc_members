@@ -567,9 +567,7 @@ class Expense(SaveReversionMixin, AuditUserTime):
 
     @property
     def is_cancelled(self):
-        if self.cancelled_date:
-            return self.cancelled_date
-        return False
+        return bool(self.cancelled_date)
 
     class Meta:
         permissions = (
