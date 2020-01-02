@@ -2,10 +2,9 @@ import os
 import stdnum
 import reversion
 
-from stdnum.exceptions import InvalidChecksum
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Sum
 from django.urls import reverse
@@ -37,22 +36,7 @@ from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
 
 User = get_user_model()
 validation_module = stdnum.get_cc_module('ar', 'cbu')
-
-
-def validate_cuit(cuit_to_validate):
-    try:
-        validator = stdnum.get_cc_module('ar', 'cuit')
-        if validator.validate(cuit_to_validate) and \
-           cuit_to_validate == validator.format(cuit_to_validate):
-            return True
-    except InvalidChecksum:
-        raise ValidationError(
-            _('El CUIT ingresado no es correcto')
-        )
-    else:
-        raise ValidationError(
-            _('El CUIT ingresado no es correcto')
-        )
+validator_cuit = stdnum.get_cc_module('ar', 'cuit')
 
 
 def lower_non_spaces(text):
@@ -72,7 +56,7 @@ class BankAccountData(SaveReversionMixin, AuditUserTime):
         _('CUIT'),
         max_length=13,
         help_text=_('CUIT del propietario de la cuenta, formato ##-########-#'),
-        validators=[validate_cuit]
+        validators=[validator_cuit.validate]
     )
 
     bank_entity = models.CharField(
@@ -341,7 +325,7 @@ class Sponsor(SaveReversionMixin, AuditUserTime):
         _('CUIT'),
         max_length=13,
         help_text=_('CUIT, formato ##-########-#'),
-        validators=[validate_cuit],
+        validators=[validator_cuit.validate],
         unique=True
     )
 
@@ -599,7 +583,7 @@ class Provider(SaveReversionMixin, AuditUserTime):
         _('CUIT'),
         max_length=13,
         help_text=_('CUIT del propietario de la cuenta, formato ##-########-#'),
-        validators=[validate_cuit],
+        validators=[validator_cuit.validate],
         unique=True
     )
 
