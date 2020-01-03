@@ -2,6 +2,7 @@ import os
 import stdnum
 import reversion
 
+from stdnum.exceptions import InvalidChecksum
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -36,7 +37,17 @@ from members.models import DEFAULT_MAX_LEN, LONG_MAX_LEN
 
 User = get_user_model()
 validation_module = stdnum.get_cc_module('ar', 'cbu')
-validator_cuit = stdnum.get_cc_module('ar', 'cuit')
+
+
+def validate_cuit(cuit_to_validate):
+    try:
+        validator = stdnum.get_cc_module('ar', 'cuit')
+        if validator.validate(cuit_to_validate):
+            return True
+    except InvalidChecksum:
+        raise ValidationError(
+            _('El CUIT ingresado no es correcto')
+        )
 
 
 def lower_non_spaces(text):
@@ -55,8 +66,8 @@ class BankAccountData(SaveReversionMixin, AuditUserTime):
     document_number = models.CharField(
         _('CUIT'),
         max_length=13,
-        help_text=_('CUIT del propietario de la cuenta, formato ##-########-#'),
-        validators=[validator_cuit.validate]
+        help_text=_('CUIT del propietario de la cuenta.'),
+        validators=[validate_cuit]
     )
 
     bank_entity = models.CharField(
@@ -324,8 +335,8 @@ class Sponsor(SaveReversionMixin, AuditUserTime):
     document_number = models.CharField(
         _('CUIT'),
         max_length=13,
-        help_text=_('CUIT, formato ##-########-#'),
-        validators=[validator_cuit.validate],
+        help_text=_('CUIT'),
+        validators=[validate_cuit],
         unique=True
     )
 
@@ -582,8 +593,8 @@ class Provider(SaveReversionMixin, AuditUserTime):
     document_number = models.CharField(
         _('CUIT'),
         max_length=13,
-        help_text=_('CUIT del propietario de la cuenta, formato ##-########-#'),
-        validators=[validator_cuit.validate],
+        help_text=_('CUIT del propietario de la cuenta.'),
+        validators=[validate_cuit],
         unique=True
     )
 
