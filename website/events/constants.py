@@ -72,6 +72,8 @@ INVOICE_SET_PARTIAL_PAYMENT_MESSAGE = _('Factura marcada como pago parcial ')
 
 SPONSORING_SUCCESSFULLY_CLOSE_MESSAGE = _('Patrocinio cerrado exitosamente')
 
+EXPENSE_MODIFIED = _('Gasto modificado exitosamente')
+
 # Sponsoring/invoice states
 SPONSOR_STATE_UNBILLED = _('no facturado')
 SPONSOR_STATE_INVOICED = _('facturado')
