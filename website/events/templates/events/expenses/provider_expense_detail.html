@@ -105,15 +105,24 @@
             </div>
             {% endif %}
         </div>
+       {% if perms.events.change_providerexpense %}
         <div class="col-md-12 text-right">
-            {% if perms.events.change_providerexpense and not providerexpense.payment %}
-            <a class="btn btn-primary" href="{% url 'provider_expense_update' pk=providerexpense.pk %}">Editar Gasto </a>
+            {% if not providerexpense.payment %}
+                <a class="btn btn-primary" href="{% url 'provider_expense_update' pk=providerexpense.pk %}"><i class="fa fa-edit"> Editar Gasto </i></a>
+            {% endif %}    
+            <form action="{% url 'provider_expense_switch_state' providerexpense.pk %}" method="post" style="display: inline;">
+                {% csrf_token %}
+            {% if providerexpense.is_cancelled %}
+                <button type="submit" class="btn btn-success" onclick="return confirm('Está seguro que desea restaurar el gasto?');"><i class="fa fa-check"> Restaurar Gasto </i></button>
+            {% else %}
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Está seguro que desea cancelar el gasto?');"><i class="fa fa-cross"> Cancelar Gasto </i></button>
             {% endif %}
+            </form>            
         </div>
-    </div>
+        {% endif %}
     
+    </div>
 </div>
-
 
 <div id="popup" class="modal fade" role="dialog">
 </div>
