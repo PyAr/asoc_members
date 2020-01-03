@@ -5,6 +5,7 @@ from django.template.loader import render_to_string
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 from events.constants import (
     CANT_CHANGE_CLOSE_EVENT_MESSAGE,
@@ -61,7 +62,8 @@ from events.models import (
     Sponsor,
     SponsorCategory,
     Sponsoring,
-    ProviderExpense
+    ProviderExpense,
+    validate_cuit
 )
 from io import StringIO
 from unittest.mock import patch
@@ -776,6 +778,18 @@ class SponsoringViewsTest(TestCase, CustomAssertMethods):
         self.assertRedirects(response, redirect_url)
         invoice.sponsoring.refresh_from_db()
         self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_CHECKED)
+
+    def test_validate_cuit(self):
+        cuits_ok = ['20364360607', '20-36436060-7', '55000002126', '55-00000212-6']
+        cuits_nok = ['12345678912', '12-34854949-1', '20_36436060_7',
+                     '55*00000212*6', '2', 'ad-sdqerfsc-w']
+
+        for cuit in cuits_ok:
+            self.assertEqual(validate_cuit(cuit), True)
+
+        with self.assertRaises(ValidationError):
+            for cuit in cuits_nok:
+                validate_cuit(cuit)
 
 
 class PendindTaskTest(TestCase, CustomAssertMethods):
