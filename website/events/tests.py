@@ -779,13 +779,15 @@ class SponsoringViewsTest(TestCase, CustomAssertMethods):
         invoice.sponsoring.refresh_from_db()
         self.assertEqual(invoice.sponsoring.state, SPONSOR_STATE_CHECKED)
 
-    def test_validate_cuit(self):
+    def test_validate_correct_cuits(self):
         cuits_ok = ['20364360607', '20-36436060-7', '55000002126', '55-00000212-6']
-        cuits_nok = ['12345678912', '12-34854949-1', '20_36436060_7',
-                     '55*00000212*6', '2', 'ad-sdqerfsc-w']
 
         for cuit in cuits_ok:
-            self.assertEqual(validate_cuit(cuit), True)
+            self.assertTrue(validate_cuit(cuit))
+
+    def test_validate_incorrect_cuits(self):
+        cuits_nok = ['12345678912', '12-34854949-1', '20_36436060_7',
+                     '55*00000212*6', '2', 'ad-sdqerfsc-w']
 
         with self.assertRaises(ValidationError):
             for cuit in cuits_nok:
