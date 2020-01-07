@@ -1,3 +1,5 @@
+import logging
+import mimetypes
 import os
 import shutil
 
@@ -10,6 +12,11 @@ from django.conf import settings
 SCOPE = 'https://www.googleapis.com/auth/drive'
 APPLICATION_NAME = 'AutoFacturador'
 SETTINGS_FILE = "/tmp/gdrive_settings.json"
+
+# turn off overdetailed debugging
+httplib2.debuglevel = 0
+logger = logging.getLogger()
+logger.setLevel(logging.WARNING)
 
 
 def get_credentials():
@@ -54,11 +61,12 @@ class Explorer:
         resp = self.service.files().create(body=metadata, fields='id').execute()
         return resp['id']
 
-    def upload(self, filepath, folder):
+    def upload(self, filepath, folder, filename=None):
         """Upload a file to a specific folder."""
-        filename = os.path.basename(filepath)
+        if filename is None:
+            filename = os.path.basename(filepath)
 
-        mime_type = 'application/pdf'
+        mime_type, _ = mimetypes.guess_type(filename)
         media = http.MediaFileUpload(filepath, mimetype=mime_type, resumable=True)
         metadata = {
             'name': filename,
