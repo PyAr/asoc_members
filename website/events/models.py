@@ -42,8 +42,7 @@ validation_module = stdnum.get_cc_module('ar', 'cbu')
 def validate_cuit(cuit_to_validate):
     try:
         validator = stdnum.get_cc_module('ar', 'cuit')
-        if validator.validate(cuit_to_validate):
-            return True
+        return validator.validate(cuit_to_validate)
     except (InvalidChecksum, InvalidFormat):
         raise ValidationError(
             _('El CUIT ingresado no es correcto')

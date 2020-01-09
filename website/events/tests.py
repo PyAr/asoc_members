@@ -63,7 +63,7 @@ from events.models import (
     SponsorCategory,
     Sponsoring,
     ProviderExpense,
-    validate_cuit
+    validate_cuit,
 )
 from io import StringIO
 from unittest.mock import patch
