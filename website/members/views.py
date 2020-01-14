@@ -312,7 +312,8 @@ class ReportMissing(OnlyAdminsViewMixin, View):
         return render(request, 'members/mail_sent.html', context)
 
     def get(self, request):
-        not_yet_members = Member.objects.filter(legal_id=None).order_by('created').all()
+        not_yet_members = Member.objects.filter(
+            legal_id=None, shutdown_date=None).order_by('created').all()
 
         incompletes = []
         for member in not_yet_members:
