@@ -1,6 +1,5 @@
 from django.utils.translation import gettext_lazy as _
 
-CUIT_REGEX = r'^(20|23|24|27|30|33|34)-[0-9]{8}-[0-9]$'
 
 # Permissions codenames to create groups, asign, and test.
 CAN_CLOSE_SPONSORING_CODENAME = 'close_sponsoring'
