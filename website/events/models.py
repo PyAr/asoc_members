@@ -2,9 +2,10 @@ import os
 import stdnum
 import reversion
 
+from stdnum.exceptions import InvalidChecksum, InvalidLength, InvalidFormat
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Sum
 from django.urls import reverse
@@ -12,7 +13,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from events.helpers.models import AuditUserTime, SaveReversionMixin, ActiveManager
 from events.constants import (
-    CUIT_REGEX,
     CAN_CLOSE_SPONSORING_CODENAME,
     CAN_SET_APPROVED_INVOICE_CODENAME,
     CAN_SET_COMPLETE_PAYMENT_CODENAME,
@@ -39,6 +39,20 @@ User = get_user_model()
 validation_module = stdnum.get_cc_module('ar', 'cbu')
 
 
+def validate_cuit(cuit_to_validate):
+    try:
+        validator = stdnum.get_cc_module('ar', 'cuit')
+        return validator.validate(cuit_to_validate)
+    except (InvalidChecksum, InvalidFormat):
+        raise ValidationError(
+            _('El CUIT ingresado no es correcto')
+        )
+    except InvalidLength as err:
+        raise ValidationError(
+            _(str(err))
+        )
+
+
 def lower_non_spaces(text):
     return text.lower().replace(' ', '')
 
@@ -55,8 +69,8 @@ class BankAccountData(SaveReversionMixin, AuditUserTime):
     document_number = models.CharField(
         _('CUIT'),
         max_length=13,
-        help_text=_('CUIT del propietario de la cuenta, formato ##-########-#'),
-        validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto.'))]
+        help_text=_('CUIT del propietario de la cuenta.'),
+        validators=[validate_cuit]
     )
 
     bank_entity = models.CharField(
@@ -324,8 +338,8 @@ class Sponsor(SaveReversionMixin, AuditUserTime):
     document_number = models.CharField(
         _('CUIT'),
         max_length=13,
-        help_text=_('CUIT, formato ##-########-#'),
-        validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto.'))],
+        help_text=_('CUIT'),
+        validators=[validate_cuit],
         unique=True
     )
 
@@ -587,8 +601,8 @@ class Provider(SaveReversionMixin, AuditUserTime):
     document_number = models.CharField(
         _('CUIT'),
         max_length=13,
-        help_text=_('CUIT del propietario de la cuenta, formato ##-########-#'),
-        validators=[RegexValidator(CUIT_REGEX, _('El CUIT ingresado no es correcto.'))],
+        help_text=_('CUIT del propietario de la cuenta.'),
+        validators=[validate_cuit],
         unique=True
     )
 
