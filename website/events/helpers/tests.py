@@ -26,7 +26,7 @@ User = get_user_model()
 
 sponsor_data = {
     'organization_name': 'te patrocino',
-    'document_number': '20-26456987-7',
+    'document_number': '20-36436060-7',
     'vat_condition': 'monotributo',
     'contact_info': '',
     'address': ''
@@ -38,7 +38,7 @@ invoice_data = {
 
 provider_data = {
     'organization_name': 'Pablo',
-    'document_number': '20-21321265-7',
+    'document_number': '20364360607',
     'bank_entity': 'Banco Rio',
     'account_type': 'CC',
     'account_number': '4',
