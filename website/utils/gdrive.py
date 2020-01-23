@@ -91,14 +91,15 @@ class Explorer:
         return all_items
 
 
-def upload_invoice(filepath, invoice_date):
+def upload_invoice(filepath, invoice_date, base_folder=None, filename=None):
     """Upload an invoice to the the month folder in Google Drive."""
     explorer = Explorer()
 
     month_folder = invoice_date.strftime('%Y%m')
+    if base_folder is None:
+        base_folder = settings.INVOICES_GDRIVE['folder_id']
 
     # get the id of the month folder (or create it)
-    base_folder = settings.INVOICES_GDRIVE['folder_id']
     for folder in explorer.list_folder(base_folder):
         if month_folder == folder['name']:
             folder_id = folder['id']
@@ -107,4 +108,4 @@ def upload_invoice(filepath, invoice_date):
         folder_id = explorer.create_folder(month_folder, base_folder)
 
     # upload!
-    explorer.upload(filepath, folder_id)
+    explorer.upload(filepath, folder_id, filename)

@@ -9,7 +9,7 @@ from django.db.models import Max
 from members import logic
 from members.models import Quota, Person, Payment, Member, PaymentStrategy
 
-from . import _afip, _gdrive
+from utils import gdrive, afip
 
 INVOICES_FROM = '2018-08-01 00:00+03'
 GMTminus3 = datetime.timezone(datetime.timedelta(hours=-3))
@@ -66,7 +66,7 @@ class Command(BaseCommand):
         records = []
 
         # check AFIP
-        _afip.verify_service()
+        afip.verify_service(settings.AFIP['selling_point'])
 
         # get the greatest invoice number used (once, will keep updated later)
         _max_invoice_number_query = Payment.objects.aggregate(Max('invoice_number'))
@@ -159,10 +159,25 @@ class Command(BaseCommand):
             print("    found {} quota(s) ({} - {})".format(
                 len(quotas), record['service_date_from'], record['service_date_to']))
 
+        # convert the stored records to proper invoices and call AFIP
+        invoices = []
+        for rec in records:
+            invoice = afip.MemberInvoice(
+                document_number=rec['dni'], fullname=rec['fullname'],
+                address=rec['address'], city=rec['city'], zip_code=rec['zip_code'],
+                province=rec['province'], invoice_date=rec['invoice_date'],
+                invoice_number=rec['invoice'],
+                service_date_from=rec['service_date_from'],
+                service_date_to=rec['service_date_to'],
+                selling_point=settings.AFIP['selling_point'])
+            description = "{}\n{}".format(rec['description'], rec['payment_comment'])
+            invoice.add_item(
+                description=description, quantity=rec['quantity'], amount=rec['amount'])
+            invoices.append(invoice)
         try:
-            results = _afip.generate_invoices(records)
+            results = afip.process_invoices(invoices, settings.AFIP['selling_point'])
         except Exception:
-            print("PROBLEMS generating invoices with records", records)
+            print("PROBLEMS processing invoices", invoices)
             raise
 
         # save the results for the generated ok invoices and send the proper mails
@@ -178,7 +193,7 @@ class Command(BaseCommand):
             payment.save()
 
             # upload the invoice to google drive
-            _gdrive.upload_invoice(result['pdf_path'], invoice_date)
+            gdrive.upload_invoice(result['pdf_path'], invoice_date)
             print("    uploaded to gdrive OK")
 
             # send the invoice by mail
