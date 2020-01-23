@@ -14,7 +14,7 @@ BASE_FOLDER = '1Kvfmz1eTNd9y2ZAqosaN3Cn2ydUKjtN_'
 
 
 class Command(BaseCommand):
-    help = "Generate the missing invoices"
+    help = "Upload those invoices type A to gdrive"
 
     def add_arguments(self, parser):
         parser.add_argument('year', type=int)

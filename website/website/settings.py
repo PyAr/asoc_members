@@ -154,9 +154,9 @@ class Base(Configuration):
         'url_wsaa': "https://wsaahomo.afip.gov.ar/ws/services/LoginCms?wsdl",
         'url_wsfev1': "https://wswhomo.afip.gov.ar/wsfev1/service.asmx?WSDL",
         'selling_point': 4000,
-        'cuit': 20267565393,
-        'auth_cert_path': '/tmp/reingart.crt',
-        'auth_key_path': '/tmp/reingart.key',
+        'cuit': 20243794049,
+        'auth_cert_path': '/tmp/testing.crt',
+        'auth_key_path': '/tmp/testing.key',
     }
 
     INVOICES_GDRIVE = {
