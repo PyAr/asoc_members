@@ -81,5 +81,4 @@ class Command(BaseCommand):
             print("    uploaded to gdrive OK")
 
             # invoice uploaded to gdrive and sent ok, don't need it here anymore
-            #FIXME
-            # os.remove(result['pdf_path'])
+            os.remove(result['pdf_path'])
