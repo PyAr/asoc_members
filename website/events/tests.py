@@ -50,7 +50,9 @@ from events.helpers.tests import (
     create_sponsors_set,
     create_sponsoring_set,
     create_sponsoring_invoice,
-    create_provider
+    create_provider,
+    create_provider_expense,
+    create_organizer_refund,
 )
 
 from events.middleware import set_current_user
@@ -63,6 +65,7 @@ from events.models import (
     SponsorCategory,
     Sponsoring,
     ProviderExpense,
+    OrganizerRefund,
     validate_cuit,
 )
 from io import StringIO
@@ -993,3 +996,80 @@ class ProviderExpenseViewsTest(TestCase, CustomAssertMethods):
         # And redirect to login.
         redirect_to_login_url = reverse('login') + '?next=' + url
         self.assertEqual(response.url, redirect_to_login_url)
+
+
+class ProviderExpenseSwitchStateTest(TestCase, CustomAssertMethods):
+
+    def setUp(self):
+        create_organizer_set(auto_create_user_set=True)
+        user = User.objects.first()
+        create_event_set(user)
+        associate_events_organizers()
+        create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        create_provider()
+        create_provider_expense()
+
+    def test_provider_expense_switch_state(self):
+        expense = ProviderExpense.objects.first()
+        url = reverse(
+            'provider_expense_switch_state',
+            kwargs={'pk': expense.pk}
+        )
+        perm = Permission.objects.get(
+            content_type__app_label='events',
+            codename='change_providerexpense')
+
+        user = User.objects.get(username='organizer01')
+        user.user_permissions.add(perm)
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url)
+
+        # View redirect.
+        self.assertEqual(response.status_code, 302)
+
+        # Switch to cancelled
+        expense.refresh_from_db()
+        self.assertEqual(expense.is_cancelled, True)
+
+        # Switch back to not cancelled
+        response = self.client.post(url)
+        expense.refresh_from_db()
+        self.assertEqual(expense.is_cancelled, False)
+
+
+class OrganizerRefundSwitchStateTest(TestCase, CustomAssertMethods):
+    def setUp(self):
+        create_organizer_set(auto_create_user_set=True)
+        user = User.objects.first()
+        create_event_set(user)
+        associate_events_organizers()
+        create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        create_provider()
+        create_organizer_refund()
+
+    def test_organizer_refund_switch_state(self):
+        refund = OrganizerRefund.objects.first()
+        url = reverse(
+            'organizer_refund_switch_state',
+            kwargs={'pk': refund.pk}
+        )
+        perm = Permission.objects.get(
+            content_type__app_label='events',
+            codename='change_organizerrefund')
+
+        user = User.objects.get(username='organizer01')
+        user.user_permissions.add(perm)
+        self.client.login(username='organizer01', password='organizer01')
+        response = self.client.post(url)
+
+        # View redirect.
+        self.assertEqual(response.status_code, 302)
+
+        # Switch to cancelled
+        refund.refresh_from_db()
+        self.assertEqual(refund.is_cancelled, True)
+
+        # Switch back to not cancelled
+        response = self.client.post(url)
+        refund.refresh_from_db()
+        self.assertEqual(refund.is_cancelled, False)

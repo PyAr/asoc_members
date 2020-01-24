@@ -87,7 +87,11 @@ urlpatterns = [
         views.organizer_refund_payment_create,
         name='organizer_refund_payment_create'
     ),
-
+    path(
+        'organizadores/<pk>/reintegros/switch/',
+        views.organizer_refund_switch_state,
+        name='organizer_refund_switch_state'
+    ),
     # Invoice actions urls.
     path(
         'eventos/factura/<pk>/aprobar/',

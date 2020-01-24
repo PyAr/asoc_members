@@ -106,9 +106,22 @@
             </div>
             {% endif %}
         </div>
+
+       {% if perms.events.change_organizerrefund %}
+        <div class="col-md-12 text-right">
+            <form action="{% url 'organizer_refund_switch_state' organizerrefund.pk %}" method="post" style="display: inline;">
+                {% csrf_token %}
+            {% if organizerrefund.is_cancelled %}
+                <button type="submit" class="btn btn-success" onclick="return confirm('Está seguro que desea restaurar el gasto?');"><i class="fa fa-check"> Restaurar Gasto </i></button>
+            {% else %}
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Está seguro que desea cancelar el gasto?');"><i class="fa fa-cross"> Cancelar Gasto </i></button>
+            {% endif %}
+            </form>            
+        </div>
+        {% endif %}
+
     </div>
 </div>
-
 
 <div id="popup" class="modal fade" role="dialog">
 </div>

@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.core.files import File
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from events.helpers.permissions import (
     associate_users_permissions,
@@ -17,7 +18,9 @@ from events.models import (
     Sponsor,
     SponsorCategory,
     Sponsoring,
-    Provider
+    Provider,
+    OrganizerRefund,
+    ProviderExpense,
 )
 from unittest import TestCase, mock
 
@@ -257,6 +260,44 @@ def create_invoice_affect_set(invoice, total_amount=False):
 def get_response_wsgi_messages(response):
     storage = get_messages(response.wsgi_request)
     return [message.message for message in storage]
+
+
+def create_provider_expense():
+    """Create provider expense to test.
+
+    Precondition:
+        create_sponsoring_invoice()
+        create_event_set()
+        create_provider()
+    """
+    ProviderExpense.objects.create(
+        provider=Provider.objects.first(),
+        amount='1200',
+        invoice_type='A',
+        invoice_date=timezone.now(),
+        description='test',
+        event=Event.objects.first(),
+        cancelled_date=None,
+    )
+
+
+def create_organizer_refund():
+    """Create organizer refund to test.
+
+    Precondition:
+        create_sponsoring_invoice()
+        create_event_set()
+        create_organizer()
+    """
+    OrganizerRefund.objects.create(
+        organizer=Organizer.objects.first(),
+        amount='1200',
+        invoice_type='A',
+        invoice_date=timezone.now(),
+        description='test',
+        event=Event.objects.first(),
+        cancelled_date=None,
+    )
 
 
 class CustomAssertMethods(TestCase):
