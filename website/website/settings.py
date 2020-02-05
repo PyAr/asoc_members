@@ -211,6 +211,8 @@ class Staging(Base):
     """Staging configuration."""
     DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
     STATICFILES_STORAGE = "storages.backends.azure_storage.AzureStorage"
+    DEBUG = False
+    TEMPLATE_DEBUG = False
 
 
 class Prod(Base):
