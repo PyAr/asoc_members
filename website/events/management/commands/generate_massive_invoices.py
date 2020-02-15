@@ -52,26 +52,26 @@ class Command(BaseCommand):
             }
             records.append(record)
 
-        # convert the stored records to proper invoices and call AFIP
-        invoices = []
+        # convert the records to proper invoices, call AFIP, and upload
+        # PDF, all sequentially for better fail support
         for rec in records:
+            invoice_number = rec['invoice_number']
+            print("Processing invoice {}".format(invoice_number))
+
             invoice = afip.MassiveProductSellingInvoice(
                 selling_point=SELLING_POINT,
                 invoice_number=rec['invoice_number'],
                 invoice_date=invoice_date)
             invoice.add_item(
                 description=rec['description'], quantity=rec['quantity'], amount=rec['amount'])
-            invoices.append(invoice)
-        try:
-            results = afip.process_invoices(invoices, SELLING_POINT)
-        except Exception:
-            print("PROBLEMS processing invoices", invoices)
-            raise
 
-        # save the results for the generated ok invoices and send the proper mails
-        for invoice_number, result in sorted(results.items()):
-            print("Post-processing invoice {} at {}".format(
-                invoice_number, result.get('pdf_path')))
+            try:
+                results = afip.process_invoices([invoice], SELLING_POINT)
+            except Exception:
+                print("PROBLEMS processing invoice", invoice)
+                raise
+
+            (result,) = results.values()  # only one invoice processed!
             if not result['invoice_ok']:
                 print("    WARNING: invoice NOT authorized ok")
                 continue
@@ -82,3 +82,5 @@ class Command(BaseCommand):
 
             # invoice uploaded to gdrive and sent ok, don't need it here anymore
             os.remove(result['pdf_path'])
+
+        print("Done")
