@@ -7,6 +7,5 @@ services:
 before_install:
   - pip install -U docker-compose 
 script: 
-  - make up-dev
-  - make install-dev
+  - make bootstrap
   - make test
