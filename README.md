@@ -1,12 +1,19 @@
 # Aplicación web para la gestión de membresías de la Asociación Civil [![Build Status](https://travis-ci.org/PyAr/asoc_members.svg?branch=master)](https://travis-ci.org/PyAr/asoc_members)
 
-## Desarrollo (con Docker)
+## Development
 
-```bash
-make build-dev
-make start-dev
-make install-dev
-```
+These are the normal commands used for development:
+
+- `make bootstrap`: only needed the first time the project is setup or after service dependencies/infrastructure changed (note that in this case a proper `clean` should be issued first).
+
+- `make test`: run all the tests
+
+- `make run`: start all services locally, leave everything ready to play locally
+
+- `make stop`: turn down everything (not removing all stuff, just off)
+
+- `make clean`: stop and remove everything, no dirt left around
+
 
 If you need to create a Django's superuser:
 
