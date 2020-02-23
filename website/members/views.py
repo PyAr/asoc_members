@@ -396,8 +396,13 @@ class ReportComplete(View):
         return render(request, 'members/mail_sent.html', context)
 
     def _analyze_member(self, member):
-        """Analyze and indicate in which categories the member is missing somethhing."""
+        """Analyze and indicate in which categories the member is missing something."""
         missing_info = get_member_missing_info(member)
+
+        # picture and nickname are not really needed to flag members as "ready to be approved"
+        missing_info.pop('missing_nickname', None)
+        missing_info.pop('missing_picture', None)
+
         anything_missing = any(missing_info.values())
         return anything_missing
 

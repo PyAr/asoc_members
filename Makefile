@@ -17,7 +17,8 @@ bootstrap:
 	docker-compose up -d
 	${RUN} pip install -r /code/config/requirements-dev.txt
 
-# run all the tests; do FIXME for run only some of them
+# run all the tests; to avoid migrations everytime and run only some of them, do for example:
+# 	make test ARGS="-k members.tests.ReportCompleteTests"
 test:
 	docker-compose start
 	${MANAGE} test -v2 --noinput $(ARGS)
