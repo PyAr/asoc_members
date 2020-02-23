@@ -652,3 +652,93 @@ class MembersReportTests(TestCase):
 
     def tearDown(self):
         self.client.logout()
+
+
+class ReportCompleteTests(TestCase):
+
+    def _create_member(self, **kwargs):
+        """Create a not-yet-member with good defaults, accepting changes."""
+        category_name = kwargs.pop('category_name', Category.ACTIVE)
+        params = {
+            'category': Category.objects.get(name=category_name),
+            'first_payment_month': 8,
+            'first_payment_year': 2015,
+            'has_student_certificate': False,
+            'has_subscription_letter': True,
+            'has_collaborator_acceptance': False,
+        }
+        params = {k: kwargs.pop(k, v) for k, v in params.items()}
+        member = Member.objects.create(**params)
+
+        # create the related person
+        params = {
+            'membership': member,
+            'nickname': 'test-nick',
+            'picture': 'fake-pic',
+        }
+        params = {k: kwargs.pop(k, v) for k, v in params.items()}
+        Person.objects.create(**params)
+
+        assert not kwargs, kwargs  # would indicate a misuse of the parameters
+        return member
+
+    def test_analyze_member_all_perfect(self):
+        member = self._create_member()
+        anything_missing = views.ReportComplete()._analyze_member(member)
+        self.assertFalse(anything_missing)
+
+    def test_analyze_member_student_without_certificate(self):
+        member = self._create_member(category_name=Category.STUDENT, has_student_certificate=False)
+        anything_missing = views.ReportComplete()._analyze_member(member)
+        self.assertTrue(anything_missing)
+
+    def test_analyze_member_student_with_certificate(self):
+        member = self._create_member(category_name=Category.STUDENT, has_student_certificate=True)
+        anything_missing = views.ReportComplete()._analyze_member(member)
+        self.assertFalse(anything_missing)
+
+    def test_analyze_member_collaborator_not_accepted(self):
+        member = self._create_member(
+            category_name=Category.COLLABORATOR, has_collaborator_acceptance=False)
+        anything_missing = views.ReportComplete()._analyze_member(member)
+        self.assertTrue(anything_missing)
+
+    def test_analyze_member_collaborator_accepted(self):
+        member = self._create_member(
+            category_name=Category.COLLABORATOR, has_collaborator_acceptance=True)
+        anything_missing = views.ReportComplete()._analyze_member(member)
+        self.assertFalse(anything_missing)
+
+    def test_analyze_member_missing_picture(self):
+        # picture is not needed to consider the member as "complete"
+        member = self._create_member(picture='')
+        anything_missing = views.ReportComplete()._analyze_member(member)
+        self.assertFalse(anything_missing)
+
+    def test_analyze_member_denied_picture(self):
+        # picture is not needed to consider the member as "complete"
+        member = self._create_member(picture=False)
+        anything_missing = views.ReportComplete()._analyze_member(member)
+        self.assertFalse(anything_missing)
+
+    def test_analyze_member_missing_nickname(self):
+        # nickname is not needed to consider the member as "complete"
+        member = self._create_member(nickname='')
+        anything_missing = views.ReportComplete()._analyze_member(member)
+        self.assertFalse(anything_missing)
+
+    def test_analyze_member_missing_signed_letter(self):
+        member = self._create_member(has_subscription_letter=False)
+        anything_missing = views.ReportComplete()._analyze_member(member)
+        self.assertTrue(anything_missing)
+
+    def test_analyze_member_missing_payment_payingtype(self):
+        member = self._create_member(first_payment_year=None, first_payment_month=None)
+        anything_missing = views.ReportComplete()._analyze_member(member)
+        self.assertTrue(anything_missing)
+
+    def test_analyze_member_missing_payment_notpayingtype(self):
+        member = self._create_member(
+            category_name=Category.TEENAGER, first_payment_year=None, first_payment_month=None)
+        anything_missing = views.ReportComplete()._analyze_member(member)
+        self.assertFalse(anything_missing)
