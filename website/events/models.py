@@ -285,7 +285,7 @@ class Sponsoring(SaveReversionMixin, AuditUserTime):
             f"- {self.sponsorcategory.name} "
             f"({self.state})"
         )
-        
+
     def get_absolute_url(self):
         return reverse('sponsoring_detail', args=[str(self.pk)])
 

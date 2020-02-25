@@ -94,7 +94,7 @@ def events_home(request):
     return render(request, 'events_home.html', {
         'tasks': tasks,
         'sponsoring_pending': sponsoring_pending,
-        })
+    })
 
 
 @permission_required('events.add_organizer')

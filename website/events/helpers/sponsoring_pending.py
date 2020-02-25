@@ -6,11 +6,9 @@ This module is to help on construct the list of pending sponsoring.
     Superuser Tasks:
         * calculate_all_sponsoring_pending
 """
-from django.db.models import Count, Max, Sum
 from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
 from events.constants import SPONSOR_STATE_CHECKED, SPONSOR_STATE_PARTIALLY_PAID
-from events.models import Event, Organizer, Sponsoring
+from events.models import Organizer, Sponsoring
 
 
 class PendingSponsoring:
@@ -22,6 +20,7 @@ class PendingSponsoring:
         self.description = description
         self.amount = amount
         self.url = url
+
 
 def pending_sponsoring(sponsoring):
     description = sponsoring.get_sponsoring_description
@@ -40,7 +39,8 @@ def calculate_all_sponsoring_pending():
     pending = []
 
     for sponsoring in Sponsoring.objects.all():
-        if sponsoring.state == SPONSOR_STATE_PARTIALLY_PAID or sponsoring.state == SPONSOR_STATE_CHECKED:
+        if sponsoring.state == SPONSOR_STATE_PARTIALLY_PAID or \
+           sponsoring.state == SPONSOR_STATE_CHECKED:
             pending.append(pending_sponsoring(sponsoring))
     pending.sort(key=lambda x: x.amount, reverse=True)
     return pending
@@ -58,8 +58,9 @@ def calculate_sponsoring_pending_by_organizer(organizer_user):
     pending = []
     organizer = Organizer.objects.get(user=organizer_user)
     for sponsoring in Sponsoring.objects.filter(
-        sponsorcategory__event__in=organizer.get_associate_events()):
-        if sponsoring.state == SPONSOR_STATE_PARTIALLY_PAID or sponsoring.state == SPONSOR_STATE_CHECKED:
+            sponsorcategory__event__in=organizer.get_associate_events()):
+        if sponsoring.state == SPONSOR_STATE_PARTIALLY_PAID or \
+           sponsoring.state == SPONSOR_STATE_CHECKED:
             pending.append(pending_sponsoring(sponsoring))
     pending.sort(key=lambda x: x.amount, reverse=True)
-    return pending        
+    return pending
