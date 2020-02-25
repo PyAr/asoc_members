@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from django.core.files.storage import default_storage
 
 from events.models import Expense
-from website.utils import gdrive
+from utils import gdrive
 
 # https://drive.google.com/drive/u/0/folders/1Kvfmz1eTNd9y2ZAqosaN3Cn2ydUKjtN_
 BASE_FOLDER = '1Kvfmz1eTNd9y2ZAqosaN3Cn2ydUKjtN_'
