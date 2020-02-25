@@ -38,6 +38,10 @@ from events.helpers.task import (
     calculate_super_user_task,
     Task
 )
+from events.helpers.sponsoring_pending import (
+    calculate_all_sponsoring_pending,
+    calculate_sponsoring_pending_by_organizer,
+)
 from events.helpers.tests import (
     associate_events_organizers,
     CustomAssertMethods,
@@ -1073,3 +1077,29 @@ class OrganizerRefundSwitchStateTest(TestCase, CustomAssertMethods):
         response = self.client.post(url)
         refund.refresh_from_db()
         self.assertEqual(refund.is_cancelled, False)
+
+
+class PendindSponsoringTest(TestCase, CustomAssertMethods):
+
+    def setUp(self):
+        create_organizer_set(auto_create_user_set=True)
+        self.user = User.objects.first()
+        create_event_set(self.user)
+        associate_events_organizers()
+        self.invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
+        create_invoice_affect_set(self.invoice, total_amount=False)
+        self.invoice.invoice_ok = True
+        self.invoice.partial_payment = True
+        self.invoice.save()
+
+    def test_calculate_all_sponsoring_pending(self):
+        pending_sponsoring = calculate_all_sponsoring_pending()
+        self.assertEqual(len(pending_sponsoring), 1)
+
+    def test_sponsoring_pending_by_organizer(self):
+        user = User.objects.get(username="organizer01")
+        pending_sponsoring = calculate_sponsoring_pending_by_organizer(user)
+        self.assertEqual(len(pending_sponsoring), 1)
+        user = User.objects.get(username="organizer03")
+        pending_sponsoring = calculate_sponsoring_pending_by_organizer(user)
+        self.assertEqual(len(pending_sponsoring), 0)
