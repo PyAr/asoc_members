@@ -39,8 +39,9 @@ from events.helpers.task import (
     Task
 )
 from events.helpers.sponsoring_pending import (
-    calculate_all_sponsoring_pending,
-    calculate_sponsoring_pending_by_organizer,
+    PendingSponsoring,
+    pending_sponsoring,
+    calculate_sponsoring_pending,
 )
 from events.helpers.tests import (
     associate_events_organizers,
@@ -1092,14 +1093,19 @@ class PendindSponsoringTest(TestCase, CustomAssertMethods):
         self.invoice.partial_payment = True
         self.invoice.save()
 
-    def test_calculate_all_sponsoring_pending(self):
-        pending_sponsoring = calculate_all_sponsoring_pending()
-        self.assertEqual(len(pending_sponsoring), 1)
+    def test_pending_sponsoring_method(self):
+        sponsoring = Sponsoring.objects.first()
+        sponsoring_namedtuple = pending_sponsoring(sponsoring)
+        self.assertIsInstance(sponsoring_namedtuple, PendingSponsoring)
 
-    def test_sponsoring_pending_by_organizer(self):
+    def test_calculate_all_sponsoring_pending(self):
+        sponsoring = calculate_sponsoring_pending()
+        self.assertEqual(len(sponsoring), 1)
+
+    def test_calculate_all_sponsoring_pending_by_organizer(self):
         user = User.objects.get(username="organizer01")
-        pending_sponsoring = calculate_sponsoring_pending_by_organizer(user)
-        self.assertEqual(len(pending_sponsoring), 1)
+        sponsoring = calculate_sponsoring_pending(user)
+        self.assertEqual(len(sponsoring), 1)
         user = User.objects.get(username="organizer03")
-        pending_sponsoring = calculate_sponsoring_pending_by_organizer(user)
-        self.assertEqual(len(pending_sponsoring), 0)
+        sponsoring = calculate_sponsoring_pending(user)
+        self.assertEqual(len(sponsoring), 0)

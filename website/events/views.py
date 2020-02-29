@@ -72,8 +72,7 @@ from events.models import (
     Sponsoring
 )
 from events.helpers.sponsoring_pending import (
-    calculate_all_sponsoring_pending,
-    calculate_sponsoring_pending_by_organizer
+    calculate_sponsoring_pending,
 )
 from pyar_auth.forms import PasswordResetForm
 
@@ -85,11 +84,11 @@ def events_home(request):
     sponsoring_pending = []
     if Organizer.objects.filter(user=user).exists():
         tasks = calculate_organizer_task(user)
-        sponsoring_pending = calculate_sponsoring_pending_by_organizer(user)
+        sponsoring_pending = calculate_sponsoring_pending(user)
     else:
         if user.is_superuser:
             tasks = calculate_super_user_task()
-            sponsoring_pending = calculate_all_sponsoring_pending()
+            sponsoring_pending = calculate_sponsoring_pending()
 
     return render(request, 'events_home.html', {
         'tasks': tasks,
