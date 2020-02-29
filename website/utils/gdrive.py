@@ -13,6 +13,8 @@ SCOPE = 'https://www.googleapis.com/auth/drive'
 APPLICATION_NAME = 'AutoFacturador'
 SETTINGS_FILE = "/tmp/gdrive_settings.json"
 
+DEFAULT_MIMETYPE = 'application/octet-stream'
+
 # turn off overdetailed debugging
 httplib2.debuglevel = 0
 logger = logging.getLogger()
@@ -67,6 +69,8 @@ class Explorer:
             filename = os.path.basename(filepath)
 
         mime_type, _ = mimetypes.guess_type(filename)
+        if mime_type is None:
+            mime_type = DEFAULT_MIMETYPE
         media = http.MediaFileUpload(filepath, mimetype=mime_type, resumable=True)
         metadata = {
             'name': filename,
