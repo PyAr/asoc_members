@@ -17,7 +17,7 @@ services:
   web:
     build: .
     ports:
-      - "8000:8000"
+      - "8127:8127"
     volumes:
       - .:/code
     command: "tail -f /dev/null"
