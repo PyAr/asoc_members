@@ -1,5 +1,19 @@
 # Aplicación web para la gestión de membresías de la Asociación Civil [![Build Status](https://travis-ci.org/PyAr/asoc_members.svg?branch=master)](https://travis-ci.org/PyAr/asoc_members)
 
+## System dependencies to manage/use the project
+
+You will need Docker in your system, here are [proper instructions to install it](https://docs.docker.com/get-docker/)
+
+After that, you just need:
+
+- Python 3
+- Docker compose
+
+Example to install in Debian/Ubuntu:
+
+    sudo apt install python3 docker docker-compose
+
+
 ## Development
 
 These are the normal commands used for development:
