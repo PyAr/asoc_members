@@ -519,8 +519,7 @@ class SponsorViewsTest(TestCase, CustomAssertMethods):
         url = reverse('sponsor_set_enabled', kwargs={'pk': sponsor.pk})
         self.client.login(username='organizer01', password='organizer01')
         response = self.client.post(url)
-        redirect_to_login_url = reverse('login') + '?next=' + url
-        self.assertRedirects(response, redirect_to_login_url)
+        self.assertForbidden(response)
 
     def test_can_set_sponsors_enabled_with_perms(self):
         sponsor = Sponsor.objects.create(**sponsor_data)
@@ -641,8 +640,7 @@ class SponsoringViewsTest(TestCase, CustomAssertMethods):
         url = reverse('sponsoring_set_close', kwargs={'pk': sponsoring.pk})
         self.client.login(username='organizer01', password='organizer01')
         response = self.client.post(url)
-        redirect_to_login_url = reverse('login') + '?next=' + url
-        self.assertRedirects(response, redirect_to_login_url)
+        self.assertForbidden(response)
 
     def test_super_organizer_can_close_sponsoring(self):
         # Test 'close' state from 'unbilled'.
@@ -666,8 +664,7 @@ class SponsoringViewsTest(TestCase, CustomAssertMethods):
         url = reverse('invoice_set_complete_payment', kwargs={'pk': invoice.pk})
         self.client.login(username='organizer01', password='organizer01')
         response = self.client.post(url)
-        redirect_to_login_url = reverse('login') + '?next=' + url
-        self.assertRedirects(response, redirect_to_login_url)
+        self.assertForbidden(response)
 
     def test_super_organizer_can_set_complete_payment(self):
         invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
@@ -690,8 +687,7 @@ class SponsoringViewsTest(TestCase, CustomAssertMethods):
         url = reverse('invoice_set_partial_payment', kwargs={'pk': invoice.pk})
         self.client.login(username='organizer01', password='organizer01')
         response = self.client.post(url)
-        redirect_to_login_url = reverse('login') + '?next=' + url
-        self.assertRedirects(response, redirect_to_login_url)
+        self.assertForbidden(response)
 
     def test_super_organizer_can_set_partial_payment(self):
         invoice = create_sponsoring_invoice(auto_create_sponsoring_and_sponsor=True)
@@ -729,8 +725,7 @@ class SponsoringViewsTest(TestCase, CustomAssertMethods):
             'document': StringIO('test'),
         }
         response = self.client.post(url, data)
-        redirect_to_login_url = reverse('login') + '?next=' + url
-        self.assertRedirects(response, redirect_to_login_url)
+        self.assertForbidden(response)
 
     @patch('django.core.files.storage.FileSystemStorage.save')
     def test_super_user_can_add_invoice(self, mock_save):
@@ -912,7 +907,7 @@ class ProviderViewsTest(TestCase, CustomAssertMethods):
         self.assertEqual(Provider.objects.all().count(), providers_count + 1)
         self.assertEqual(response.status_code, 302)
 
-    def test_create_provider_redirects_without_perms(self):
+    def test_create_provider_forbidden_without_perms(self):
         url = reverse('provider_create')
         perm = Permission.objects.get(
             content_type__app_label='events',
@@ -921,13 +916,7 @@ class ProviderViewsTest(TestCase, CustomAssertMethods):
         user.user_permissions.remove(perm)
         self.client.login(username='organizer01', password='organizer01')
         response = self.client.post(url, data=provider_data)
-
-        # View redirect.
-        self.assertEqual(response.status_code, 302)
-
-        # And redirect to login.
-        redirect_to_login_url = reverse('login') + '?next=' + reverse('provider_create')
-        self.assertEqual(response.url, redirect_to_login_url)
+        self.assertForbidden(response)
 
 
 class ProviderExpenseViewsTest(TestCase, CustomAssertMethods):
@@ -968,7 +957,7 @@ class ProviderExpenseViewsTest(TestCase, CustomAssertMethods):
         self.assertEqual(ProviderExpense.objects.all().count(), provider_expense_count + 1)
         self.assertEqual(response.status_code, 302)
 
-    def test_create_provider_expense_redirects_without_perms(self):
+    def test_create_provider_expense_forbidden_without_perms(self):
         url = reverse(
             'provider_expense_create',
             kwargs={'event_pk': Event.objects.filter(name='MyTest01').first().pk}
@@ -989,13 +978,7 @@ class ProviderExpenseViewsTest(TestCase, CustomAssertMethods):
         user.user_permissions.remove(perm)
         self.client.login(username='organizer01', password='organizer01')
         response = self.client.post(url, data=provider_expense_data)
-
-        # View redirect.
-        self.assertEqual(response.status_code, 302)
-
-        # And redirect to login.
-        redirect_to_login_url = reverse('login') + '?next=' + url
-        self.assertEqual(response.url, redirect_to_login_url)
+        self.assertForbidden(response)
 
 
 class ProviderExpenseSwitchStateTest(TestCase, CustomAssertMethods):
