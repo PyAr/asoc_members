@@ -2,7 +2,7 @@ import os
 import stdnum
 import reversion
 
-from stdnum.exceptions import InvalidChecksum, InvalidLength, InvalidFormat
+from stdnum.exceptions import InvalidChecksum, InvalidLength, InvalidFormat, InvalidComponent
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -43,7 +43,7 @@ def validate_cuit(cuit_to_validate):
     try:
         validator = stdnum.get_cc_module('ar', 'cuit')
         return validator.validate(cuit_to_validate)
-    except (InvalidChecksum, InvalidFormat):
+    except (InvalidChecksum, InvalidFormat, InvalidComponent):
         raise ValidationError(
             _('El CUIT ingresado no es correcto')
         )

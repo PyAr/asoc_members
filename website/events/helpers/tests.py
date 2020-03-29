@@ -307,3 +307,6 @@ class CustomAssertMethods(TestCase):
         compare_messages = ((message == message_text) for message in messages)
         self.assertTrue(any(compare_messages),
                         _(f"Mensaje: '{message_text}' no encontrado en la lista de mensajes."))
+
+    def assertForbidden(self, response):
+        self.assertEqual(response.status_code, 403)
