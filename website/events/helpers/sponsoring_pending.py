@@ -7,6 +7,7 @@ This module is to help on construct the list of pending sponsoring.
         * calculate_all_sponsoring_pending
 """
 from collections import namedtuple
+from operator import attrgetter
 
 from django.urls import reverse
 from events.constants import SPONSOR_STATE_CHECKED, SPONSOR_STATE_PARTIALLY_PAID
@@ -37,9 +38,12 @@ def calculate_sponsoring_pending(organizer_user=False):
     else:
         sponsorings = Sponsoring.objects.all()
 
+    open_sponsorings = (
+        SPONSOR_STATE_PARTIALLY_PAID,
+        SPONSOR_STATE_CHECKED,
+    )
+
     for sponsoring in sponsorings:
-        if sponsoring.state == SPONSOR_STATE_PARTIALLY_PAID or \
-           sponsoring.state == SPONSOR_STATE_CHECKED:
+        if sponsoring.state in open_sponsorings:
             pending.append(pending_sponsoring(sponsoring))
-        pending.sort(key=lambda x: x.amount, reverse=True)
-    return pending
+    return sorted(pending, key=attrgetter('amount'), reverse=True)
