@@ -133,22 +133,32 @@ def create_recurring_payments(recurring_records):
 def get_debt_state(member, limit_year, limit_month):
     """Return if the member is in debt, and the missing quotas.
 
-    The quotas verified are from first payment up to the given year/month limit (including).
+    If the member has a first payment, the quotas verified are from that first payment up
+    to the given year/month limit (including).
+
+    If the member never paid, the registration date is used, and that month is also included.
     """
+    if member.first_payment_year is None:
+        # never paid! using registration date to start with
+        yearmonths_paid = set()
+        year_to_check = member.registration_date.year
+        month_to_check = member.registration_date.month
+    else:
+        # build a set for the year/month of paid quotas
+        quotas = Quota.objects.filter(member=member).all()
+        yearmonths_paid = {(q.year, q.month) for q in quotas}
+
+        year_to_check = member.first_payment_year
+        month_to_check = member.first_payment_month
+
     # verify the limit is after member started paying
-    if member.first_payment_year == limit_year:
-        if member.first_payment_month > limit_month:
+    if year_to_check == limit_year:
+        if month_to_check > limit_month:
             return []
-    elif member.first_payment_year > limit_year:
+    elif year_to_check > limit_year:
         return []
 
-    # build a set for the year/month of paid quotas
-    quotas = Quota.objects.filter(member=member).all()
-    yearmonths_paid = {(q.year, q.month) for q in quotas}
-
     # build a set of all the year/month the member should have paid up to (including) the limit
-    year_to_check = member.first_payment_year
-    month_to_check = member.first_payment_month
     should_have_paid = set()
     while True:
         should_have_paid.add((year_to_check, month_to_check))
