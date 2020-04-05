@@ -12,8 +12,15 @@ from django.db.models.fields.files import ImageFieldFile
 
 from members import logic, views
 from members.models import (
-    Member, Patron, Category, PaymentStrategy, Quota, Person,
-    Organization, Payment)
+    Category,
+    Member,
+    Organization,
+    Patron,
+    Payment,
+    PaymentStrategy,
+    Person,
+    Quota,
+)
 from .factories import (
     PatronFactory,
     QuotaFactory,
@@ -34,14 +41,15 @@ def create_category():
     return category
 
 
-def create_member(first_payment_year=None, first_payment_month=None, patron=None):
+def create_member(
+        first_payment_year=None, first_payment_month=None, patron=None, registration_date=None):
     """Create a testing Member."""
-    first_payment_year = first_payment_year or 2017
-    first_payment_month = first_payment_month or 5
+    first_payment_year = first_payment_year
+    first_payment_month = first_payment_month
     category = create_category()
     return Member.objects.create(
         first_payment_year=first_payment_year, first_payment_month=first_payment_month,
-        category=category, patron=patron)
+        category=category, patron=patron, registration_date=registration_date)
 
 
 def create_patron(email=None):
@@ -215,7 +223,7 @@ class CreatePaymentTestCase(TestCase):
 
     def test_first_payment(self):
         # needed objects
-        member = create_member()
+        member = create_member(first_payment_year=2017, first_payment_month=5)
         ps = create_payment_strategy()
 
         # create the payment
@@ -295,7 +303,7 @@ class CreatePaymentTestCase(TestCase):
 
     def test_not_exact_amount_small(self):
         # needed objects
-        member = create_member()
+        member = create_member(first_payment_year=2017, first_payment_month=5)
         ps = create_payment_strategy()
 
         # create the payment
@@ -346,7 +354,7 @@ class CreateRecurringPaymentTestCase(TestCase):
         # needed objects
         payer_id = 'test@example.com'
         ps = create_payment_strategy(platform=PaymentStrategy.MERCADO_PAGO, payer_id=payer_id)
-        member = create_member(patron=ps.patron)
+        member = create_member(patron=ps.patron, first_payment_year=2017, first_payment_month=5)
 
         # create the payment
         tstamp = make_aware(datetime.datetime(year=2017, month=2, day=5))
@@ -366,7 +374,7 @@ class CreateRecurringPaymentTestCase(TestCase):
         # needed objects
         payer_id = 'test@example.com'
         ps = create_payment_strategy(platform=PaymentStrategy.MERCADO_PAGO, payer_id=payer_id)
-        member = create_member(patron=ps.patron)
+        member = create_member(patron=ps.patron, first_payment_year=2017, first_payment_month=5)
 
         # create three payments in different timestamps
         tstamp1 = make_aware(datetime.datetime(year=2017, month=2, day=5))
@@ -399,7 +407,7 @@ class CreateRecurringPaymentTestCase(TestCase):
         # needed objects
         payer_id = 'test@example.com'
         ps = create_payment_strategy(platform=PaymentStrategy.MERCADO_PAGO, payer_id=payer_id)
-        create_member(patron=ps.patron)
+        create_member(patron=ps.patron, first_payment_year=2017, first_payment_month=5)
 
         # create two payments in different timestamps
         tstamp1 = make_aware(datetime.datetime(year=2017, month=2, day=5))
@@ -427,9 +435,9 @@ class CreateRecurringPaymentTestCase(TestCase):
         payer_id1 = 'test@example.com'
         payer_id2 = 'other@example.com'
         ps = create_payment_strategy(platform=PaymentStrategy.MERCADO_PAGO, payer_id=payer_id1)
-        member1 = create_member(patron=ps.patron)
+        member1 = create_member(patron=ps.patron, first_payment_year=2017, first_payment_month=5)
         ps = create_payment_strategy(platform=PaymentStrategy.MERCADO_PAGO, payer_id=payer_id2)
-        member2 = create_member(patron=ps.patron)
+        member2 = create_member(patron=ps.patron, first_payment_year=2017, first_payment_month=5)
 
         # create the payment
         tstampA = make_aware(datetime.datetime(year=2017, month=2, day=5))
@@ -497,7 +505,7 @@ class CreateRecurringPaymentTestCase(TestCase):
         # needed objects
         payer_id = 'test@example.com'
         ps = create_payment_strategy(platform=PaymentStrategy.MERCADO_PAGO, payer_id=payer_id)
-        create_member(patron=ps.patron)
+        create_member(patron=ps.patron, first_payment_year=2017, first_payment_month=5)
 
         # create two payments in different timestamps
         tstamp1 = make_aware(datetime.datetime(year=2017, month=2, day=1))
@@ -588,6 +596,21 @@ class GetDebtStateTestCase(TestCase):
             (2019, 7), (2019, 8), (2019, 9), (2019, 10), (2019, 11), (2019, 12),
             (2020, 1), (2020, 2)])
 
+    def test_no_payment_yet_previous_month(self):
+        member = create_member(registration_date=datetime.date(2017, 5, 13))
+        debt = logic.get_debt_state(member, 2017, 1)
+        self.assertEqual(debt, [])
+
+    def test_no_payment_yet_registration_month(self):
+        member = create_member(registration_date=datetime.date(2017, 5, 13))
+        debt = logic.get_debt_state(member, 2017, 5)
+        self.assertEqual(debt, [(2017, 5)])
+
+    def test_no_payment_yet_several_months(self):
+        member = create_member(registration_date=datetime.date(2017, 5, 13))
+        debt = logic.get_debt_state(member, 2017, 8)
+        self.assertEqual(debt, [(2017, 5), (2017, 6), (2017, 7), (2017, 8)])
+
 
 class BuildDebtStringTestCase(TestCase):
     """Tests for the string debt building utility."""
@@ -645,7 +668,7 @@ class MembersReportTests(TestCase):
         self.assertTemplateUsed(response, 'members/members_list.html')
 
     def test_get_member_detail_page(self):
-        member = create_member()
+        member = create_member(first_payment_year=2017, first_payment_month=5)
         response = self.client.get(reverse('member_detail', kwargs={"pk": member.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'members/member_detail.html')
