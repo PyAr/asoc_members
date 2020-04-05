@@ -90,6 +90,32 @@
             {% endif %}
         </div>
     </div>
+
+    <div class="sponsoring-pending">
+        <h4>Patrocinios Pendientes <span class="badge">{{sponsoring_pending|length}}</span></h4>
+        <div class="list-group">
+        {% for pending in sponsoring_pending %}
+        <div class="list-group-item">
+            <div class="row task-element">
+                <div class="col-md-8 task-description">
+                    {{ pending.description }}
+                </div>
+                <div class="col-md-2 task-amount">
+                    {{ pending.amount }}
+                </div>
+                <div class="col-md-2 task-action">
+                    <a class="btn btn-success" href="{{pending.url}}">Ir</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+            <div class="alert alert-info" role="alert">
+                No hay patrocinios pendientes.
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+
     <div class="user-pending">
         <h4>Tareas <span class="badge">{{tasks|length}}</span></h4>
         <div class="list-group">

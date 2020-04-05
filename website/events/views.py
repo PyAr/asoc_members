@@ -71,6 +71,9 @@ from events.models import (
     SponsorCategory,
     Sponsoring
 )
+from events.helpers.sponsoring_pending import (
+    calculate_sponsoring_pending,
+)
 from pyar_auth.forms import PasswordResetForm
 
 
@@ -78,13 +81,19 @@ from pyar_auth.forms import PasswordResetForm
 def events_home(request):
     user = request.user
     tasks = []
+    sponsoring_pending = []
     if Organizer.objects.filter(user=user).exists():
         tasks = calculate_organizer_task(user)
+        sponsoring_pending = calculate_sponsoring_pending(user)
     else:
         if user.is_superuser:
             tasks = calculate_super_user_task()
+            sponsoring_pending = calculate_sponsoring_pending()
 
-    return render(request, 'events_home.html', {'tasks': tasks})
+    return render(request, 'events_home.html', {
+        'tasks': tasks,
+        'sponsoring_pending': sponsoring_pending,
+    })
 
 
 @permission_required('events.add_organizer')
