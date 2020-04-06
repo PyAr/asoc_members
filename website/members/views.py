@@ -527,7 +527,7 @@ class MemberDetailView(LoginRequiredMixin, DetailView):
     model = Member
     template_name = 'members/member_detail.html'
 
-    def _get_last_payments(self, member):
+    def _get_last_payments(self, member, limit=12):
         """Get the info for last payments."""
         quotas = Quota.objects.filter(member=member).all()
         grouped = {}
@@ -536,7 +536,7 @@ class MemberDetailView(LoginRequiredMixin, DetailView):
 
         payments = sorted(grouped.items(), key=lambda pq: pq[0].timestamp, reverse=True)
         info = []
-        for payment, quotas in payments:
+        for payment, quotas in payments[:limit]:
             info.append({
                 'title': "{} x {:.2f}".format(payment.strategy.platform.title(), payment.amount),
                 'timestamp': payment.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
