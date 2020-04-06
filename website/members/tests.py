@@ -2,6 +2,7 @@ import datetime
 import tempfile
 import logassert
 from io import BytesIO
+
 from PIL import Image
 
 from django.contrib.auth.models import User
@@ -661,6 +662,7 @@ class MembersReportTests(TestCase):
         user = User.objects.create_user(
             username='testuser', password='12345', email='1@1.com')
         self.client.force_login(user)
+        self.addCleanup(self.client.logout)
 
     def test_get_members_list_page(self):
         response = self.client.get(reverse('members_list'))
@@ -673,8 +675,63 @@ class MembersReportTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'members/member_detail.html')
 
-    def tearDown(self):
-        self.client.logout()
+    def test_last_payments_none(self):
+        member = create_member()
+        info = views.MemberDetailView()._get_last_payments(member)
+        self.assertEqual(info, [])
+
+    def test_last_payments_one(self):
+        member = create_member(first_payment_year=2017, first_payment_month=5)
+        ps = create_payment_strategy()
+        amount = 100
+        tstamp = datetime.datetime(2018, 3, 22, 14, 32, 11)
+        logic.create_payment(member, tstamp, amount, ps)
+        info = views.MemberDetailView()._get_last_payments(member)
+        self.assertEqual(info, [
+            {
+                'title': 'Transfer x 100.00',
+                'timestamp': '2018-03-22 14:32:11',
+                'quotas': '2017-05',
+            }
+        ])
+
+    def test_last_payments_several(self):
+        member = create_member(first_payment_year=2017, first_payment_month=5)
+        ps = create_payment_strategy()
+
+        # payment 1
+        amount = 100
+        tstamp = datetime.datetime(2018, 3, 22, 14, 32, 11)
+        logic.create_payment(member, tstamp, amount, ps)
+
+        # payment 2
+        amount = 500
+        tstamp = datetime.datetime(2020, 3, 22, 14, 32, 11)  # mixed tstamp on purpose!!
+        logic.create_payment(member, tstamp, amount, ps)
+
+        # payment 3
+        amount = 300
+        tstamp = datetime.datetime(2019, 3, 22, 14, 32, 11)
+        logic.create_payment(member, tstamp, amount, ps)
+
+        info = views.MemberDetailView()._get_last_payments(member)
+        self.assertEqual(info, [
+            {
+                'title': 'Transfer x 500.00',
+                'timestamp': '2020-03-22 14:32:11',
+                'quotas': '2017-06, 2017-07, 2017-08, 2017-09, 2017-10',
+            },
+            {
+                'title': 'Transfer x 300.00',
+                'timestamp': '2019-03-22 14:32:11',
+                'quotas': '2017-11, 2017-12, 2018-01',
+            },
+            {
+                'title': 'Transfer x 100.00',
+                'timestamp': '2018-03-22 14:32:11',
+                'quotas': '2017-05',
+            },
+        ])
 
 
 class ReportCompleteTests(TestCase):
