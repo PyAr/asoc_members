@@ -527,6 +527,24 @@ class MemberDetailView(LoginRequiredMixin, DetailView):
     model = Member
     template_name = 'members/member_detail.html'
 
+    def _get_last_payments(self, member, limit=12):
+        """Get the info for last payments."""
+        quotas = Quota.objects.filter(member=member).all()
+        grouped = {}
+        for q in quotas:
+            grouped.setdefault(q.payment, []).append(q)
+
+        payments = sorted(grouped.items(), key=lambda pq: pq[0].timestamp, reverse=True)
+        info = []
+        for payment, quotas in payments[:limit]:
+            info.append({
+                'title': "{} x {:.2f}".format(payment.strategy.platform.title(), payment.amount),
+                'timestamp': payment.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                'quotas': ', '.join(sorted(q.code for q in quotas)),
+            })
+
+        return info
+
     def get_context_data(self, **kwargs):
         # Get the context from base
         context = super(MemberDetailView, self).get_context_data(**kwargs)
@@ -536,7 +554,7 @@ class MemberDetailView(LoginRequiredMixin, DetailView):
         if len(debt) > 1 and member.category.fee > 0:
             context['debtor'] = True
         context['member'] = member
-        context['quotas'] = Quota.objects.filter(member=member)[:6]
+        context['last_payments_info'] = self._get_last_payments(member)
         context['missing_letter'] = not member.has_subscription_letter
         return context
 

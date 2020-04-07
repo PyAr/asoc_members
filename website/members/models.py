@@ -24,6 +24,9 @@ class Quota(TimeStampedModel):
     class Meta:
         get_latest_by = ['year', 'month']
 
+    def __str__(self):
+        return "<Quota {}-{} payment={}".format(self.year, self.month, self.payment)
+
     @property
     def code(self):
         return f'{self.year}-{self.month:02d}'

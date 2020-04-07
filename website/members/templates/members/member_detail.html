@@ -134,15 +134,16 @@
             </div>
             {% endif %}
                         
-            {% if quotas %}
+            {% if last_payments_info %}
             <h3>Ultimos Pagos</h3>
             <div class="col-sm-12">
                 <table class="table{% if debtor %} bg-danger{% else %} bg-success{% endif %}">
                     <tbody>
-                    {% for quota in quotas reversed %}
+                    {% for info in last_payments_info %}
                         <tr>
-                            <th scope="row">{{ quota.code }}</th>
-                            <td>{{ quota.payment }}</td>
+                            <th scope="row">{{ info.title }}</th>
+                            <td>{{ info.timestamp }}</td>
+                            <td>{{ info.quotas }}</td>
                         </tr>
                     {% endfor %}
                     </tbody>
