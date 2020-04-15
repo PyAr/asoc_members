@@ -35,15 +35,14 @@ class Command(BaseCommand):
     def process_mercadopago(self, results, filter_payment_id, filter_payer_id):
         """Process Mercadopago info, building a per-payer sorted structure."""
         payments = []
-        for item in results:
-            info = item['collection']
+        for info in results:
 
             if info['operation_type'] != 'recurring_payment':
                 continue
 
             # needed information to record the payment
             timestamp = parse_datetime(info['date_approved'])
-            amount = Decimal(info['total_paid_amount'])
+            amount = Decimal(info['transaction_amount'])
             payer_id = info['payer']['id']
             assert payer_id is not None
             payer_id = str(payer_id)
@@ -56,8 +55,8 @@ class Command(BaseCommand):
 
             # some info to identify the payer in case it's not in our DB
             id_helper = {
-                'cardholder': info['cardholder'],
-                'reason': info['reason'],
+                'cardholder': info['card']['cardholder'],
+                'reason': info['description'],
                 'payment_id': info['id'],
             }
 

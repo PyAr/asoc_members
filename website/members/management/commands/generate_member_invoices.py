@@ -91,7 +91,6 @@ class Command(BaseCommand):
             record = {
                 'invoice_date': invoice_date,
             }
-            records.append(record)
 
             # get the related member (if None, or multiple, still not supported!)
             _members = Member.objects.filter(patron=payment.strategy.patron).all()
@@ -158,6 +157,11 @@ class Command(BaseCommand):
             record['service_date_to'] = to_day.strftime("%Y%m%d")
             print("    found {} quota(s) ({} - {})".format(
                 len(quotas), record['service_date_from'], record['service_date_to']))
+            records.append(record)
+
+        if not records:
+            print("No processable records found.")
+            return
 
         # convert the stored records to proper invoices and call AFIP
         invoices = []
