@@ -43,8 +43,7 @@ class Command(BaseCommand):
     def process_mercadopago(self, results, year, month):
         """Process Mercadopago info."""
         payments = []
-        for item in results:
-            info = item['collection']
+        for info in results:
 
             if info['operation_type'] == 'recurring_payment':
                 continue
@@ -58,12 +57,12 @@ class Command(BaseCommand):
                 continue
 
             # needed information to record the payment
-            payer_id = "{type} {number}".format(**info['cardholder']['identification'])
+            payer_id = "{type} {number}".format(**info['card']['cardholder']['identification'])
             payment = {
                 'id': info['id'],
                 'date_approved': parser.parse(info['date_approved']),
-                'amount': Decimal(info['total_paid_amount']),
-                'payer_name': info['cardholder']['name'],
+                'amount': Decimal(info['transaction_amount']),
+                'payer_name': info['card']['cardholder']['name'],
                 'payer_id': payer_id,
                 'reference': info['external_reference'],
                 'reason': info['reason'],
