@@ -153,11 +153,7 @@ class ReportDebts(OnlyAdminsViewMixin, View):
             # get by default one month before now, as it's the first month not really
             # paid (current month is not yet finished)
             currently = now()
-            year = currently.year
-            month = currently.month - 1
-            if month <= 0:
-                year -= 1
-                month += 12
+            year, month = logic.decrement_year_month(currently.year, currently.month)
         return year, month
 
     def get(self, request):

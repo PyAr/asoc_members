@@ -15,6 +15,15 @@ def increment_year_month(year, month):
     return year, month
 
 
+def decrement_year_month(year, month):
+    """Subtract one month to the received year/month."""
+    month -= 1
+    if month <= 0:
+        year -= 1
+        month = 12
+    return year, month
+
+
 def get_year_month_range(year, month, quantity):
     """Return several year/month pairs from a given start."""
     yield year, month
