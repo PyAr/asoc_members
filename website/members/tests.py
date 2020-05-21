@@ -343,6 +343,19 @@ class CreatePaymentTestCase(TestCase):
             (2017, 7),
         ])
 
+    def test_custom_fee(self):
+        # needed objects
+        member = create_member(first_payment_year=2017, first_payment_month=5)
+        ps = create_payment_strategy()
+
+        # create the payment
+        custom_fee = DEFAULT_FEE // 2
+        amount = custom_fee * 5
+        logic.create_payment(member, now(), amount, ps, custom_fee=custom_fee)
+
+        # check
+        self.assertEqual(len(Quota.objects.all()), 5)
+
 
 class CreateRecurringPaymentTestCase(TestCase):
     """Tests for the recurring payments creation."""
@@ -535,6 +548,23 @@ class CreateRecurringPaymentTestCase(TestCase):
         self.assertEqual(len(Quota.objects.all()), 5)
         self.assertLoggedWarning(
             "Found exceeding payment limit", str(tstamp2), f'remaining: {len(records)}')
+
+    def test_simple_custom_fee(self):
+        # needed objects
+        payer_id = 'test@example.com'
+        ps = create_payment_strategy(platform=PaymentStrategy.MERCADO_PAGO, payer_id=payer_id)
+        create_member(patron=ps.patron, first_payment_year=2017, first_payment_month=5)
+
+        # create the payment
+        tstamp = make_aware(datetime.datetime(year=2017, month=2, day=5))
+        custom_fee = DEFAULT_FEE // 2
+        records = [
+            {'timestamp': tstamp, 'amount': custom_fee * 3, 'payer_id': payer_id},
+        ]
+        logic.create_recurring_payments(records, custom_fee=custom_fee)
+
+        # check that payment got through ok, having 3 payments!
+        self.assertEqual(len(Quota.objects.all()), 3)
 
 
 class GetDebtStateTestCase(TestCase):

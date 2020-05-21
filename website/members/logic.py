@@ -32,7 +32,9 @@ def get_year_month_range(year, month, quantity):
         yield year, month
 
 
-def create_payment(member, timestamp, amount, payment_strategy, first_unpaid=None, comments=''):
+def create_payment(
+        member, timestamp, amount, payment_strategy, first_unpaid=None,
+        comments='', custom_fee=None):
     """Create a payment from the given strategy to the specific member."""
     # get the latest unpaid monthly fee
     if first_unpaid is None:
@@ -46,11 +48,11 @@ def create_payment(member, timestamp, amount, payment_strategy, first_unpaid=Non
 
     # calculate how many fees covers the amount, supporting not being exact but for a very
     # small difference
-    paying_quant_real = amount / member.category.fee
+    fee = member.category.fee if custom_fee is None else custom_fee
+    paying_quant_real = amount / fee
     paying_quant_int = int(round(paying_quant_real))
     if abs(paying_quant_real - paying_quant_int) > paying_quant_int * 0.01:
-        raise ValueError(
-            "Paying amount too inexact! amount={} fee={}".format(amount, member.category.fee))
+        raise ValueError("Paying amount too inexact! amount={} fee={}".format(amount, fee))
 
     # create the payment itself
     payment = Payment.objects.create(
@@ -62,7 +64,7 @@ def create_payment(member, timestamp, amount, payment_strategy, first_unpaid=Non
         Quota.objects.create(payment=payment, month=month, year=year, member=member)
 
 
-def create_recurring_payments(recurring_records):
+def create_recurring_payments(recurring_records, custom_fee=None):
     # group payments per payer and order them
     grouped = {}
     for record in recurring_records:
@@ -134,7 +136,9 @@ def create_recurring_payments(recurring_records):
         else:
             count_without_new_payments += 1
         for payment_info in remaining_payments:
-            create_payment(member, payment_info['timestamp'], payment_info['amount'], strategy)
+            create_payment(
+                member, payment_info['timestamp'], payment_info['amount'],
+                strategy, custom_fee=custom_fee)
 
     logger.info("Processed %d payers without new payments", count_without_new_payments)
 

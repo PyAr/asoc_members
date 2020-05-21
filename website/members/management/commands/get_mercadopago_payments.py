@@ -15,8 +15,9 @@ class Command(BaseCommand):
     help = 'Import payments from JSON file'
 
     def add_arguments(self, parser):
-        parser.add_argument('--payment_id', type=int, nargs='?')
-        parser.add_argument('--payer_id', type=str, nargs='?')
+        parser.add_argument('--payment-id', type=int, nargs='?')
+        parser.add_argument('--payer-id', type=str, nargs='?')
+        parser.add_argument('--custom-fee', type=int, nargs='?')
 
     def handle(self, *args, **options):
         payment_id = options.get('payment_id')
@@ -24,13 +25,16 @@ class Command(BaseCommand):
         if payment_id is not None or payer_id is not None:
             # if filtering, we want verbose
             logging.getLogger('').setLevel(logging.DEBUG)
+        custom_fee = options.get('custom_fee')
+        if custom_fee is not None:
+            custom_fee = Decimal(custom_fee)
 
         raw_info = _mp.get_raw_mercadopago_info()
         if raw_info is None:
             return
 
         records = self.process_mercadopago(raw_info, payment_id, payer_id)
-        logic.create_recurring_payments(records)
+        logic.create_recurring_payments(records, custom_fee=custom_fee)
 
     def process_mercadopago(self, results, filter_payment_id, filter_payer_id):
         """Process Mercadopago info, building a per-payer sorted structure."""
