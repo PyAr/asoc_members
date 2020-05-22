@@ -121,7 +121,7 @@ class Person(TimeStampedModel):
     )
 
     document_number = models.CharField(
-        _('N° de documento'), max_length=DEFAULT_MAX_LEN, blank=True)
+        _('N° de documento'), max_length=DEFAULT_MAX_LEN, null=False, unique=True)
     email = models.EmailField(_('correo electrónico'), max_length=1024)
     nickname = models.CharField(
         _('nick'), max_length=DEFAULT_MAX_LEN, blank=True, help_text=_('Nick o sobrenombre'))
