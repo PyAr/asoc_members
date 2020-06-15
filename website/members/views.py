@@ -182,37 +182,6 @@ class ReportDebts(OnlyAdminsViewMixin, View):
         return render(request, 'members/report_debts.html', context)
 
 
-def get_member_missing_info(member):
-    """Analyze and indicate in which categories the member is missing somethhing."""
-    cat_student = Category.objects.get(name=Category.STUDENT)
-    cat_collab = Category.objects.get(name=Category.COLLABORATOR)
-
-    # simple flags with "Not Applicable" situation
-    missing_student_certif = (
-        member.category == cat_student and not member.has_student_certificate)
-    missing_collab_accept = (
-        member.category == cat_collab and not member.has_collaborator_acceptance)
-
-    # info from Person
-    missing_nickname = member.person.nickname == ""
-    # picture is complicated, bool() is used to check if the Image field has an associated
-    # filename, and False itself is used as the "dont want a picture!" flag
-    missing_picture = not member.person.picture and member.person.picture is not False
-
-    # info from Member itself
-    missing_payment = member.first_payment_month is None and member.category.fee > 0
-    missing_signed_letter = not member.has_subscription_letter
-
-    return {
-        'missing_signed_letter': missing_signed_letter,
-        'missing_student_certif': missing_student_certif,
-        'missing_payment': missing_payment,
-        'missing_nickname': missing_nickname,
-        'missing_picture': missing_picture,
-        'missing_collab_accept': missing_collab_accept,
-    }
-
-
 class ReportMissing(OnlyAdminsViewMixin, View):
     """Handle the report about what different people miss to get approved as a member."""
     MAIL_SUBJECT = "Continuación del trámite de inscripción a la Asociación Civil Python Argentina"
@@ -245,10 +214,6 @@ class ReportMissing(OnlyAdminsViewMixin, View):
             letter_svg_template, path_prefix, "dni", [person_info], images=None)
         return letter_filepath
 
-    def _analyze_member(self, member):
-        """Analyze and indicate in which categories the member is missing somethhing."""
-        return get_member_missing_info(member)
-
     def post(self, request):
         raw_sendmail = parse.parse_qs(request.body)[b'sendmail']
         to_send_mail_ids = map(int, raw_sendmail)
@@ -260,7 +225,7 @@ class ReportMissing(OnlyAdminsViewMixin, View):
             member = Member.objects.get(id=member_id)
 
             # create the mail text from the template
-            missing_info = self._analyze_member(member)
+            missing_info = member.get_missing_info()
             missing_info['annual_fee'] = member.category.fee * 12
             missing_info['member'] = member
             missing_info['on_purpose_missing_var'] = "ERROR"
@@ -391,23 +356,12 @@ class ReportComplete(View):
         }
         return render(request, 'members/mail_sent.html', context)
 
-    def _analyze_member(self, member):
-        """Analyze and indicate in which categories the member is missing something."""
-        missing_info = get_member_missing_info(member)
-
-        # picture and nickname are not really needed to flag members as "ready to be approved"
-        missing_info.pop('missing_nickname', None)
-        missing_info.pop('missing_picture', None)
-
-        anything_missing = any(missing_info.values())
-        return anything_missing
-
     def get(self, request):
         not_yet_members = Member.objects.filter(legal_id=None).order_by('created').all()
 
         completes = []
         for member in not_yet_members:
-            anything_missing = self._analyze_member(member)
+            anything_missing = any(member.get_missing_info(for_approval=True).values())
             if anything_missing:
                 continue
 
