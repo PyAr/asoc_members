@@ -93,6 +93,46 @@ class Member(TimeStampedModel):
         shutdown = "" if self.shutdown_date is None else ", DADO DE BAJA"
         return f"{legal_id} - [{self.category}{shutdown}] {self.entity}"
 
+    def get_missing_info(self, for_approval=False):
+        """Indicate in which categories the member is missing something.
+
+        If `for_approval` is indicated, some data will not be reported as missing (as they
+        are not really needed for legal approval).
+        """
+        cat_student = Category.objects.get(name=Category.STUDENT)
+        cat_collab = Category.objects.get(name=Category.COLLABORATOR)
+
+        # simple flags with "Not Applicable" situation
+        missing_student_certif = (
+            self.category == cat_student and not self.has_student_certificate)
+        missing_collab_accept = (
+            self.category == cat_collab and not self.has_collaborator_acceptance)
+
+        # info from Person
+        missing_nickname = self.person.nickname == ""
+        # picture is complicated, bool() is used to check if the Image field has an associated
+        # filename, and False itself is used as the "dont want a picture!" flag
+        missing_picture = not self.person.picture and self.person.picture is not False
+
+        # info from Member itself
+        missing_payment = self.first_payment_month is None and self.category.fee > 0
+        missing_signed_letter = not self.has_subscription_letter
+
+        # some fields are not really needed to for a member to be legally approved
+        if for_approval:
+            missing_nickname = False
+            missing_picture = False
+            missing_payment = False
+
+        return {
+            'missing_signed_letter': missing_signed_letter,
+            'missing_student_certif': missing_student_certif,
+            'missing_payment': missing_payment,
+            'missing_nickname': missing_nickname,
+            'missing_picture': missing_picture,
+            'missing_collab_accept': missing_collab_accept,
+        }
+
 
 def picture_upload_path(instance, filename):
     """Customize the picture's upload path to MEDIA_ROOT/pictures/lastname_document.ext."""
