@@ -1,16 +1,12 @@
 import datetime
 import logging
-import re
 import os
 import time
 import uuid
 from urllib import parse
 
-import certg
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.mail import EmailMessage
 from django.db.models import Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -21,36 +17,13 @@ from django.utils.translation import ugettext as _
 from django.views import View
 from django.views.generic import TemplateView, CreateView, ListView, DetailView
 
-import members
-from members import logic
-from members.constants import (
-    DEFAULT_PAGINATION,
-)
+from members import logic, utils
+from members.constants import DEFAULT_PAGINATION
 from events.helpers.views import search_filtered_queryset
 from members.forms import SignupPersonForm, SignupOrganizationForm
 from members.models import Person, Organization, Category, Member, Quota, Payment
 
 logger = logging.getLogger(__name__)
-
-
-def _clean_double_empty_lines(oldtext):
-    while True:
-        newtext = re.sub("\n *?\n *?\n", "\n\n", oldtext)
-        if newtext == oldtext:
-            return newtext
-        oldtext = newtext
-
-
-def _build_debt_string(debt):
-    """Build a nice string to represent the debt."""
-    if not debt:
-        return "-"
-
-    # convert tuples to nice string format (only first 3, the used ones)
-    debt_nicer = ["{}-{:02d}".format(*d) for d in debt[:3]]
-    exceeding = "" if len(debt) <= 3 else ", ..."
-    result = "{} ({}{})".format(len(debt), ", ".join(debt_nicer), exceeding)
-    return result
 
 
 class OnlyAdminsViewMixin(LoginRequiredMixin):
@@ -113,22 +86,19 @@ class ReportDebts(OnlyAdminsViewMixin, View):
 
             debt = logic.get_debt_state(member, limit_year, limit_month)
             debt_info = {
-                'debt': _build_debt_string(debt),
+                'debt': utils.build_debt_string(debt),
                 'member': member,
                 'annual_fee': member.category.fee * 12,
                 'on_purpose_missing_var': "ERROR",
             }
             text = render_to_string('members/mail_indebt.txt', debt_info)
-            text = _clean_double_empty_lines(text)
             if 'ERROR' in text:
                 # badly built template
                 logger.error(
                     "Error when building the report missing mail result, info: %s", debt_info)
                 return HttpResponse("Error al armar la página")
-            recipient = f"{member.entity.full_name} <{member.entity.email}>"
-            mail = EmailMessage(self.MAIL_SUBJECT, text, settings.EMAIL_FROM, [recipient])
             try:
-                mail.send()
+                utils.send_email(member, text, self.MAIL_SUBJECT)
             except Exception as err:
                 sent_error += 1
                 logger.error(
@@ -171,7 +141,7 @@ class ReportDebts(OnlyAdminsViewMixin, View):
             if debt:
                 debts.append({
                     'member': member,
-                    'debt': _build_debt_string(debt),
+                    'debt': utils.build_debt_string(debt),
                 })
 
         context = {
@@ -185,34 +155,6 @@ class ReportDebts(OnlyAdminsViewMixin, View):
 class ReportMissing(OnlyAdminsViewMixin, View):
     """Handle the report about what different people miss to get approved as a member."""
     MAIL_SUBJECT = "Continuación del trámite de inscripción a la Asociación Civil Python Argentina"
-
-    def _generate_letter(self, member):
-        """Generate the letter to be signed."""
-        letter_svg_template = os.path.join(
-            os.path.dirname(members.__file__), 'templates', 'members', 'carta.svg')
-        path_prefix = "/tmp/letter"
-        person = member.person
-        person_info = {
-            'tiposocie': member.category.name,
-            'nombre': person.first_name,
-            'apellido': person.last_name,
-            'dni': person.document_number,
-            'email': person.email,
-            'nacionalidad': person.nationality,
-            'estadocivil': person.marital_status,
-            'profesion': person.occupation,
-            'fechanacimiento': person.birth_date.strftime("%Y-%m-%d"),
-            'domicilio': person.street_address,
-            'ciudad': person.city,
-            'codpostal': person.zip_code,
-            'provincia': person.province,
-            'pais': person.country,
-        }
-
-        # this could be optimized to generate all PDFs at once, but we're fine so far
-        (letter_filepath,) = certg.process(
-            letter_svg_template, path_prefix, "dni", [person_info], images=None)
-        return letter_filepath
 
     def post(self, request):
         raw_sendmail = parse.parse_qs(request.body)[b'sendmail']
@@ -230,26 +172,21 @@ class ReportMissing(OnlyAdminsViewMixin, View):
             missing_info['member'] = member
             missing_info['on_purpose_missing_var'] = "ERROR"
             text = render_to_string('members/mail_missing.txt', missing_info)
-            text = _clean_double_empty_lines(text)
             if 'ERROR' in text:
                 # badly built template
                 logger.error(
                     "Error when building the report missing mail result, info: %s", missing_info)
                 return HttpResponse("Error al armar la página")
 
-            # if missing the signed letter, produce it and attach it
+            # if missing the signed letter, produce it
             if missing_info['missing_signed_letter']:
-                letter_filepath = self._generate_letter(member)
+                letter_filepath = utils.generate_member_letter(member)
+            else:
+                letter_filepath = None
 
-            # build the mail
-            recipient = f"{member.entity.full_name} <{member.entity.email}>"
-            mail = EmailMessage(self.MAIL_SUBJECT, text, settings.EMAIL_FROM, [recipient])
-            if missing_info['missing_signed_letter']:
-                mail.attach_file(letter_filepath)
-
-            # actually send it
+            # send the mail
             try:
-                mail.send()
+                utils.send_email(member, self.MAIL_SUBJECT, text, attachment=letter_filepath)
             except Exception as err:
                 sent_error += 1
                 logger.error(
@@ -278,7 +215,7 @@ class ReportMissing(OnlyAdminsViewMixin, View):
 
         incompletes = []
         for member in not_yet_members:
-            missing_info = self._analyze_member(member)
+            missing_info = member.get_missing_info()
 
             # convert missing info to proper strings to show
             for k, v in missing_info.items():

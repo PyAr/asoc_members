@@ -11,7 +11,7 @@ from django.utils.timezone import now, make_aware
 from django.urls import reverse
 from django.db.models.fields.files import ImageFieldFile
 
-from members import logic, views
+from members import logic, views, utils
 from members.models import (
     Category,
     Member,
@@ -647,23 +647,23 @@ class BuildDebtStringTestCase(TestCase):
     """Tests for the string debt building utility."""
 
     def test_empty(self):
-        result = views._build_debt_string([])
+        result = utils.build_debt_string([])
         self.assertEqual(result, "-")
 
     def test_1(self):
-        result = views._build_debt_string([(2018, 8)])
+        result = utils.build_debt_string([(2018, 8)])
         self.assertEqual(result, "1 (2018-08)")
 
     def test_2(self):
-        result = views._build_debt_string([(2018, 8), (2018, 9)])
+        result = utils.build_debt_string([(2018, 8), (2018, 9)])
         self.assertEqual(result, "2 (2018-08, 2018-09)")
 
     def test_3(self):
-        result = views._build_debt_string([(2018, 8), (2018, 9), (2018, 10)])
+        result = utils.build_debt_string([(2018, 8), (2018, 9), (2018, 10)])
         self.assertEqual(result, "3 (2018-08, 2018-09, 2018-10)")
 
     def test_exceeding(self):
-        result = views._build_debt_string([(2018, 8), (2018, 9), (2018, 10), (2018, 11)])
+        result = utils.build_debt_string([(2018, 8), (2018, 9), (2018, 10), (2018, 11)])
         self.assertEqual(result, "4 (2018-08, 2018-09, 2018-10, ...)")
 
 
