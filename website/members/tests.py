@@ -90,7 +90,7 @@ class SignupPagesTests(TestCase):
     def test_get_signup_person_page(self):
         response = self.client.get(reverse('signup_person'))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'members/signup_form.html')
+        self.assertTemplateUsed(response, 'members/signup_person_form.html')
 
     def test_get_signup_org_page(self):
         response = self.client.get(reverse('signup_organization'))
@@ -119,10 +119,9 @@ class SignupPagesTests(TestCase):
             'nickname': 'pepepin',
             'picture': create_image_file_in_memory()
         }
-        response = self.client.get(reverse('signup_person'))
         response = self.client.post(reverse('signup_person'), data=data)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('signup_thankyou'))
+        self.assertEqual(response.url, reverse('signup_person_thankyou'))
         person = Person.objects.get(nickname='pepepin')
         self.assertEqual(person.first_name, 'Pepe')
         self.assertEqual(person.email, 'pepe@pomp.in')
@@ -151,10 +150,9 @@ class SignupPagesTests(TestCase):
             'province': 'Córdoba',
             'country': 'Argentina',
         }
-        response = self.client.get(reverse('signup_person'))
         response = self.client.post(reverse('signup_person'), data=data)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('signup_thankyou'))
+        self.assertEqual(response.url, reverse('signup_person_thankyou'))
         person = Person.objects.get(document_number='124354656')
         self.assertEqual(person.first_name, 'Pepe')
         self.assertEqual(person.email, 'pepe@pomp.in')
@@ -197,10 +195,9 @@ class SignupPagesTests(TestCase):
             'address': 'Calle False 123',
             'social_media': '@orga',
         }
-        response = self.client.get(reverse('signup_organization'))
         response = self.client.post(reverse('signup_organization'), data=data)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('signup_thankyou'))
+        self.assertEqual(response.url, reverse('signup_organization_thankyou'))
         orga = Organization.objects.get(name='Orga')
         self.assertEqual(orga.contact_info, random_text)
 
@@ -213,7 +210,6 @@ class SignupPagesTests(TestCase):
             'address': 'Calle False 123',
             'social_media': '@orga',
         }
-        response = self.client.get(reverse('signup_organization'))
         response = self.client.post(reverse('signup_organization'), data=data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue("name" in response.context["form"].errors)

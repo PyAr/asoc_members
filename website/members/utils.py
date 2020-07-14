@@ -7,6 +7,7 @@ import re
 import certg
 from django.conf import settings
 from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 
 logger = logging.getLogger(__name__)
 
@@ -69,3 +70,36 @@ def send_email(member, subject, text, attachment=None):
     if attachment is not None:
         mail.attach_file(attachment)
     mail.send()
+
+
+def send_missing_info_mail(member):
+    """Send a mail to a member with all missing information.
+
+    This is used by reports, or when the user initially subscribes, or could be triggered from
+    anywhere, as it only sends what is missing.
+    """
+    mail_subject = "Continuación del trámite de inscripción a la Asociación Civil Python Argentina"
+
+    # create the mail text from the template
+    missing_info = member.get_missing_info()
+    missing_info['annual_fee'] = member.category.fee * 12
+    missing_info['member'] = member
+    missing_info['on_purpose_missing_var'] = "ERROR"
+    text = render_to_string('members/mail_missing.txt', missing_info)
+    if 'ERROR' in text:
+        # badly built template
+        msg = "Error when building the report missing mail result, info: {}".format(missing_info)
+        raise ValueError(msg)
+
+    # if missing the signed letter, produce it
+    if missing_info['missing_signed_letter']:
+        letter_filepath = generate_member_letter(member)
+    else:
+        letter_filepath = None
+
+    # send the mail
+    try:
+        send_email(member, mail_subject, text, attachment=letter_filepath)
+    finally:
+        if letter_filepath is not None:
+            os.unlink(letter_filepath)
