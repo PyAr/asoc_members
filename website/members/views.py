@@ -1,6 +1,5 @@
 import datetime
 import logging
-import os
 import time
 import uuid
 from urllib import parse
@@ -40,8 +39,8 @@ class SignupInitialView(TemplateView):
 class SignupPersonFormView(CreateView):
     model = Person
     form_class = SignupPersonForm
-    template_name = 'members/signup_form.html'
-    success_url = reverse_lazy('signup_thankyou')
+    template_name = 'members/signup_person_form.html'
+    success_url = reverse_lazy('signup_person_thankyou')
 
     def get_context_data(self, **kwargs):
         context = super(SignupPersonFormView, self).get_context_data(**kwargs)
@@ -52,16 +51,37 @@ class SignupPersonFormView(CreateView):
         messages.error(self.request, _("Por favor, revise los campos."))
         return super(SignupPersonFormView, self).form_invalid(form)
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        error_code = str(uuid.uuid4())
+        try:
+            utils.send_missing_info_mail(form.instance.membership)
+        except Exception as err:
+            logger.exception(
+                "Problems sending post-registration email [%s] to member %s: %r",
+                error_code, form.instance.membership, err)
+            msg = (
+                "No pudimos enviarte el email para continuar con el proceso de registración, "
+                "por favor mandanos un mail a presidencia@ac.python.org.ar indicando "
+                "el código de error {}. ¡Gracias!".format(error_code))
+            messages.warning(self.request, _(msg))
+
+        return response
+
 
 class SignupOrganizationsFormView(CreateView):
     form_class = SignupOrganizationForm
     model = Organization
     template_name = 'members/signup_org_form.html'
-    success_url = reverse_lazy('signup_thankyou')
+    success_url = reverse_lazy('signup_organization_thankyou')
 
 
-class SignupThankyouView(TemplateView):
-    template_name = 'members/signup_thankyou.html'
+class SignupPersonThankyouView(TemplateView):
+    template_name = 'members/signup_person_thankyou.html'
+
+
+class SignupOrganizationThankyouView(TemplateView):
+    template_name = 'members/signup_organization_thankyou.html'
 
 
 class ReportsInitialView(OnlyAdminsViewMixin, TemplateView):
@@ -101,7 +121,7 @@ class ReportDebts(OnlyAdminsViewMixin, View):
                 utils.send_email(member, text, self.MAIL_SUBJECT)
             except Exception as err:
                 sent_error += 1
-                logger.error(
+                logger.exception(
                     "Problems sending email [%s] to member %s: %r", errors_code, member, err)
             else:
                 sent_ok += 1
@@ -165,40 +185,14 @@ class ReportMissing(OnlyAdminsViewMixin, View):
         errors_code = str(uuid.uuid4())
         for member_id in to_send_mail_ids:
             member = Member.objects.get(id=member_id)
-
-            # create the mail text from the template
-            missing_info = member.get_missing_info()
-            missing_info['annual_fee'] = member.category.fee * 12
-            missing_info['member'] = member
-            missing_info['on_purpose_missing_var'] = "ERROR"
-            text = render_to_string('members/mail_missing.txt', missing_info)
-            if 'ERROR' in text:
-                # badly built template
-                logger.error(
-                    "Error when building the report missing mail result, info: %s", missing_info)
-                return HttpResponse("Error al armar la página")
-
-            # if missing the signed letter, produce it
-            if missing_info['missing_signed_letter']:
-                letter_filepath = utils.generate_member_letter(member)
-            else:
-                letter_filepath = None
-
-            # send the mail
             try:
-                utils.send_email(member, self.MAIL_SUBJECT, text, attachment=letter_filepath)
+                utils.send_missing_info_mail(member)
             except Exception as err:
                 sent_error += 1
-                logger.error(
+                logger.exception(
                     "Problems sending email [%s] to member %s: %r", errors_code, member, err)
             else:
                 sent_ok += 1
-            finally:
-                if missing_info['missing_signed_letter']:
-                    try:
-                        os.unlink(letter_filepath)
-                    except Exception as exc:
-                        logger.warning("Couldn't remove letter file %r: %r", letter_filepath, exc)
 
         deltat = time.time() - tini
         context = {
@@ -450,7 +444,8 @@ class MemberDetailView(LoginRequiredMixin, DetailView):
 signup_initial = SignupInitialView.as_view()
 signup_form_person = SignupPersonFormView.as_view()
 signup_form_organization = SignupOrganizationsFormView.as_view()
-signup_thankyou = SignupThankyouView.as_view()
+signup_person_thankyou = SignupPersonThankyouView.as_view()
+signup_organization_thankyou = SignupOrganizationThankyouView.as_view()
 # only admins
 reports_main = ReportsInitialView.as_view()
 report_debts = ReportDebts.as_view()
