@@ -57,13 +57,13 @@ class SignupPersonFormView(CreateView):
         try:
             utils.send_missing_info_mail(form.instance.membership)
         except Exception as err:
-            logger.error(
+            logger.exception(
                 "Problems sending post-registration email [%s] to member %s: %r",
                 error_code, form.instance.membership, err)
             msg = (
                 "No pudimos enviarte el email para continuar con el proceso de registración, "
                 "por favor mandanos un mail a presidencia@ac.python.org.ar indicando "
-                "el código de error {}. ¡Gracias!")
+                "el código de error {}. ¡Gracias!".format(error_code))
             messages.warning(self.request, _(msg))
 
         return response
@@ -121,7 +121,7 @@ class ReportDebts(OnlyAdminsViewMixin, View):
                 utils.send_email(member, text, self.MAIL_SUBJECT)
             except Exception as err:
                 sent_error += 1
-                logger.error(
+                logger.exception(
                     "Problems sending email [%s] to member %s: %r", errors_code, member, err)
             else:
                 sent_ok += 1
@@ -189,7 +189,7 @@ class ReportMissing(OnlyAdminsViewMixin, View):
                 utils.send_missing_info_mail(member)
             except Exception as err:
                 sent_error += 1
-                logger.error(
+                logger.exception(
                     "Problems sending email [%s] to member %s: %r", errors_code, member, err)
             else:
                 sent_ok += 1
