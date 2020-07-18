@@ -7,9 +7,10 @@ from members import logic
 from members.models import Person, PaymentStrategy, Organization
 
 PLATFORMS = {
+    'credit': PaymentStrategy.CREDIT,
+    'mercadopago': PaymentStrategy.MERCADO_PAGO,
     'todopago': PaymentStrategy.TODO_PAGO,
     'transfer': PaymentStrategy.TRANSFER,
-    'credit': PaymentStrategy.CREDIT,
 }
 
 
