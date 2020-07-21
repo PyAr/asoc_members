@@ -59,4 +59,7 @@ collectstatic:
 shell_plus:
 	${MANAGE} shell_plus
 
+load_members_testdata:
+	${MANAGE} load_data_test 20
+
 .PHONY: help start stop ps clean test dockershell shell_plus only_test pep8

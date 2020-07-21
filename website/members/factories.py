@@ -109,7 +109,9 @@ class PaymentStrategyFactory(DjangoModelFactory):
 class PaymentFactory(DjangoModelFactory):
     strategy = factory.Iterator(PaymentStrategy.objects.all())
     comments = fake.text
+    invoice_spoint = 7
     invoice_number = factory.fuzzy.FuzzyInteger(100, 99999)
+    invoice_ok = True
 
     @factory.lazy_attribute
     def timestamp(self):
