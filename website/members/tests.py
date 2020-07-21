@@ -717,6 +717,7 @@ class MembersReportTests(TestCase):
             {
                 'title': 'Transfer x 100.00',
                 'timestamp': '2018-03-22 14:32:11',
+                'invoice': '(-)',
                 'quotas': '2017-05',
             }
         ])
@@ -745,16 +746,19 @@ class MembersReportTests(TestCase):
             {
                 'title': 'Transfer x 500.00',
                 'timestamp': '2020-03-22 14:32:11',
+                'invoice': '(-)',
                 'quotas': '2017-06, 2017-07, 2017-08, 2017-09, 2017-10',
             },
             {
                 'title': 'Transfer x 300.00',
                 'timestamp': '2019-03-22 14:32:11',
+                'invoice': '(-)',
                 'quotas': '2017-11, 2017-12, 2018-01',
             },
             {
                 'title': 'Transfer x 100.00',
                 'timestamp': '2018-03-22 14:32:11',
+                'invoice': '(-)',
                 'quotas': '2017-05',
             },
         ])
@@ -773,6 +777,28 @@ class MembersReportTests(TestCase):
         info = views.MemberDetailView()._get_last_payments(member)
         self.assertEqual(len(info), 12)
         self.assertEqual(info[0]['timestamp'], '2020-03-22 14:32:14')
+
+    def test_last_payments_with_invoice(self):
+        member = create_member(first_payment_year=2017, first_payment_month=5)
+        ps = create_payment_strategy()
+        amount = 100
+        tstamp = datetime.datetime(2018, 3, 22, 14, 32, 11)
+        logic.create_payment(member, tstamp, amount, ps)
+        (payment,) = Payment.objects.all()
+        payment.invoice_spoint = 7
+        payment.invoice_number = 1234
+        payment.invoice_ok = True
+        payment.save()
+
+        info = views.MemberDetailView()._get_last_payments(member)
+        self.assertEqual(info, [
+            {
+                'title': 'Transfer x 100.00',
+                'timestamp': '2018-03-22 14:32:11',
+                'invoice': '7-1234',
+                'quotas': '2017-05',
+            }
+        ])
 
 
 class MemberTests(TestCase):
