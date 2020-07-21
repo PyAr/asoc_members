@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.core.management.base import BaseCommand
 
-from events.models import Event, Expense, Invoice
+from events.models import Event, Expense, Invoice, Sponsoring
 
 from rapidtables import make_table
 
@@ -38,9 +38,10 @@ class Command(BaseCommand):
 
 
 class PaymentState(enum.Enum):
+    not_invoiced = "no invoice"
     complete = "✓"
-    partial = "~"
-    missing = "x"
+    partial = "partial"
+    missing = "no payment"
 
 
 def show_title(title):
@@ -57,41 +58,43 @@ def show_table(title, table):
 
 def process_incomes(event):
     """Process and show incomes."""
-    invoice_totals = dict(available=0, pending=0)
-    invoices = (
-        Invoice.objects
-        .filter(sponsoring__sponsorcategory__event=event, sponsoring__close=False)
-        .all()
-    )
-    if not invoices:
-        print("WARNING!!! invoices not found")
-        return invoice_totals
+    income_totals = dict(available=0, pending=0)
+    sponsorings = Sponsoring.objects.filter(sponsorcategory__event=event, close=False).all()
+    if not sponsorings:
+        print("WARNING!!! sponsorings not found")
+        return income_totals
 
-    invoice_data = []
-    for invoice in invoices:
+    income_data = []
+    for sponsoring in sponsorings:
         # payment state
-        if invoice.complete_payment:
-            payment = PaymentState.complete
-        elif invoice.partial_payment:
-            payment = PaymentState.partial
+        try:
+            invoice = Invoice.objects.get(sponsoring=sponsoring)
+        except Invoice.DoesNotExist:
+            payment = PaymentState.not_invoiced
         else:
-            payment = PaymentState.missing
+            if invoice.complete_payment:
+                payment = PaymentState.complete
+            elif invoice.partial_payment:
+                payment = PaymentState.partial
+            else:
+                payment = PaymentState.missing
 
         # sponsor info
         sponsor_info = "{} ({})".format(
-            invoice.sponsoring.sponsor.organization_name, invoice.sponsoring.sponsorcategory.name)
+            sponsoring.sponsor.organization_name, sponsoring.sponsorcategory.name)
 
-        invoice_data.append({
-            'amount': invoice.amount,
+        amount = sponsoring.sponsorcategory.amount
+        income_data.append({
+            'amount': amount,
             'payment': payment.value,
             'sponsorship': sponsor_info,
         })
 
         total = "available" if payment == PaymentState.complete else "pending"
-        invoice_totals[total] = invoice_totals[total] + invoice.amount
+        income_totals[total] = income_totals[total] + amount
 
-    show_table("Detailed sponsorships status:", invoice_data)
-    return invoice_totals
+    show_table("Detailed sponsorships status:", income_data)
+    return income_totals
 
 
 def process_expenses(event):
