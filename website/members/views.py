@@ -418,9 +418,14 @@ class MemberDetailView(LoginRequiredMixin, DetailView):
         payments = sorted(grouped.items(), key=lambda pq: pq[0].timestamp, reverse=True)
         info = []
         for payment, quotas in payments[:limit]:
+            if payment.invoice_ok:
+                invoice = '{}-{}'.format(payment.invoice_spoint, payment.invoice_number)
+            else:
+                invoice = '(-)'
             info.append({
                 'title': "{} x {:.2f}".format(payment.strategy.platform.title(), payment.amount),
                 'timestamp': payment.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                'invoice': invoice,
                 'quotas': ', '.join(sorted(q.code for q in quotas)),
             })
 
