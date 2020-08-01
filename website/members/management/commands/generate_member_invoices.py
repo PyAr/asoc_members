@@ -87,7 +87,7 @@ class Command(BaseCommand):
             print("    truncating to {}".format(limit))
 
         for payment in payments:
-            print("Generating invoice for payment", payment)
+            print("Processing payment", payment)
             record = {
                 'invoice_date': invoice_date,
             }
@@ -178,16 +178,18 @@ class Command(BaseCommand):
             invoice.add_item(
                 description=description, quantity=rec['quantity'], amount=rec['amount'])
             invoices.append(invoice)
+        print("Invoices generated, calling AFIP...")
         try:
             results = afip.process_invoices(invoices, settings.AFIP['selling_point'])
         except Exception:
-            print("PROBLEMS processing invoices", invoices)
+            print("    PROBLEMS processing invoices", invoices)
             raise
+        print("AFIP interaction ended correctly")
 
-        # save the results for the generated ok invoices and send the proper mails
+        # save the results for the generated ok invoices
+        storing_info = []
         for invoice_number, result in sorted(results.items()):
-            print("Post-processing invoice {} at {}".format(
-                invoice_number, result.get('pdf_path')))
+            print("Checking invoice {} results {}".format(invoice_number, result))
             if not result['invoice_ok']:
                 print("    WARNING: invoice NOT authorized ok")
                 continue
@@ -196,14 +198,37 @@ class Command(BaseCommand):
             payment.invoice_ok = True
             payment.save()
 
+            storing_info.append((result['pdf_path'], invoice_number, payment))
+            print("    ok")
+
+        # at this point the AFIP cycle is closed: if AFIP approved the invoice it's flagged as
+        # ok in our DB, the worst thing that can happen now is failing to storing the PDF in
+        # gdrive or sending it by mail
+        for pdf_path, invoice_number, payment in storing_info:
+            print("Post-processing invoice {} at {}".format(invoice_number, pdf_path))
+            storing_ok = True
+
             # upload the invoice to google drive
-            gdrive.upload_invoice(result['pdf_path'], invoice_date)
-            print("    uploaded to gdrive OK")
+            try:
+                gdrive.upload_invoice(pdf_path, invoice_date)
+            except Exception as err:
+                storing_ok = False
+                print("    failed uploading to gdrive:", repr(err))
+            else:
+                print("    uploaded to gdrive OK")
 
             # send the invoice by mail
-            person = persons_per_invoice[invoice_number]
-            _send_mail(payment.timestamp, person.email, result['pdf_path'])
-            print("    sent by mail OK")
+            try:
+                person = persons_per_invoice[invoice_number]
+                _send_mail(payment.timestamp, person.email, pdf_path)
+            except Exception as err:
+                storing_ok = False
+                print("    failed sending by mail:", repr(err))
+            else:
+                print("    sent by mail OK")
 
-            # invoice uploaded to gdrive and sent ok, don't need it here anymore
-            os.remove(result['pdf_path'])
+            if storing_ok:
+                # invoice uploaded to gdrive and sent ok, don't need it here anymore
+                os.remove(pdf_path)
+            else:
+                print("    ERROR! Keeping invoice PDF")
