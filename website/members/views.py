@@ -44,7 +44,8 @@ class SignupPersonFormView(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super(SignupPersonFormView, self).get_context_data(**kwargs)
-        context["categories"] = Category.objects.order_by('-fee')
+        human_cats = Category.HUMAN_CATEGORIES
+        context["categories"] = Category.objects.order_by('-fee').filter(name__in=human_cats)
         return context
 
     def form_invalid(self, form):

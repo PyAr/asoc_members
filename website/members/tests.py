@@ -92,6 +92,18 @@ class SignupPagesTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'members/signup_person_form.html')
 
+    def test_signup_person_page_linebreaks(self):
+        # test that it respectes the line breaks of the original description
+        Category.objects.create(name='Activo', description='foo\nbar\n', fee=50)
+        response = self.client.get(reverse('signup_person'))
+        self.assertIn(b'foo<br>bar', response.content)
+
+    def test_signup_person_page_categories(self):
+        # test that it show only human-related categories
+        cat = Category.objects.create(name=Category.BENEFACTOR_GOLD, description='', fee=500)
+        response = self.client.get(reverse('signup_person'))
+        self.assertNotIn(cat, response.context_data['categories'])
+
     def test_get_signup_org_page(self):
         response = self.client.get(reverse('signup_organization'))
         self.assertEqual(response.status_code, 200)
