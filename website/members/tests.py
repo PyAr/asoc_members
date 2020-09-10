@@ -109,6 +109,34 @@ class SignupPagesTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'members/signup_org_form.html')
 
+    def test_signup_org_page_linebreaks(self):
+        # test that it respectes the line breaks of the original description
+        Category.objects.create(name=Category.BENEFACTOR_GOLD, description='foo\nbar\n', fee=50)
+        response = self.client.get(reverse('signup_organization'))
+        self.assertIn(b'foo<br>bar', response.content)
+
+    def test_signup_org_page_data(self):
+        # test that it produced the correct info for the form
+        Category.objects.create(name=Category.BENEFACTOR_SILVER, description='descrip 1', fee=500)
+        Category.objects.create(name=Category.BENEFACTOR_GOLD, description='descrip 2', fee=700)
+        response = self.client.get(reverse('signup_organization'))
+        expected = [{
+            'name': Category.BENEFACTOR_GOLD,
+            'description': 'descrip 2',
+            'anual_fee': 8400,
+        }, {
+            'name': Category.BENEFACTOR_SILVER,
+            'description': 'descrip 1',
+            'anual_fee': 6000,
+        }]
+        self.assertEqual(response.context_data['categories'], expected)
+
+    def test_signup_org_page_categories(self):
+        # test that it show only enterprise-related categories
+        cat = Category.objects.create(name=Category.ACTIVE, description='', fee=500)
+        response = self.client.get(reverse('signup_organization'))
+        self.assertNotIn(cat, response.context_data['categories'])
+
     def test_signup_submit_success(self):
         # crear categoria
         cat = Category.objects.create(name='Activo', description='', fee=50)
