@@ -2,6 +2,7 @@ import datetime
 import tempfile
 import logassert
 from io import BytesIO
+from unittest.mock import patch
 
 from PIL import Image
 
@@ -972,3 +973,38 @@ class MemberTests(TestCase):
 
         missing = {k for k, v in member.get_missing_info(for_approval=True).items() if v}
         self.assertFalse(missing)
+
+
+class ReportCompleteTests(TestCase):
+
+    def setUp(self):
+        user = User.objects.create_user(username='testuser', password='12345', email='1@1.com')
+        self.client.force_login(user)
+        self.addCleanup(self.client.logout)
+
+    def test_approve_and_send_mails_ok(self):
+        # create a couple of members already there, for the system to select next number
+        MemberFactory.create(legal_id=1)
+        MemberFactory.create(legal_id=2)
+
+        # create two members ready to be approved
+        category = create_category()
+        m1 = Member.objects.create(legal_id=None, registration_date=None, category=category)
+        m2 = Member.objects.create(legal_id=None, registration_date=None, category=category)
+
+        # hit the service
+        with patch('members.utils.send_email'):
+            request_data = {
+                'approve': [m1.id, m2.id],
+                'registration_date': '2020-09-11',
+            }
+            response = self.client.post(reverse('report_complete'), data=request_data)
+            self.assertEqual(response.status_code, 200)
+
+        # check the members were approved correctly
+        m = Member.objects.get(pk=m1.id)
+        self.assertEqual(m.legal_id, 3)
+        self.assertEqual(m.registration_date, datetime.date(2020, 9, 11))
+        m = Member.objects.get(pk=m2.id)
+        self.assertEqual(m.legal_id, 4)
+        self.assertEqual(m.registration_date, datetime.date(2020, 9, 11))

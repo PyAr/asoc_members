@@ -1,0 +1,17 @@
+Hola!
+
+En este sencillo pero emotivo acto (?) te cuento que en la última reunión de Comisión Directiva se aprobó y confirmó tu asociación.
+
+Tipo de asociación {{ member_type }}, número {{ member_number }}.
+
+Cualquier duda o comentario, a tu servicio.
+
+Gracias, saludos,
+
+--
+.   Lalita
+.
+Asociación Civil Python Argentina
+http://ac.python.org.ar/
+
+(claro, este mail es automático, soy une bot, pero contestá el mail sin problemas que le va a llegar al humane correspondiente)

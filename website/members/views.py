@@ -6,7 +6,7 @@ from urllib import parse
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Max
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
@@ -239,56 +239,45 @@ class ReportComplete(View):
     """Handles the report on people who are in a position to be approved as members"""
 
     MAIL_SUBJECT = "Continuación del trámite de inscripción a la Asociación Civil Python Argentina"
-    MAIL_FROM = 'Lalita <lalita@ac.python.org.ar>'
     MAIL_MANAGER = 'presidencia@ac.python.org.ar>'
 
     def post(self, request):
-        print("======body?", parse.parse_qs(request.body))
-        raw_approve = parse.parse_qs(request.body)[b'approve']
-        to_approve_ids = map(int, raw_approve)
+        to_approve_ids = map(int, request.POST.getlist('approve'))
+        registration_date = datetime.datetime.strptime(
+            request.POST['registration_date'], '%Y-%m-%d')
+
         sent_error = 0
         sent_ok = 0
         tini = time.time()
         errors_code = str(uuid.uuid4())
+
+        # get the first free legal id
+        _max_legal_id_query = Member.objects.aggregate(Max('legal_id'))
+        next_legal_id = _max_legal_id_query['legal_id__max'] + 1
+
         for member_id in to_approve_ids:
             member = Member.objects.get(id=member_id)
 
-            # approve the member, setting a new legal_id to it
-            print("======= FIXME: approve", member)
+            # approve the member, setting a new legal_id and date to it
+            member.legal_id = next_legal_id
+            member.registration_date = registration_date
+            member.save()
+            next_legal_id += 1
 
             # send a mail to the person informing new membership
-            print("======= FIXME: send mail about new membership")
-            # text = render_to_string('members/mail_missing.txt', missing_info)
-            # text = _clean_double_empty_lines(text)
-            # if 'ERROR' in text:
-            #     # badly built template
-            #     logger.error(
-            #         "Error when building the report missing mail result, info: %s", missing_info)
-            #     return HttpResponse("Error al armar la página")
-
-            # # build the mail
-            # recipient = f"{member.entity.full_name} <{member.entity.email}>"
-            # mail = EmailMessage(
-            #     self.MAIL_SUBJECT, text, self.MAIL_FROM, [recipient],
-            #     cc=[self.MAIL_MANAGER], reply_to=[self.MAIL_MANAGER])
-            # if missing_info['missing_signed_letter']:
-            #     mail.attach_file(letter_filepath)
-
-            # # actually send it
-            # try:
-            #     mail.send()
-            # except Exception as err:
-            #     sent_error += 1
-            #     logger.error(
-            #         "Problems sending email [%s] to member %s: %r", errors_code, member, err)
-            # else:
-            #     sent_ok += 1
-            # finally:
-            #     if missing_info['missing_signed_letter']:
-            #         try:
-            #             os.unlink(letter_filepath)
-            #         except Exception as exc:
-            #            logger.warning("Couldn't remove letter file %r: %r", letter_filepath, exc)
+            info = {
+                'member_type': member.category.name,
+                'member_number': member.legal_id,
+            }
+            text = render_to_string('members/mail_newmember.txt', info)
+            try:
+                utils.send_email(member, text, self.MAIL_SUBJECT, cc=[self.MAIL_MANAGER])
+            except Exception as err:
+                sent_error += 1
+                logger.exception(
+                    "Problems sending email [%s] to member %s: %r", errors_code, member, err)
+            else:
+                sent_ok += 1
 
         deltat = time.time() - tini
         context = {

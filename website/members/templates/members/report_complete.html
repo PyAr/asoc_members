@@ -9,10 +9,12 @@
         <div class="inner-content">
             {% block inner-content %}
                 <div>
-                <form method="post" action"{% url 'report_complete' %}">
+                <form method="post" action="{% url 'report_complete' %}">
                     {% csrf_token %}
-                    ¿Aprobar los seleccionados?
-                    <button id="selected" type="submit">Mandar</button>
+                    Fecha de aprobación (YYYY-MM-DD): 
+                    <input type="text" name="registration_date" style="width: 12em;"/>
+                    <button id="approve" type="submit">Aprobar los seleccionados</button>
+
                 <table class="table">
                 <tr> 
                     <th>Nombre</th>
