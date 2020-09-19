@@ -24,8 +24,9 @@
                     Socio {{ cat.name }}
                 </div>
                 <div class="panel-body">
-                    {{ cat.description}}<br>
-                    <strong>Cuota:  ${{ cat.fee }} Mensual </strong>
+                    {{ cat.description | linebreaks }}
+                    <br/>
+                    <strong>Cuota: ${{ cat.fee }} mensual </strong>
                 </div>
             </div>
         </div>
