@@ -61,12 +61,14 @@ def generate_member_letter(member):
     return letter_filepath
 
 
-def send_email(member, subject, text, attachment=None):
+def send_email(member, subject, text, attachment=None, cc=None):
     """Send a mail to a member."""
     text = clean_double_empty_lines(text)
     recipient = f"{member.entity.full_name} <{member.entity.email}>"
+    if cc is None:
+        cc = []
 
-    mail = EmailMessage(subject, text, settings.EMAIL_FROM, [recipient])
+    mail = EmailMessage(subject, text, settings.EMAIL_FROM, [recipient], cc=cc)
     if attachment is not None:
         mail.attach_file(attachment)
     mail.send()
