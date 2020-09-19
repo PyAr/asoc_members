@@ -1,13 +1,51 @@
 {% extends "members/signup_initial.html" %}
 {% load crispy_forms_tags %}
 {% block inner-content %}
-    <p>Si querés el detalle completo podes consultarlo en la página 5 de nuestro estatuto:
-            <a href="http://bit.ly/pyar-estatuto">http://bit.ly/pyar-estatuto</a>
-        </p>
-    <form method="POST" novalidate  enctype="multipart/form-data">
-        {% crispy form %}
-        <a class="btn btn-default" href="{% url 'signup' %}">Volver</a>
-        <input type="submit" class="btn btn-success" value="Enviar solicitud" />
-    </form>
+
+<p>
+De la página 5 de nuestro <a href="http://bit.ly/pyar-estatuto">Estatuto</a>:
+</p>
+<p>
+Serán asociados benefactores las personas físicas o jurídicas que contribuyan
+prestando servicios o aportes significativos a la Asociación, reconocidos por la Comisión
+Directiva e incorporados, previa su aceptación como socios por la misma. Apoyarán
+económicamente y de manera especial a la entidad abonando cuota social u otras
+contribuciones que se establezcan. Podrán ser designados para integrar las subcomisiones
+que se creen. Tendrán voz pero no voto en las asambleas, y no podrán ser elegidos para
+integrar los órganos sociales. Los socios activos o adherentes que, voluntariamente abonen
+de forma regular aportes significativos adicionales a la cuota social, a juicio de la Comisión
+Directiva, podrán pertenecer a esta categoría, sin que esta denominación les otorgue
+privilegio alguno, por lo tanto, no implica reconocer derechos ni imponer obligaciones.
+</p>
+
+<div class="row">
+    {% for cat in categories %}
+    <div class="col-sm-4">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                Socio {{ cat.name }}
+            </div>
+            <div class="panel-body">
+                {{ cat.description | linebreaks }}
+                <br/>
+                <strong>Cuota: ${{ cat.anual_fee }} anual </strong>
+            </div>
+        </div>
+    </div>
+    {% if forloop.counter|divisibleby:3 %}
+        </div><div class="row">
+    {% endif %}
+    {% endfor %}
 </div>
+
+<p>
+Más información sobre los distintos beneficios en <a href="https://github.com/PyAr/asoc/raw/master/folleter%C3%ADa/Propuesta%20Empresas%20Benefactoras.pdf">este documento</a>.
+</p>
+
+<form method="POST" novalidate  enctype="multipart/form-data">
+    {% crispy form %}
+    <a class="btn btn-default" href="{% url 'signup' %}">Volver</a>
+    <input type="submit" class="btn btn-success" value="Enviar solicitud" />
+</form>
+
 {% endblock %}

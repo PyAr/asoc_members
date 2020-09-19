@@ -43,13 +43,14 @@ class SignupPersonFormView(CreateView):
     success_url = reverse_lazy('signup_person_thankyou')
 
     def get_context_data(self, **kwargs):
-        context = super(SignupPersonFormView, self).get_context_data(**kwargs)
-        context["categories"] = Category.objects.order_by('-fee')
+        context = super().get_context_data(**kwargs)
+        human_cats = Category.HUMAN_CATEGORIES
+        context["categories"] = Category.objects.order_by('-fee').filter(name__in=human_cats)
         return context
 
     def form_invalid(self, form):
         messages.error(self.request, _("Por favor, revise los campos."))
-        return super(SignupPersonFormView, self).form_invalid(form)
+        return super().form_invalid(form)
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -74,6 +75,17 @@ class SignupOrganizationsFormView(CreateView):
     model = Organization
     template_name = 'members/signup_org_form.html'
     success_url = reverse_lazy('signup_organization_thankyou')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        human_cats = Category.HUMAN_CATEGORIES
+        context["categories"] = [
+            {
+                'name': cat.name,
+                'description': cat.description,
+                'anual_fee': cat.fee * 12,
+            } for cat in Category.objects.order_by('-fee').exclude(name__in=human_cats)]
+        return context
 
 
 class SignupPersonThankyouView(TemplateView):
@@ -387,7 +399,7 @@ class MembersListView(LoginRequiredMixin, ListView):
     }
 
     def get_queryset(self):
-        queryset = super(MembersListView, self).get_queryset()
+        queryset = super().get_queryset()
         search_value = self.request.GET.get('search', None)
         if search_value and search_value != '':
             queryset = search_filtered_queryset(queryset, self.search_fields, search_value)
@@ -433,7 +445,7 @@ class MemberDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         # Get the context from base
-        context = super(MemberDetailView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         member = self.get_object()
         today = datetime.date.today()
         debt = logic.get_debt_state(member, today.year, today.month)

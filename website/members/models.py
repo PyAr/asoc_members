@@ -248,6 +248,7 @@ class Category(TimeStampedModel):
         (BENEFACTOR_GOLD, BENEFACTOR_GOLD),
         (BENEFACTOR_SILVER, BENEFACTOR_SILVER),
     )
+    HUMAN_CATEGORIES = {ACTIVE, SUPPORTER, STUDENT, COLLABORATOR, TEENAGER}
 
     class Meta:
         verbose_name_plural = "categories"
