@@ -271,7 +271,7 @@ class ReportComplete(View):
             }
             text = render_to_string('members/mail_newmember.txt', info)
             try:
-                utils.send_email(member, text, self.MAIL_SUBJECT, cc=[self.MAIL_MANAGER])
+                utils.send_email(member, self.MAIL_SUBJECT, text, cc=[self.MAIL_MANAGER])
             except Exception as err:
                 sent_error += 1
                 logger.exception(
