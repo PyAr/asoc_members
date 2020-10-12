@@ -993,7 +993,7 @@ class ReportCompleteTests(TestCase):
         m2 = Member.objects.create(legal_id=None, registration_date=None, category=category)
 
         # hit the service
-        with patch('members.utils.send_email'):
+        with patch('members.utils.send_email') as mail_mock:
             request_data = {
                 'approve': [m1.id, m2.id],
                 'registration_date': '2020-09-11',
@@ -1002,9 +1002,25 @@ class ReportCompleteTests(TestCase):
             self.assertEqual(response.status_code, 200)
 
         # check the members were approved correctly
-        m = Member.objects.get(pk=m1.id)
-        self.assertEqual(m.legal_id, 3)
-        self.assertEqual(m.registration_date, datetime.date(2020, 9, 11))
-        m = Member.objects.get(pk=m2.id)
-        self.assertEqual(m.legal_id, 4)
-        self.assertEqual(m.registration_date, datetime.date(2020, 9, 11))
+        m3 = Member.objects.get(pk=m1.id)
+        self.assertEqual(m3.legal_id, 3)
+        self.assertEqual(m3.registration_date, datetime.date(2020, 9, 11))
+        m4 = Member.objects.get(pk=m2.id)
+        self.assertEqual(m4.legal_id, 4)
+        self.assertEqual(m4.registration_date, datetime.date(2020, 9, 11))
+
+        # verify mail was called ok
+        call1, call2 = mail_mock.mock_calls
+
+        _, args, kwargs = call1
+        self.assertEqual(args[0], m3)
+        self.assertEqual(
+            args[1],
+            'Continuación del trámite de inscripción a la Asociación Civil Python Argentina')
+        self.assertIn(
+            'en la última reunión de Comisión Directiva se aprobó y confirmó tu asociación.',
+            args[2])
+        self.assertEqual(kwargs, {'cc': ['presidencia@ac.python.org.ar>']})
+
+        _, args, kwargs = call2
+        self.assertEqual(args[0], m4)
