@@ -1,11 +1,12 @@
 certg==4.2
+certifi>=2020.4.5.1
 django-configurations==2.2
 django-crispy-forms==1.9.0
 django-extensions==2.2.8
 django-reversion-compare==0.12.0
 django-storages[azure]==1.9.1
 django==2.2.13
-google-api-python-client-py3==1.2
+google-api-python-client==1.12.8
 gunicorn==20.0.4
 mercadopago==1.1.1
 oauth2client==4.1.3
