@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from django.core.exceptions import ValidationError
 from django.core.files.images import get_image_dimensions
-from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.templatetags.static import static
 
 DEFAULT_MAX_LEN = 317  # Almost random
 LONG_MAX_LEN = 2048  # Random but bigger
