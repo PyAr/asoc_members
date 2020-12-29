@@ -55,6 +55,8 @@ def verify_service(selling_point):
     """Basic initial check that everything works with AFIP."""
     wsfev1 = _get_afip()
     last_auth_invoice = wsfev1.CompUltimoAutorizado(INVOICE_TYPE, selling_point)
+    if int(last_auth_invoice) == 0:
+        raise ValueError("Bad last auth invoice (AFIP is misbehaving)")
     print("Last authorized invoice", last_auth_invoice)
     res = wsfev1.CompConsultar(INVOICE_TYPE, last_auth_invoice, selling_point)
     print("Current status", repr(res))

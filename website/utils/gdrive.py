@@ -51,7 +51,7 @@ class Explorer:
     def __init__(self):
         credentials = get_credentials()
         authorized_http = credentials.authorize(httplib2.Http())
-        self.service = discovery.build('drive', 'v3', http=authorized_http)
+        self.service = discovery.build('drive', 'v3', http=authorized_http, cache_discovery=False)
 
     def create_folder(self, folder, parent):
         """Create a folder."""
