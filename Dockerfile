@@ -19,6 +19,10 @@ COPY . /code/
 # Set working dir
 WORKDIR /code/website
 
+# Patch SSL config so we can work with AFIP (see the following issue 
+# for more info: https://github.com/PyAr/asoc_members/issues/133 )
+RUN sed -i 's/CipherString = DEFAULT@SECLEVEL=2/CipherString = DEFAULT@SECLEVEL=1/' /etc/ssl/openssl.cnf
+
 # Bring pyafipws branch and install it's dependencies
 RUN wget https://github.com/PyAr/pyafipws/archive/py3k.zip && unzip py3k.zip && mv pyafipws-py3k pyafipws
 RUN pip install --no-cache-dir -r /code/website/pyafipws/requirements.txt
