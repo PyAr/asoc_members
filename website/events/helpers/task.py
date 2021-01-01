@@ -1,6 +1,9 @@
 """Task helper.
+
 This module is to help on construct the list of pending tasks.
+
 The idea is represents the next set of task types:
+
     Organizer Tasks:
         * Event with incomplete data (place, date or type) - INCOMPLETE_EVENT
         * Event without sponsorcategories - NOT_SPONSOR_CAEGORY
@@ -16,6 +19,7 @@ The idea is represents the next set of task types:
         * End provider payment
         * End organizer refund payment
 """
+
 from django.db.models import Max, Sum, Count
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -38,6 +42,7 @@ NOT_BANK_ACCOUNT = 'not_bank_account'
 
 class Task:
     """Represents a pending task to asing a superuser or organizer.
+
     Each tas must have a description to show, an url to access to resolve
     and a time to order the group of tasks.
     """
@@ -48,7 +53,7 @@ class Task:
 
 
 class TaskFactory:
-    """ Factory of task."""
+    """Factory of task."""
     def __init__(self):
         self._builders = {}
 
@@ -91,18 +96,14 @@ def not_approved_invoices_task_builder(invoice):
 
 
 def not_complete_personal_data_task_builder(organizer):
-    description = _(
-        f'Falta completar su informacion personal'
-    )
+    description = _('Falta completar su informacion personal')
     url = reverse('organizer_change', kwargs={'pk': organizer.pk})
     time = organizer.created
     return Task(description, url, time)
 
 
 def not_account_data_task_builder(organizer):
-    description = _(
-        f'Falta completar sus datos de cuenta bancaria'
-    )
+    description = _('Falta completar sus datos de cuenta bancaria')
     url = reverse('organizer_create_bank_account_data', kwargs={'pk': organizer.pk})
     time = organizer.created
     return Task(description, url, time)
@@ -168,11 +169,12 @@ def unpaid_organizer_refund_task_builder(organizer, count, time):
 
 
 def calculate_super_user_task():
-    """Calculates superuser pending tasks.
+    """Calculate superuser pending tasks.
+
     The user is not an argument because is the same for all superusers
 
-    Returns:
-    list(Task): List of superusar task
+    Return:
+        list(Task): List of superuser tasks.
     """
     tasks = []
 
@@ -183,11 +185,11 @@ def calculate_super_user_task():
 
     # Sponsoring without invoice attached.
     # TODO: move query into manager
-    unblilled_sponsorings = Sponsoring.objects.filter(invoice__isnull=True, close=False).all()
-    for sponsoring in unblilled_sponsorings:
+    unbilled_sponsorings = Sponsoring.objects.filter(invoice__isnull=True, close=False).all()
+    for sponsoring in unbilled_sponsorings:
         tasks.append(unblilled_sponsorings_task_builder(sponsoring))
 
-    # Invoice with invoice affect that sum tota and not complete flag setted
+    # Invoice with invoice affect that sum total and not complete flag set
     # TODO: move query into manager
     not_complete_with_affects_sum = Invoice.objects.filter(
         sponsoring__close=False,
@@ -212,7 +214,8 @@ def calculate_super_user_task():
             tasks.append(unpayment_invoices_task_builder(invoice))
 
     unpaid_provider_expense = ProviderExpense.objects.filter(
-        payment__isnull=True
+        payment__isnull=True,
+        cancelled_date__isnull=True,
     ).all()
     for expense in unpaid_provider_expense:
         tasks.append(provider_payment_unfinish_task_builder(expense))

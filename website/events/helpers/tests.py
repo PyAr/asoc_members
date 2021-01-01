@@ -126,6 +126,7 @@ def create_event_set(user):
 
     SponsorCategory.objects.create(name='Gold', amount=10000, event=event01)
     SponsorCategory.objects.create(name='Silver', amount=1000, event=event01)
+    return event01
 
 
 def create_organizer_set(auto_create_user_set=False):
@@ -192,7 +193,7 @@ def create_sponsors_set():
 
 
 def create_provider():
-    Provider.objects.create(**provider_data)
+    return Provider.objects.create(**provider_data)
 
 
 def create_sponsoring_set(auto_create_sponsors_set=False):
@@ -262,7 +263,7 @@ def get_response_wsgi_messages(response):
     return [message.message for message in storage]
 
 
-def create_provider_expense():
+def create_provider_expense(payment=None, cancelled_date=None):
     """Create provider expense to test.
 
     Precondition:
@@ -270,14 +271,21 @@ def create_provider_expense():
         create_event_set()
         create_provider()
     """
-    ProviderExpense.objects.create(
-        provider=Provider.objects.first(),
+    provider = Provider.objects.first()
+    if provider is None:
+        provider = create_provider()
+    event = Event.objects.first()
+    if event is None:
+        event = create_event_set()
+    return ProviderExpense.objects.create(
+        provider=provider,
         amount='1200',
         invoice_type='A',
         invoice_date=timezone.now(),
         description='test',
-        event=Event.objects.first(),
-        cancelled_date=None,
+        event=event,
+        cancelled_date=cancelled_date,
+        payment=payment,
     )
 
 
