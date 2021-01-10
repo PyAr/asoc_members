@@ -65,6 +65,7 @@ from events.models import (
     BankAccountData,
     Event,
     Organizer,
+    Payment,
     Provider,
     Sponsor,
     SponsorCategory,
@@ -891,6 +892,24 @@ class PendindTaskTest(TestCase, CustomAssertMethods):
         calculate_super_user_task()
         invoices_to_complete_builder_function.assert_called_once_with(self.invoice)
         self.assertFalse(unpayment_task_builder_function.called)
+
+    @patch('events.helpers.task.provider_payment_unfinish_task_builder', return_value=test_task)
+    def test_providerexpense_no_payment(self, provider_payment_unfinish_task_builder):
+        expense = create_provider_expense()
+        calculate_super_user_task()
+        provider_payment_unfinish_task_builder.assert_called_with(expense)
+
+    @patch('events.helpers.task.provider_payment_unfinish_task_builder', return_value=test_task)
+    def test_providerexpense_paid(self, provider_payment_unfinish_task_builder):
+        create_provider_expense(payment=Payment.objects.create(document='testdoc'))
+        calculate_super_user_task()
+        provider_payment_unfinish_task_builder.assert_not_called()
+
+    @patch('events.helpers.task.provider_payment_unfinish_task_builder', return_value=test_task)
+    def test_providerexpense_cancelled(self, provider_payment_unfinish_task_builder):
+        create_provider_expense(cancelled_date=timezone.now())
+        calculate_super_user_task()
+        provider_payment_unfinish_task_builder.assert_not_called()
 
 
 class ProviderViewsTest(TestCase, CustomAssertMethods):
