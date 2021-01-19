@@ -5,6 +5,7 @@ import os.path
 
 from django.core.management.base import BaseCommand
 from django.core.files.storage import default_storage
+from django.utils import timezone
 
 from events.models import Expense
 from utils import gdrive
@@ -23,6 +24,7 @@ FOLDER_TYPE_NAMES = {
 
 # to avoid messing with gdrive every time
 DIR_CACHE = {}
+FILES_CACHE = {}
 
 
 def ensure_directory(explorer, parent_id, dirname):
@@ -42,22 +44,50 @@ def ensure_directory(explorer, parent_id, dirname):
     return folder_id
 
 
+def get_files(explorer, folder_id):
+    """Get files info for a specific folder, cached."""
+    try:
+        files = FILES_CACHE[folder_id]
+    except KeyError:
+        files = {f['name']: f for f in explorer.list_folder(folder_id)}
+        FILES_CACHE[folder_id] = files
+    return files
+
+
 class Command(BaseCommand):
     help = "Upload those invoices type A to gdrive"
 
     def add_arguments(self, parser):
-        parser.add_argument('year', type=int)
-        parser.add_argument('month', type=int)
+        parser.add_argument('yearmonth', type=str, nargs='?')
 
     def handle(self, *args, **options):
-        year = int(options['year'])
-        month = int(options['month'])
+        yearmonth = options['yearmonth']
+        if yearmonth is None:
+            # by default is "last month"
+            now = timezone.now()
+            year = now.year
+            month = now.month - 1
+            if month <= 0:
+                year -= 1
+                month = 12
+        else:
+            if len(yearmonth) != 6 or not yearmonth.isdigit():
+                print("USAGE: upload_gdrive_invoices.py [YYYYMM]")
+                exit()
+            year = int(yearmonth[:4])
+            month = int(yearmonth[4:])
 
+        print("Filtering expenses for year={!r} month={!r}".format(year, month))
         expenses = Expense.objects.filter(
             invoice_date__year=year,
             invoice_date__month=month,
         ).all()
         print("Found {} expenses".format(len(expenses)))
+
+        # ensure needed dirs are present in google drive
+        explorer = gdrive.Explorer()
+        yearmonth_foldername = "{}{:02d}".format(year, month)
+        base_folder_id = ensure_directory(explorer, BASE_FOLDER, yearmonth_foldername)
 
         for exp in expenses:
             # build useful vars for later
@@ -66,9 +96,18 @@ class Command(BaseCommand):
             dest_filename = "{:%Y%m%d} - {}: {} [${}] ({}).{}".format(
                 exp.invoice_date, exp.event.name, exp.description,
                 exp.amount, orig_name, extension)
-            dest_foldername_ym = exp.invoice_date.strftime("%Y%m")
             dest_foldername_inv_type = FOLDER_TYPE_NAMES[exp.invoice_type]
             print("Processing", repr(dest_filename))
+
+            # ensure dir in google drive, see if file is already there
+            folder_id = ensure_directory(explorer, base_folder_id, dest_foldername_inv_type)
+            old_files = get_files(explorer, folder_id)
+            if dest_filename in old_files:
+                old_info = old_files[dest_filename]
+                if int(old_info['size']) == default_storage.size(exp.invoice.name):
+                    print("    ignoring, already updated")
+                    continue
+                print("    different size, uploading again")
 
             # download the invoice content to a local temp file (flush at the end so all content is
             # available externally, and only after using it close it, as it will then removed)
@@ -77,13 +116,7 @@ class Command(BaseCommand):
             shutil.copyfileobj(remote_fh, local_temp_fh)
             local_temp_fh.flush()
 
-            # upload to google drive
-            explorer = gdrive.Explorer()
-
-            # ensure both dirs are present
-            parent_id = ensure_directory(explorer, BASE_FOLDER, dest_foldername_ym)
-            folder_id = ensure_directory(explorer, parent_id, dest_foldername_inv_type)
-
             # upload
             explorer.upload(local_temp_fh.name, folder_id, filename=dest_filename)
             local_temp_fh.close()
+            print("    uploaded")
