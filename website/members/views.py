@@ -239,7 +239,7 @@ class ReportComplete(View):
     """Handles the report on people who are in a position to be approved as members"""
 
     MAIL_SUBJECT = "Continuación del trámite de inscripción a la Asociación Civil Python Argentina"
-    MAIL_MANAGER = 'presidencia@ac.python.org.ar>'
+    MAIL_MANAGER = 'presidencia@ac.python.org.ar'
 
     def post(self, request):
         to_approve_ids = map(int, request.POST.getlist('approve'))
