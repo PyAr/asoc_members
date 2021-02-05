@@ -1020,7 +1020,7 @@ class ReportCompleteTests(TestCase):
         self.assertIn(
             'en la última reunión de Comisión Directiva se aprobó y confirmó tu asociación.',
             args[2])
-        self.assertEqual(kwargs, {'cc': ['presidencia@ac.python.org.ar>']})
+        self.assertEqual(kwargs, {'cc': ['presidencia@ac.python.org.ar']})
 
         _, args, kwargs = call2
         self.assertEqual(args[0], m4)
