@@ -130,7 +130,7 @@ class ReportDebts(OnlyAdminsViewMixin, View):
                     "Error when building the report missing mail result, info: %s", debt_info)
                 return HttpResponse("Error al armar la página")
             try:
-                utils.send_email(member, text, self.MAIL_SUBJECT)
+                utils.send_email(member, self.MAIL_SUBJECT, text)
             except Exception as err:
                 sent_error += 1
                 logger.exception(
