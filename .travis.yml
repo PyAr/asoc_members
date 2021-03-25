@@ -1,10 +1,8 @@
 sudo: required
 language: python
 python:
-  - "3.6.4"
-  - "3.7"
-  - "3.8"
-  - "3.8-dev"  # 3.8 development branch
+  - "3.9"
+  - "3.10-dev"  # development branch
 services:
   - docker
 before_install:
