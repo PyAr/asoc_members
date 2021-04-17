@@ -42,7 +42,7 @@ class Command(BaseCommand):
             text = render_to_string('members/mail_indebt.txt', debt_info)
             if 'ERROR' in text:
                 # badly built template
-                print("Error when building the report missing mail result, info:", debt_info)
+                raise ValueError("Problems building the mail text; info: {}".format(debt_info))
             mail_data.append((member, text))
 
         print("Found {} members in debt".format(len(mail_data)))
