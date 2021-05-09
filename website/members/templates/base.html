@@ -9,7 +9,7 @@
 		<meta charset="utf-8">
 		<title>Python Argentina - Asociación Civil</title>
 		<meta http-equiv="X-UA-Compatible" content="IE=Edge">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 		<meta name="keywords" content="">
 		<meta name="description" content="">
 
@@ -17,15 +17,17 @@
 
 		<!-- animate css -->
 		<link rel="stylesheet" href="{% static 'css/animate.min.css' %}">
-		<!-- bootstrap css -->
-		<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+		<!-- bootstrap4 css -->
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+		<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
 		<!-- font-awesome -->
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 		<!-- google font -->
 		<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,400italic,700,800' rel='stylesheet' type='text/css'>
 
 		<!-- custom css -->
-		<link rel="stylesheet" href="{% static 'css/templatemo-style.css' %}">
+		<!-- <link rel="stylesheet" href="{% static 'css/templatemo-style.css' %}"> -->
 		{% block extra_statics %}{% endblock %}
 
 	</head>
@@ -36,48 +38,46 @@
 		 </div> -->
 		<!-- end preloader -->
 		<!-- start navigation -->
-		<nav class="navbar navbar-default navbar-fixed-top templatemo-nav" role="navigation">
-			<div class="container">
-				<div class="navbar-header">
-					<button class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-						<span class="icon icon-bar"></span>
-						<span class="icon icon-bar"></span>
-						<span class="icon icon-bar"></span>
-					</button>
-					<img src="{% static 'images/acpyar.png' %}" href="#" class="navbar-brand" alt="Asociación Civil Python Argentina"/>
-				</div>
-				<div class="collapse navbar-collapse">
-					<ul class="nav navbar-nav text-uppercase">
+		<div class="container">
+			<nav class="navbar sticky-top navbar-expand-lg navbar-light bg-light">
+				<a class="navbar-brand" href="{% url 'events_home' %}">
+					<img src="{% static 'images/acpyar.png' %}" alt="Logo de la Asociación Civil Python Argentina" width="120px">
+				</a>
+				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarSupportedContent">
+					<ul class="navbar-nav mr-auto text-uppercase">
 						<!-- <li><a href="#feature">Misión</a></li> -->
-						<li><a href="https://ac.python.org.ar">Asociación Civil</a></li>
+						<li class="nav-item"><a class="nav-link" href="https://python.org.ar/" target="_blank"><i class="fas fa-globe"></i> Python Argentina</a></li>
+						<li class="nav-item"><a class="nav-link" href="https://ac.python.org.ar" target="_blank"><i class="fas fa-globe-americas"></i> Asociación Civil</a></li>
+						{% if user.is_staff %}
+						<li class="nav-item"><a class="nav-link"href="https://pyar.aquiles.com.ar" target="_blank"><i class="fas fa-file-invoice-dollar"></i> Aquiles</a></li>
+						{% endif  %}
 					</ul>
 					{% block extra_navbar_menu %}
 					{% endblock %}
 
 					{% if user.is_authenticated %}
-					<ul class="nav navbar-nav navbar-right">
+					<ul class="navbar-nav navbar-right">
 						<li class="nav-item dropdown">
 							<a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-4" data-toggle="dropdown"
 							aria-haspopup="true" aria-expanded="false" href="#">
 							<i class="fa fa-user"></i> {{ user.username }} </a>
 							
-							<ul class="pyar dropdown-menu" aria-labelledby="navbarDropdownMenuLink-4">
-								<li>
-									<a href="{% url 'profile' %}">Datos cuenta</a>
-								</li>
+							<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+								<a class="dropdown-item" href="{% url 'profile' %}"><i class="fab fa-whmcs"></i> Datos cuenta</a>
 								{% block extra_logged_menu_option %}
 								{% endblock %}
-								<li>
-									<a href="{% url 'logout' %}">Log out</a>
-								</li>
-							</ul>
+								<a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Log out</a>
+							</div>
 						</li>
 					</ul>
 					{% endif %}
 
 				</div>
-			</div>
-		</nav>
+			</nav>
+		</div>
 		<!-- end navigation -->
 		<!-- start home -->
 		<div id="content">

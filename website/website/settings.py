@@ -143,7 +143,7 @@ class Base(Configuration):
         os.path.join(BASE_DIR, "static"),
     ]
 
-    CRISPY_TEMPLATE_PACK = 'bootstrap3'
+    CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR

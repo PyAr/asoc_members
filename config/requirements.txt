@@ -1,7 +1,7 @@
 certg==4.2
 certifi>=2020.4.5.1
 django-configurations==2.2
-django-crispy-forms==1.10.0
+django-crispy-forms==1.11.1
 django-extensions==3.1.0
 django-reversion-compare==0.13.0
 django-storages[azure]==1.11.1

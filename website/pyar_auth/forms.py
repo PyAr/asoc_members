@@ -47,7 +47,7 @@ class AuthenticationForm(AuthAuthenticationForm):
     def __init__(self, *args, **kwargs):
         super(AuthenticationForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
+        self.helper.form_class = 'row'
         self.helper.form_tag = False
 
 
@@ -71,7 +71,7 @@ class SetPasswordForm(AuthSetPasswordForm):
     def __init__(self, *args, **kwargs):
         super(SetPasswordForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
+        self.helper.form_class = 'row'
         self.helper.form_tag = False
 
 
@@ -81,7 +81,7 @@ class PasswordResetForm(AuthPasswordResetForm):
     def __init__(self, *args, **kwargs):
         super(PasswordResetForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
+        self.helper.form_class = 'row'
         self.helper.form_tag = False
 
 
@@ -112,5 +112,5 @@ class PasswordChangeForm(AuthPasswordChangeForm):
     def __init__(self, *args, **kwargs):
         super(PasswordChangeForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
+        self.helper.form_class = 'row'
         self.helper.form_tag = False

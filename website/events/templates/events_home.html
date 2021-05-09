@@ -2,87 +2,76 @@
 {% load static %}
 {% block content %}
 <div class="container">
-    
-    <div class="route-navigator" >
-            <ol class="breadcrumb">
-                <li class="active"><a href="#">Inicio</a></li>
-            </ol>
-    </div>
-    
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-home"></i> Inicio</a></li>
+        </ol>
+    </nav>
     <div class="dashboard_options">
         <div class="row">
             <!--Events-->
-            <div class="col-sm-6 col-md-2">
-                <div class="thumbnail">
-                    <img src="{% static 'images/eventos.png' %}" alt="Eventos">
-                    <div class="caption">
-                        <!--h5 class="text-center">Eventos</h5-->
-                        <!--<p class="card-text">Lista de eventos asociados a su usuario, para poder administrar, según sus permisos.</p>-->
-                        <div class="dashborard-element-actions">
-                            <a href="{% url 'event_list' %}" class="btn btn-primary card-btn" role="button">Eventos</a>
-                        </div>
-                    </div>
-                </div>
+            <div class="col-sm-6 col-md-2 offset-sm-1">
+                <figure class="figure">
+                    <img src="{% static 'images/eventos.png' %}" class="figure-img img-fluid rounded" alt="Eventos">
+                    <figcaption class="figure-caption text-right"><a href="{% url 'event_list' %}" class="btn btn-primary card-btn" role="button">Eventos</a></figcaption>
+                  </figure>
             </div>
 
             <!--Organizers-->
             {% if perms.events.view_organizers %}
             <div class="col-sm-6 col-md-2">
-                <div class="thumbnail">
-                    <img src="{% static 'images/organizadores.png' %}" alt="Organizadores">
-                    <div class="caption">
-                        <!--h5 class="text-center">Organizadores</h5-->
-                        <!--<p class="card-text">Lista de eventos asociados a su usuario, para poder administrar, según sus permisos.</p>-->
-                        <div class="dashborard-element-actions">
-                            <a href="{% url 'organizer_list' %}" class="btn btn-primary card-btn" role="button">Organizadores</a>
-                        </div>
-                    </div>
-                </div>
+                <figure class="figure">
+                    <img src="{% static 'images/organizadores.png' %}" class="figure-img img-fluid rounded" alt="Organizadores">
+                    <figcaption class="figure-caption text-right"><a href="{% url 'organizer_list' %}" class="btn btn-primary card-btn" role="button">Organizadores</a></figcaption>
+                  </figure>
             </div>
             {% endif %}
 
             <!--Sponsors-->
             {% if perms.events.view_sponsors %}
             <div class="col-sm-6 col-md-2">
-                <div class="thumbnail">
-                    <img src="{% static 'images/sponsors.png' %}" alt="Imagen que represente sponsors">
-                    <div class="caption">
-                        <!--h5 class="text-center">Sponsors</h5-->
-                        <!--<p class="card-text">Lista de eventos asociados a su usuario, para poder administrar, según sus permisos.</p>-->
-                        <div class="dashborard-element-actions">
-                            <a href="{% url 'sponsor_list' %}" class="btn btn-primary card-btn" role="button">Sponsors</a>
-                        </div>
-                    </div>
-                </div>
+                <figure class="figure">
+                    <img src="{% static 'images/sponsors.png' %}" class="figure-img img-fluid rounded" alt="Sponsors">
+                    <figcaption class="figure-caption text-right"><a href="{% url 'sponsor_list' %}" class="btn btn-primary card-btn" role="button">Sponsors</a></figcaption>
+                  </figure>
             </div>
             {% endif %}
 
             <!--Providers-->
             {% if perms.events.view_providers %}
             <div class="col-sm-6 col-md-2">
-                <div class="thumbnail">
-                    <img src="{% static 'images/proveedores.png' %}" alt="Imagen que represente proveedores">
-                    <div class="caption">
-                        <!--h5 class="text-center">Sponsors</h5-->
-                        <!--<p class="card-text">Lista de eventos asociados a su usuario, para poder administrar, según sus permisos.</p>-->
-                        <div class="dashborard-element-actions">
-                            <a href="{% url 'provider_list' %}" class="btn btn-primary card-btn" role="button">Proveedores</a>
-                        </div>
-                    </div>
-                </div>
+                <figure class="figure">
+                    <img src="{% static 'images/proveedores.png' %}" class="figure-img img-fluid rounded" alt="Proveedores">
+                    <figcaption class="figure-caption text-right"><a href="{% url 'provider_list' %}" class="btn btn-primary card-btn" role="button">Proveedores</a></figcaption>
+                  </figure>
             </div>
             {% endif %}
 
             <!--Reports-->
             {% if perms.events.view_reports %}
             <div class="col-sm-6 col-md-2">
-                <div class="thumbnail">
-                    <img src="{% static 'images/reportes.png' %}" alt="Imagen que represente personas">
-                    <div class="caption">
-                        <!--h5 class="text-center">Organizadores</h5-->
-                        <!--<p class="card-text">Lista de eventos asociados a su usuario, para poder administrar, según sus permisos.</p>-->
-                        <div class="dashborard-element-actions">
-                            <a href="#" class="btn btn-primary card-btn" role="button">Reportes</a>
+                <figure class="figure">
+                    <img src="{% static 'images/reportes.png' %}" class="figure-img img-fluid rounded" alt="Reportes">
+                    <figcaption class="figure-caption text-right">
+                        <a href="#" class="btn btn-primary card-btn" role="button" data-toggle="modal" data-target="#NotImplementedModal">Reportes</a>
+                    </figcaption>
+                  </figure>
+            </div>
+            <!-- Modal -->
+            <div class="modal fade" id="NotImplementedModal" tabindex="-1" aria-labelledby="NotImplementedModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title text-danger" id="NotImplementedModalLabel"> <i class="fas fa-exclamation-triangle"></i> Report Module</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body bg-danger text-white">
+                            This feature is not implemented yet. Sorry!
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>

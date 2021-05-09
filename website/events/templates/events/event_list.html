@@ -1,13 +1,14 @@
 {% extends "events_base_paginated_list.html" %}
 
 {% block route-navigator %}
-<div class="route-navigator" >
-        <ol class="breadcrumb">
-            <li><a href="{% url 'events_home' %}">Inicio</a></li>
-            <li class="active"><a href="{% url 'event_list' %}">Eventos</a></li>
-        </ol>
-</div>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+      <li class="breadcrumb-item" aria-current="page"><i class="fas fa-calendar-alt"></i> Eventos</li>
+    </ol>
+</nav>
 {% endblock %}
+
 {% block list_title %}
 <h1>Eventos</h1>
 {%endblock%}    
