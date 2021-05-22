@@ -27,15 +27,12 @@
                 </thead>
                 <tbody>
                 {% for provider in provider_list %}
-                
                     <tr onclick="window.location='{% url 'provider_detail' pk=provider.pk %}';" class="clikeable">
-                        
                         <td >{{ provider.organization_name }}</td>
                         <td>{{ provider.document_number }}</td>
                         <td> {{ provider.bank_entity}}</td>
                         <td> {{ provider.get_account_type_display}}</td>
                     </tr>
-                
                 {% empty %}
                     <tr>
                         <td colspan="100%" class="empty-list">
@@ -43,7 +40,6 @@
                         </td>
                     </tr>
                 {% endfor %}
-                
                 </tbody>
             </table>
         </div>
@@ -51,11 +47,9 @@
     <div class="row sponsors-list-actions">
         <div class="col-md-12 text-right">
             {% if perms.events.add_provider %}
-            <a class="btn btn-primary" href="{% url 'provider_create' %}">Crear</a>
+            <a class="btn btn-primary col-2 float-right mx-1" href="{% url 'provider_create' %}"><i class="fas fa-certificate"></i> Crear</a>
             {% endif %}
+            <a class="btn btn-danger col-2 float-right mx-1" href="{% url 'events_home' %}"><i class="fas fa-undo"></i> Volver</a>
         </div>
     </div>
-    
-
-
 {% endblock %}

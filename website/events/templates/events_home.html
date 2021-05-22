@@ -1,5 +1,6 @@
 {% extends "events_base.html" %}
 {% load static %}
+{% load humanize %}
 {% block content %}
 <div class="container">
     <nav aria-label="breadcrumb">
@@ -62,13 +63,13 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title text-danger" id="NotImplementedModalLabel"> <i class="fas fa-exclamation-triangle"></i> Report Module</h5>
+                            <h5 class="modal-title text-danger" id="NotImplementedModalLabel"> <i class="fas fa-exclamation-triangle"></i> Módulo de Reportes</h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
                         <div class="modal-body bg-danger text-white">
-                            This feature is not implemented yet. Sorry!
+                            Esta funcionalidad aún no está implementada. 🙏 Perdón!
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -81,7 +82,7 @@
     </div>
 
     <div class="sponsoring-pending">
-        <h4>Patrocinios Pendientes <span class="badge">{{sponsoring_pending|length}}</span></h4>
+        <h4>Patrocinios Pendientes <small><span class="badge badge-dark">{{sponsoring_pending|length}}</span></small></h4>
         <div class="list-group">
         {% for pending in sponsoring_pending %}
         <div class="list-group-item">
@@ -90,23 +91,23 @@
                     {{ pending.description }}
                 </div>
                 <div class="col-md-2 task-amount">
-                    {{ pending.amount }}
+                    ${{ pending.amount|intcomma }}
                 </div>
                 <div class="col-md-2 task-action">
-                    <a class="btn btn-success" href="{{pending.url}}">Ir</a>
+                    <a class="btn btn-success" href="{{pending.url}}"><i class="fas fa-tasks"></i> Ir</a>
                 </div>
             </div>
         </div>
         {% empty %}
-            <div class="alert alert-info" role="alert">
-                No hay patrocinios pendientes.
+            <div class="alert alert-success" role="alert">
+                <i class="fas fa-check-circle"></i> No hay patrocinios pendientes.
             </div>
         {% endfor %}
         </div>
     </div>
 
     <div class="user-pending">
-        <h4>Tareas <span class="badge">{{tasks|length}}</span></h4>
+        <h4>Tareas <small><span class="badge badge-dark">{{tasks|length}}</span></small></h4>
         <div class="list-group">
         {% for task in tasks %}
         <div class="list-group-item">
@@ -115,13 +116,13 @@
                     {{ task.description }}
                 </div>
                 <div class="col-md-2 task-action">
-                    <a class="btn btn-success" href="{{task.url}}">Ir</a>
+                    <a class="btn btn-success" href="{{task.url}}"><i class="fas fa-tasks"></i> Ir</a>
                 </div>
             </div>
         </div>
         {% empty %}
-            <div class="alert alert-info" role="alert">
-                No hay tareas pendientes para el usuario logueado.
+            <div class="alert alert-success" role="alert">
+                <i class="fas fa-check-circle"></i> No hay tareas pendientes para el usuario logueado.
             </div>
         {% endfor %}
         </div>

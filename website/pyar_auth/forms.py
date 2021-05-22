@@ -10,6 +10,8 @@ from django.contrib.auth.forms import (
 from django.utils.translation import ugettext_lazy as _
 
 from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Button, Div, HTML
+from crispy_forms.bootstrap import StrictButton
 
 """Helping constant for validate passwords, and custom atuthetication forms."""
 ATTRIBUTE_SIMILARITY_HELP = _("La contraseña no puede ser similar a su otra información personal.")
@@ -47,8 +49,11 @@ class AuthenticationForm(AuthAuthenticationForm):
     def __init__(self, *args, **kwargs):
         super(AuthenticationForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_class = 'row'
+        self.helper.form_class = 'form-horizontal mt-50'
         self.helper.form_tag = False
+        self.helper.label_class = "col-sm-2"
+        self.helper.field_class = "col-sm-10"
+
 
 
 class SetPasswordForm(AuthSetPasswordForm):
@@ -71,8 +76,10 @@ class SetPasswordForm(AuthSetPasswordForm):
     def __init__(self, *args, **kwargs):
         super(SetPasswordForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_class = 'row'
+        self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
+        self.helper.label_class = "col-sm-2"
+        self.helper.field_class = "col-sm-10"
 
 
 class PasswordResetForm(AuthPasswordResetForm):
@@ -81,8 +88,10 @@ class PasswordResetForm(AuthPasswordResetForm):
     def __init__(self, *args, **kwargs):
         super(PasswordResetForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_class = 'row'
+        self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
+        self.helper.label_class = "col-sm-2"
+        self.helper.field_class = "col-sm-10"
 
 
 class PasswordChangeForm(AuthPasswordChangeForm):
@@ -112,5 +121,12 @@ class PasswordChangeForm(AuthPasswordChangeForm):
     def __init__(self, *args, **kwargs):
         super(PasswordChangeForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_class = 'row'
+        self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
+        self.helper.label_class = "col-sm-2"
+        self.helper.field_class = "col-sm-10"
+        self.helper.layout = Layout(
+            Div("old_password", "new_password1", "new_password2", css_class="mt-2"),
+            StrictButton('<i class="fas fa-save"></i> Cambiar', type="submit", css_class="btn btn-success col-2 float-right mx-1"),
+            HTML('<a class="btn btn-danger col-2 float-right mx-1" href="{{request.META.HTTP_REFERER}}"><i class="fas fa-undo"></i> Volver</a>'),
+        )

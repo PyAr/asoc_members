@@ -2,19 +2,25 @@
 {% load static %}
 {% block content %}
 <div class="container">
+    {% block route-navigator %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+            <li class="breadcrumb-item"><i class="fas fa-dolly"></i><a href="{% url 'provider_list' %}"> Proveedores</a></li>
+            {% if form.instance.pk %}
+            <li class="breadcrumb-item"><a href="{% url 'sponsor_detail' pk=form.instance.pk %}"><i class="fas fa-dolly-flatbed"></i> {{provider.organization_name}}</a></li>
+            <li class="breadcrumb-item" aria-current="page"><a href="#">Edición</a></li>
+            {% else %}
+            <li class="breadcrumb-item" aria-current="page"><i class="fas fa-dolly-flatbed"></i> {{provider.organization_name}}</li>
+            {% endif %}
+        </ol>
+    </nav>
+    {% endblock %}
 
-    <div class="route-navigator" >
-            <ol class="breadcrumb">
-                <li><a href="{% url 'events_home' %}">Inicio</a></li>
-                <li><a href="{% url 'provider_list' %}" >Proveedores</a></li>
-                <li class="active"><a href="{% url 'provider_detail' pk=provider.pk %}">{{provider.organization_name}}</a></li>
-            </ol>
-    </div>
-    
     <div class="row provider-detail">
+        <div class="col-md-2"></div>
         <div class="col-md-8">
             <h3>Datos del proveedor </h3>
-            
             <table class="table table-striped">
                 <tbody>
                     <tr>
@@ -43,12 +49,12 @@
                     </tr>
                 </tbody>
             </table>
-            
             {% if perms.events.change_provider %}
-            <a class="btn btn-primary btn-block text-uppercase" href="{% url 'provider_change' provider.pk %}">Editar</a>
+            <a class="btn btn-primary col-2 float-right mx-1" href="{% url 'provider_change' provider.pk %}"><i class="fas fa-pencil-alt"></i> Editar</a>
             {% endif %}
+            <a class="btn btn-danger col-2 float-right mx-1" href="{% url 'provider_list' %}"><i class="fas fa-undo"></i> Volver</a>
         </div>
-        
+        <div class="col-md-2"></div>
     </div>
 </div>
 

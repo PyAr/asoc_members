@@ -152,7 +152,7 @@ def invoices_to_complete_task_builder(invoice):
 
 def provider_payment_unfinish_task_builder(expense):
     description = _(
-        f'El pago al proovedor: "{expense.provider}", perteneciente al evento: '
+        f'El pago al proveedor: "{expense.provider}", perteneciente al evento: '
         f'"{expense.event}" se ecuentra sin finalizar'
     )
     url = reverse('provider_expense_detail', kwargs={'pk': expense.pk})

@@ -4,13 +4,13 @@
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
       <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
-      <li class="breadcrumb-item" aria-current="page"><i class="fas fa-handshake"></i> Patrocinadores</li>
+      <li class="breadcrumb-item" aria-current="page"><i class="fas fa-handshake"></i> Sponsors</li>
     </ol>
 </nav>
 {% endblock %}
 
 {% block list_title %}
-<h1>Patrocinadores</h1>
+<h1>Sponsors</h1>
 {%endblock%}
 
 {% block list_content %}
@@ -56,8 +56,9 @@
     <div class="row sponsors-list-actions">
         <div class="col-md-12 text-right">
             {% if perms.events.add_sponsor %}
-            <a class="btn btn-primary" href="{% url 'sponsor_create' %}">Crear</a>
+            <a class="btn btn-primary col-2 float-right mx-1" href="{% url 'sponsor_create' %}"><i class="fas fa-certificate"></i> Crear</a>
             {% endif %}
+            <a class="btn btn-danger col-2 float-right mx-1" href="{{request.META.HTTP_REFERER}}"><i class="fas fa-undo"></i> Volver</a>
         </div>
     </div>
     

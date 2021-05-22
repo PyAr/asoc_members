@@ -179,7 +179,8 @@ class EmailTest(TestCase, CustomAssertMethods):
         self.client.login(username='administrator', password='administrator')
         data = {
             'amount': '1000',
-            'category': 'Pay'
+            'category': 'Pay',
+            'document': StringIO('test'),
         }
         response = self.client.post(url, data)
 
@@ -775,7 +776,8 @@ class SponsoringViewsTest(TestCase, CustomAssertMethods):
         self.client.login(username='organizer01', password='organizer01')
         data = {
             'amount': '1000',
-            'category': 'Pay'
+            'category': 'Pay',
+            'document': StringIO('test'),
         }
         response = self.client.post(url, data)
         redirect_url = reverse('sponsoring_detail', kwargs={'pk': invoice.sponsoring.pk})

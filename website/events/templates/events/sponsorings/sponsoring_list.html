@@ -1,47 +1,45 @@
 {% extends "events_base_paginated_list.html" %}
-
+{% load humanize %}
 {% block route-navigator %}
-<div class="route-navigator" >
-        <ol class="breadcrumb">
-            <li><a href="{% url 'events_home' %}">Inicio</a></li>
-            <li><a href="{% url 'event_list' %}">Eventos</a></li>
-            <li><a href="{% url 'event_detail' pk=event.pk %}">{{event.name}}</a></li>
-            <li class="active"><a href="{% url 'sponsoring_list' event_pk=event.pk%}">Patrocinios</a></li>
-        </ol>
-</div>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+      <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
+      <li class="breadcrumb-item"><i class="fas fa-calendar-check"></i><a href="{% url 'event_detail' event.pk %}"> {{event.name}}</a></li>
+      <li class="breadcrumb-item" aria-current="page"><i class="fas fa-handshake"></i> Sponsoreos</li>
+    </ol>
+</nav>
 {% endblock %}
 
 {% block list_title %}
-<h1>Patrocinios</h1><h3>{{event}}</h3>
-
+<h1>Sponsoreos</h1><h3>{{event}}</h3>
 {%endblock%}
-{% block list_filter %}
-{% endblock %}
+
 {% block list_content %}
     <div class="row sponsors-list">
         <div class="col-md-12">
             <table class="table table-striped row-clickeable-table">
                 <thead>
-                    <tr>
-                        <th scope="row">Sponsor</th>
-                        <th scope="row">Categoria</th>
-                        <th scope="row">Monto Categoria</th>
+                    <tr class="text-center">
+                        <th scope="row" class="text-left">Sponsor</th>
+                        <th scope="row">Categoría</th>
+                        <th scope="row" class="text-right">Monto Categoría</th>
                         <th scope="row">Estado</th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for sponsoring in sponsoring_list %}
-                
                     <tr onclick="window.location='{% url 'sponsoring_detail' pk=sponsoring.pk %}';" class="clikeable">
-                        
-                        <td >{{ sponsoring.sponsor.organization_name }}</td>
-                        <td>{{ sponsoring.sponsorcategory.name }}</td>
-                        <td>{{ sponsoring.sponsorcategory.amount }}</td>
-                        <td class="text-capitalize">
+                        <td>{{ sponsoring.sponsor.organization_name }}</td>
+                        <td class="text-center">{{ sponsoring.sponsorcategory.name }}</td>
+                        <td class="text-right">${{ sponsoring.sponsorcategory.amount|intcomma }}</td>
+                        <td class="text-capitalize text-center">
                         {% if sponsoring.close %}
-                        <span class="text-danger">
+                        <span class="text-danger"><i class="fab fa-expeditedssl"></i> 
                         {% elif sponsoring.state == "pago completo" %}
-                        <span class="text-success">
+                        <span class="text-success"><i class="fas fa-check-circle"></i> 
+                        {% elif sponsoring.state == "pago parcial" %}
+                        <span class="text-info"><i class="fas fa-star-half-alt"></i> 
                         {% else %}
                         <span >
                         {% endif %}
@@ -65,8 +63,9 @@
     <div class="row sponsors-list-actions">
         <div class="col-md-12 text-right">
             {% if perms.events.add_sponsor %}
-            <a class="btn btn-primary" href="{% url 'sponsoring_create' event_pk=event.pk %}">Crear</a>
+            <a class="btn btn-primary col-2 float-right mx-1" href="{% url 'sponsoring_create' event_pk=event.pk %}"><i class="fas fa-certificate"></i> Crear</a>
             {% endif %}
+            <a class="btn btn-danger col-2 float-right mx-1" href="{{request.META.HTTP_REFERER}}"><i class="fas fa-undo"></i> Volver</a>
         </div>
     </div>
     

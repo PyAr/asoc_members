@@ -25,7 +25,8 @@
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 		<!-- google font -->
 		<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,400italic,700,800' rel='stylesheet' type='text/css'>
-
+		<!-- PDF.js -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.8.335/pdf.min.js" integrity="sha512-SG4yH2eYtAR5eK4/VL0bhqOsIb6AZSWAJjHOCmfhcaqTkDviJFoar/VYdG96iY7ouGhKQpAg3CMJ22BrZvhOUA==" crossorigin="anonymous"></script>
 		<!-- custom css -->
 		<!-- <link rel="stylesheet" href="{% static 'css/templatemo-style.css' %}"> -->
 		{% block extra_statics %}{% endblock %}
@@ -67,8 +68,12 @@
 							
 							<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
 								<a class="dropdown-item" href="{% url 'profile' %}"><i class="fab fa-whmcs"></i> Datos cuenta</a>
-								{% block extra_logged_menu_option %}
-								{% endblock %}
+								{% if user.is_superuser %}
+								<a class="dropdown-item" href="{% url 'admin:index' %}" target="_blank"><i class="fas fa-user-shield"></i> Admin Site</a>
+								{% endif %}
+								{% if user.organizer %}
+								<a class="dropdown-item" href="{% url 'organizer_detail' pk=user.organizer.pk %}"><i class="fas fa-user-cog"></i> Datos Organizador</a>
+								{% endif %}
 								<a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Log out</a>
 							</div>
 						</li>
@@ -91,9 +96,9 @@
 			{% block content %}{% endblock %}
 		</div>
 
-		<script src="{% static 'js/jquery.js' %}"></script>
+		<!-- <script src="{% static 'js/jquery.js' %}"></script>
 		<script src="{% static 'js/bootstrap.min.js' %}"></script>
-		<script src="{% static 'js/jquery.singlePageNav.min.js' %}"></script>
+		<script src="{% static 'js/jquery.singlePageNav.min.js' %}"></script> -->
 		{% block extra_js %}{% endblock %}
 	</body>
 </html>
