@@ -1,0 +1,31 @@
+name: Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.9 on Ubuntu Focal
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Bootstrap everything
+        run: |
+          pip install -U docker-compose 
+          make bootstrap
+      - name: Run tests
+        run: |
+          pytest -ra tests
+
