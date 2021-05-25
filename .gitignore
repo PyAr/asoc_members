@@ -112,3 +112,4 @@ scripts/credentials.json
 .idea
 .vscode
 .devcontainer
+.DS_Store
