@@ -1,6 +1,7 @@
 import datetime
 import tempfile
 import logassert
+import uuid
 from io import BytesIO
 from unittest.mock import patch
 
@@ -76,6 +77,21 @@ def create_image_file_in_memory(width=150, height=150):
     file.name = 'image.jpg'
     file.seek(0)
     return file
+
+
+def create_payment_record(payer_id, timestamp=None, amount=DEFAULT_FEE):
+    """Create a record for the recurring payments."""
+    if timestamp is None:
+        timestamp = make_aware(datetime.datetime(year=2017, month=2, day=5))
+    record = {
+        'timestamp': timestamp,
+        'amount': amount,
+        'payer_id': payer_id,
+        'id_helper': {
+            'payment_id': str(uuid.uuid4()),
+        },
+    }
+    return record
 
 
 @override_settings(MEDIA_ROOT=tempfile.gettempdir())
@@ -410,7 +426,7 @@ class CreateRecurringPaymentTestCase(TestCase):
         # create the payment
         tstamp = make_aware(datetime.datetime(year=2017, month=2, day=5))
         records = [
-            {'timestamp': tstamp, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
+            create_payment_record(payer_id, timestamp=tstamp),
         ]
         logic.create_recurring_payments(records)
 
@@ -432,17 +448,17 @@ class CreateRecurringPaymentTestCase(TestCase):
         tstamp2 = make_aware(datetime.datetime(year=2017, month=2, day=6))
         tstamp3 = make_aware(datetime.datetime(year=2017, month=2, day=7))
         records = [
-            {'timestamp': tstamp1, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
-            {'timestamp': tstamp2, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
-            {'timestamp': tstamp3, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
+            create_payment_record(payer_id, timestamp=tstamp1),
+            create_payment_record(payer_id, timestamp=tstamp2),
+            create_payment_record(payer_id, timestamp=tstamp3),
         ]
         logic.create_recurring_payments(records)
 
         # now create other two, overlapping
         tstamp4 = make_aware(datetime.datetime(year=2017, month=2, day=8))
         records = [
-            {'timestamp': tstamp3, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
-            {'timestamp': tstamp4, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
+            create_payment_record(payer_id, timestamp=tstamp3),
+            create_payment_record(payer_id, timestamp=tstamp4),
         ]
         logic.create_recurring_payments(records)
 
@@ -464,14 +480,14 @@ class CreateRecurringPaymentTestCase(TestCase):
         tstamp1 = make_aware(datetime.datetime(year=2017, month=2, day=5))
         tstamp2 = make_aware(datetime.datetime(year=2017, month=2, day=6))
         records = [
-            {'timestamp': tstamp1, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
-            {'timestamp': tstamp2, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
+            create_payment_record(payer_id, timestamp=tstamp1),
+            create_payment_record(payer_id, timestamp=tstamp2),
         ]
         logic.create_recurring_payments(records)
 
         # now create another, repeated
         records = [
-            {'timestamp': tstamp2, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
+            create_payment_record(payer_id, timestamp=tstamp2),
         ]
         logic.create_recurring_payments(records)
 
@@ -495,10 +511,10 @@ class CreateRecurringPaymentTestCase(TestCase):
         tstampB = make_aware(datetime.datetime(year=2017, month=2, day=6))
         tstampC = make_aware(datetime.datetime(year=2017, month=2, day=7))
         records = [
-            {'timestamp': tstampA, 'amount': DEFAULT_FEE, 'payer_id': payer_id1},
-            {'timestamp': tstampC, 'amount': DEFAULT_FEE, 'payer_id': payer_id1},
-            {'timestamp': tstampB, 'amount': DEFAULT_FEE, 'payer_id': payer_id2},
-            {'timestamp': tstampA, 'amount': DEFAULT_FEE, 'payer_id': payer_id2},
+            create_payment_record(payer_id1, timestamp=tstampA),
+            create_payment_record(payer_id1, timestamp=tstampC),
+            create_payment_record(payer_id2, timestamp=tstampB),
+            create_payment_record(payer_id2, timestamp=tstampA),
         ]
         logic.create_recurring_payments(records)
 
@@ -523,9 +539,8 @@ class CreateRecurringPaymentTestCase(TestCase):
         create_member(patron=ps.patron)
 
         # create the payment
-        tstamp = make_aware(datetime.datetime(year=2017, month=2, day=5))
         records = [
-            {'timestamp': tstamp, 'amount': DEFAULT_FEE, 'payer_id': 'bar'},
+            create_payment_record(payer_id='bar'),
         ]
         logic.create_recurring_payments(records)
 
@@ -542,9 +557,8 @@ class CreateRecurringPaymentTestCase(TestCase):
         create_member(patron=ps.patron)
 
         # create the payment
-        tstamp = make_aware(datetime.datetime(year=2017, month=2, day=5))
         records = [
-            {'timestamp': tstamp, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
+            create_payment_record(payer_id),
         ]
         logic.create_recurring_payments(records)
 
@@ -562,8 +576,8 @@ class CreateRecurringPaymentTestCase(TestCase):
         tstamp1 = make_aware(datetime.datetime(year=2017, month=2, day=1))
         tstamp2 = make_aware(datetime.datetime(year=2017, month=3, day=1))
         records = [
-            {'timestamp': tstamp1, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
-            {'timestamp': tstamp2, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
+            create_payment_record(payer_id, timestamp=tstamp1),
+            create_payment_record(payer_id, timestamp=tstamp2),
         ]
         logic.create_recurring_payments(records)
         assert len(Quota.objects.all()) == 2
@@ -573,9 +587,9 @@ class CreateRecurringPaymentTestCase(TestCase):
         tstamp4 = make_aware(datetime.datetime(year=2017, month=7, day=1))
         tstamp5 = make_aware(datetime.datetime(year=2017, month=8, day=1))
         records = [
-            {'timestamp': tstamp3, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
-            {'timestamp': tstamp4, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
-            {'timestamp': tstamp5, 'amount': DEFAULT_FEE, 'payer_id': payer_id},
+            create_payment_record(payer_id, timestamp=tstamp3),
+            create_payment_record(payer_id, timestamp=tstamp4),
+            create_payment_record(payer_id, timestamp=tstamp5),
 
         ]
         logic.create_recurring_payments(records)
@@ -593,15 +607,37 @@ class CreateRecurringPaymentTestCase(TestCase):
         create_member(patron=ps.patron, first_payment_year=2017, first_payment_month=5)
 
         # create the payment
-        tstamp = make_aware(datetime.datetime(year=2017, month=2, day=5))
         custom_fee = DEFAULT_FEE // 2
         records = [
-            {'timestamp': tstamp, 'amount': custom_fee * 3, 'payer_id': payer_id},
+            create_payment_record(payer_id, amount=custom_fee * 3),
         ]
         logic.create_recurring_payments(records, custom_fee=custom_fee)
 
         # check that payment got through ok, having 3 payments!
         self.assertEqual(len(Quota.objects.all()), 3)
+
+    def test_ignore_duplicated_payments(self):
+        # needed objects
+        payer_id = 'test@example.com'
+        ps = create_payment_strategy(platform=PaymentStrategy.MERCADO_PAGO, payer_id=payer_id)
+        create_member(patron=ps.patron, first_payment_year=2017, first_payment_month=5)
+
+        # create a couple of payments, different timestamps
+        tstamp1 = make_aware(datetime.datetime(year=2017, month=2, day=5))
+        tstamp2 = make_aware(datetime.datetime(year=2017, month=2, day=6))
+        records = [
+            create_payment_record(payer_id, timestamp=tstamp1),
+            create_payment_record(payer_id, timestamp=tstamp2),
+        ]
+        logic.create_recurring_payments(records)
+
+        # now receive them all again, with the last one duplicated
+        records.append(records[1])
+        logic.create_recurring_payments(records)
+
+        # check we have still only two payments
+        all_quotas = Quota.objects.all()
+        self.assertEqual(len(all_quotas), 2)
 
 
 class GetDebtStateTestCase(TestCase):

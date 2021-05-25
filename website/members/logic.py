@@ -65,10 +65,17 @@ def create_payment(
 
 
 def create_recurring_payments(recurring_records, custom_fee=None):
-    # group payments per payer and order them
+    """Create payments and quotas from external recurring payments."""
+    # group payments per payer and order them, avoiding duplicated payments
     grouped = {}
     for record in recurring_records:
-        grouped.setdefault(record['payer_id'], []).append(record)
+        payer_records = grouped.setdefault(record['payer_id'], [])
+        # inefficient to walk on all the items everytime, but these are really short lists
+        this_payment_id = record['id_helper']['payment_id']
+        if any(this_payment_id == r['id_helper']['payment_id'] for r in payer_records):
+            # duplicated! ignoring
+            continue
+        payer_records.append(record)
     for records in grouped.values():
         records.sort(key=itemgetter('timestamp'))
 
