@@ -23,9 +23,10 @@ jobs:
           python-version: 3.9
       - name: Bootstrap everything
         run: |
+          export COMPOSE_INTERACTIVE_NO_CLI=1
           pip install -U docker-compose 
           make bootstrap
       - name: Run tests
         run: |
-          pytest -ra tests
+          make test
 
