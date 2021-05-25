@@ -28,5 +28,6 @@ jobs:
           docker-compose exec -T web pip install -r /code/config/requirements-dev.txt
       - name: Run tests
         run: |
-          make test
+          docker-compose start
+          docker-compose exec -T web ./manage.py test -v2 --noinput
 
