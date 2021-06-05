@@ -15,8 +15,9 @@
     </nav>
     {% endblock %}
 
-    <h2>Sponsor 
-    <small class="text-muted">Categoría: {{sponsoring.sponsorcategory.name}} ({{sponsoring.state}})</small></h2>
+    <h2>Sponsor {{sponsoring.sponsor.organization_name}}</h2>
+    <h2><small class="text-muted">Categoría: {{sponsoring.sponsorcategory.name}} (${{sponsoring.sponsorcategory.amount|intcomma}}) [{{sponsoring.state}}]</small></h2>
+    <h3><small class="text-muted">Última modificación: {{sponsoring.modified}}</small></h3>
     <h3>Detalles <button class="btn btn-info col-2 float-right" data-toggle="collapse" href="#EventAndSponsorDetails" aria-expanded="false" aria-controls="collapseExample" id="detailButton"><i class="fa" aria-hidden="true"></i> Ver</button></h3>
     {% if sponsoring.state == "no facturado" %}
     <div class="collapse show my-2" id="EventAndSponsorDetails">
@@ -46,7 +47,8 @@
             <h4>Factura</h4>
             <strong>Sponsor:</strong> {{sponsoring.sponsor.organization_name}}<br/>
             <strong>Monto:</strong> ${{sponsoring.invoice.amount|intcomma}}<br/>
-            <strong>Documento:</strong> <a href="{{sponsoring.invoice.document.url}}" target="_blank" download><i class="fa fa-download"></i> descargar</a>
+            <strong>Documento:</strong> <a href="{{sponsoring.invoice.document.url}}" target="_blank" download><i class="fa fa-download"></i> descargar</a><br/>
+            <strong>Última modificación:</strong> {{sponsoring.invoice.modified}}<br/>
             <!-- PREVIEW -->
             {% if sponsoring.invoice.extension == ".pdf" %}
             <div id="invoice-pdf-div" invoice-url="{{sponsoring.invoice.document.url}}">
@@ -223,6 +225,10 @@
                                 {% else %}
                                 <td>Sin documento adjunto</td>
                                 {% endif %}
+                            </tr>
+                            <tr>
+                                <th scope="row">Última modificación</th>
+                                <td>{{ affect.modified }}</td>
                             </tr>
                         </tbody>
                     </table>
