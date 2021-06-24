@@ -2,20 +2,21 @@
 {% load crispy_forms_tags %}
 {% block content %}
 <div class="container">
-
-    <div class="route-navigator" >
-            <ol class="breadcrumb">
-                <li><a href="{% url 'events_home' %}">Inicio</a></li>
-                <li><a href="{% url 'event_list' %}">Eventos</a></li>
-                <li><a href="{% url 'event_detail' pk=event.pk %}">{{event.name}}</a></li>
-                <li class="active"><a href="{% url 'event_change' pk=event.pk %}">Edición</a></li>
-            </ol>
-    </div>
+    {% block route-navigator %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-calendar-check"></i><a href="{% url 'event_detail' event.pk %}"> {{event.name}}</a></li>
+          <li class="breadcrumb-item" aria-current="page"><i class="fas fa-edit"></i> Editar</li>
+        </ol>
+    </nav>
+    {% endblock %}
     <form method="POST">
         {% csrf_token %}
         {% crispy form %}
-        <a class="btn btn-default" href="{% url 'event_detail' event.pk %}">Volver</a>
-        <input type="submit" class="btn btn-success" value="Actualizar!">
+        <button type="submit" class="btn btn-success col-2 float-right mx-1"><i class="fas fa-save"></i>Actualizar</button>
+        <a class="btn btn-danger col-2 float-right mx-1" href="{% url 'event_detail' event.pk %}"><i class="fas fa-undo"></i> Volver</a>
         
     </form>
     </div>

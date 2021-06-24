@@ -45,7 +45,7 @@ provider_data = {
     'bank_entity': 'Banco Rio',
     'account_type': 'CC',
     'account_number': '4',
-    'cbu': '456548789'
+    'cbu': '0720403020000000914086'
 }
 
 

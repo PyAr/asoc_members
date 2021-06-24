@@ -1,141 +1,181 @@
 {% extends "events_base.html" %}
+{% load humanize%}
 {% load static %}
 {% block content %}
 <div class="container">
-
-    <div class="route-navigator" >
-            <ol class="breadcrumb">
-                <li><a href="{% url 'events_home' %}">Inicio</a></li>
-                <li><a href="{% url 'event_list' %}">Eventos</a></li>
-                <li><a href="{% url 'event_detail' pk=event.pk %}">{{event.name}}</a></li>
-                <li><a href="{% url 'expenses_list' event_pk=event.pk%}">Gastos</a></li>
-                <li class="active"><a href="{% url 'organizer_refund_detail' pk=organizerrefund.pk%}">
-                        Reintegro Organizador ({{organizerrefund.pk}})
-                </a></li>
-            </ol>
-    </div>
+    {% block route-navigator %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-calendar-check"></i><a href="{% url 'event_detail' pk=event.pk %}"> {{event.name}}</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-hand-holding-usd"></i><a href="{% url 'expenses_list' event_pk=event.pk %}"> Gastos</a></li>
+          <li class="breadcrumb-item" aria-current="page"><i class="fas fa-wallet"></i> Reintegro Organizador ({{organizerrefund.pk}})</li>
+        </ol>
+    </nav>
+    {% endblock %}
     <h2>Gasto Organizador</h2>
-    <div class="row">
+    <div class="row my-2">
+        <!-- FACTURA -->
         <div class="col-md-6">
-            <div class="row">
-                <div class="col-md-12">
-                    <h4 style="margin-bottom: 5px;">Factura</h4>
-                    <strong>Organizador:</strong> {{ organizerrefund.organizer.user.username }}<br/>
-                    <strong>Tipo:</strong> {{organizerrefund.get_invoice_type_display}}<br/>
-                    <strong>Monto:</strong> ${{organizerrefund.amount}}<br/>
-                    <strong>Fecha:</strong> {{organizerrefund.invoice_date}}<br/>
+            <h4>Factura</h4>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered table-striped table-hover">
+                    <tr>
+                        <th scope="row">Organizador</th>
+                        <td>{{organizerrefund.organizer.user.username}}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Tipo</th>
+                        <td>{{organizerrefund.get_invoice_type_display}}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Monto</th>
+                        <td>${{organizerrefund.amount|intcomma}}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Fecha</th>
+                        <td>{{organizerrefund.invoice_date}}</td>
+                    </tr>
                     {% if organizerrefund.invoice %}
-                    <strong>Documento:</strong> <a href="{{organizerrefund.invoice.url}}" target="_blank"> descargar <i class="fa fa-download"></i></a>
+                    <tr>
+                        <th>Documento</th>
+                        <td><a href="{{organizerrefund.invoice.url}}" target="_blank" download><i class="fa fa-download"></i> descargar</a></td>
+                    </tr>
                     {% endif %}
-                </div>    
+                </table>
             </div>
-            <div class="row">
             {% if organizerrefund.invoice %}
-            
+            <div class="text-center">
                 {% if organizerrefund.invoice_extension == ".pdf" %}
-                <div id="invoice-pdf-div" class="col-md-12 text-left" invoice-url={{organizerrefund.invoice.url}}>   
-                    <canvas id="pdf-canvas"></canvas> 
+                <div id="invoice-pdf-div" invoice-url={{organizerrefund.invoice.url}}>
+                    <a href="{{organizerrefund.invoice.url}}" target="_blank">
+                        <canvas class="rounded border border-dark" id="pdf-canvas"></canvas>
+                    </a>
                 </div>
                 {% elif organizerrefund.is_image_document %}
-                <div class="col-md-12">
-                    <img src="{{organizerrefund.invoice.url}}" style="width: 400px;">
-                </div>
+                <a href="{{organizerrefund.invoice.url}}" target="_blank">
+                    <img class="rounded border border-dark" src="{{organizerrefund.invoice.url}}" style="width: 400px;">
+                </a>
                 {% else %}
-                <div class="col-md-12">
-                    <img src="{% static 'images/not_document.svg' %}" style="width: 400px;">
-                </div>
+                <a href="{{organizerrefund.invoice.url}}" target="_blank">
+                    <img class="rounded border border-dark" src="{% static 'images/not_document.svg' %}" style="width: 400px;">
+                </a>
                 {% endif %}
-            
+            </div>
+            {% endif %}
+        </div>
+        <!-- DESCRIPCIÓN -->
+        <div class="col-md-6">
+            <h4>Descripción</h4>
+            <div class="rounded alet alert-primary p-3 my-2" role="alert">
+            {% if organizerrefund.description %}
+                <i class="fas fa-info-circle"></i> {{ organizerrefund.description }}
             {% else %}
-                <!--div class="col-md-12">
-                    <div class="alert alert-info" role="alert">
-                        Gasto cargado sin documento adjunto.
-                    </div>
-                
-                </div-->
+                <span class="text-warning">
+                    <i class="fas fa-exclamation-circle"></i> Gasto sin descripción adjunta
+                </span>
             {% endif %}
             </div>
-        </div>
-        <div class="col-md-6">
-            <div class="row">
-                <div class="col-md-12">
-                    <strong>Descripción</strong>
-                </div>
-                <div class="col-md-12">
-                    {% if organizerrefund.description %}
-                    {{ organizerrefund.description }}
-                    {% else %}
-                    Gasto sin descripción adjunta
-                    {% endif %}
+            {% if perms.events.change_organizerrefund and not organizerrefund.payment%}
+            <!-- BUTTONS -->
+            <div class="text-right">
+                <button class="btn btn-warning" data-toggle="modal" data-target="#OrganizerRefundSwitchState">
+                {% if organizerrefund.is_cancelled %}
+                    <i class="fa fa-check"></i> Restaurar Gasto
+                {% else %}
+                <i class="fas fa-times-circle"></i> Cancelar Gasto
+                {% endif %}
+                </button>
+            </div>
+            <!-- OrganizerRefundSwitchState Modal -->
+            <div class="modal fade" id="OrganizerRefundSwitchState" tabindex="-1" aria-labelledby="OrganizerRefundSwitchStateLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="OrganizerRefundSwitchStateLabel">
+                                {% if organizerrefund.is_cancelled %}
+                                <i class="fa fa-check"></i> Restaurar Gasto
+                                {% else %}
+                                <i class="fas fa-times-circle"></i> Cancelar Gasto
+                                {% endif %}
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form role="form" action="{% url 'organizer_refund_switch_state' organizerrefund.pk %}?next={% url 'organizer_refund_detail' pk=organizerrefund.pk %}" method="POST">
+                            {% csrf_token %}
+                            {% if organizerrefund.is_cancelled %}
+                                ¿Está seguro que desea Restaurar el Gasto?
+                            {% else %}
+                                ¿Está seguro que desea Cancelar el Gasto?
+                            {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger float-right col-3 mx-1" data-dismiss="modal" aria-label="Close">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-success float-right col-3 mx-1">
+                                {% if organizerrefund.is_cancelled %}
+                                <i class="fa fa-check"></i> Restaurar Gasto
+                                {% else %}
+                                <i class="fas fa-times-circle"></i> Cancelar Gasto
+                                {% endif %}
+                            </button>
+                        </div>
+                        </form>
+                    </div>
                 </div>
             </div>
-
-            <div class="row">
-                <div class="col-md-7">
-                    <h4>Comprobante Pago</h4> 
-                </div> 
-                <div class="col-md-5 text-left" style="padding: 10px">
-                    {% if organizerrefund.payment %}
-                    <a href="{{organizerrefund.payment.document.url}}" target="_blank"> descargar <i class="fa fa-download"></i></a>
-                    {% endif %}
-                </div>
-            </div>
+            <!-- End of Modal -->
+            {% endif %}
+            <h4>Comprobante Pago</h4>
             {% if organizerrefund.payment %}
             <div class="row">
-                    {% if organizerrefund.payment.extension == ".pdf" %}
-                    <div class="col-md-5" id="pdf-payment" payment-url={{organizerrefund.payment.document.url}}>
-                        <canvas></canvas>
+                <div class="col-md-12 text-center">
+                {% if organizerrefund.payment.extension == ".pdf" %}
+                    <div id="pdf-payment" payment-url={{organizerrefund.payment.document.url}}>
+                        <a href="{{organizerrefund.payment.document.url}}" target="_blank">
+                            <canvas class="rounded border border-dark"></canvas>
+                        </a>
                     </div>
-                    {% elif organizerrefund.payment.is_image_document %}
-                    <div class="col-md-5 img-payment" payment-url={{organizerrefund.payment.document.url}}>
-                            <img src="{{organizerrefund.payment.document.url}}" style="width: 200px;">
+                {% elif organizerrefund.payment.is_image_document %}
+                    <div class="img-payment" payment-url={{organizerrefund.payment.document.url}}>
+                        <a href="{{organizerrefund.payment.document.url}}" target="_blank">
+                            <img class="rounded border border-dark" src="{{organizerrefund.payment.document.url}}" style="width: 200px;">
+                        </a>
                     </div>
-                    {% else %}
-                    <div class="col-md-5" payment-url={{organizerrefund.payment.document.url}}>
-                        <img src="{% static 'images/not_document.svg' %}" style="width: 200px;">
+                {% else %}
+                    <div payment-url={{organizerrefund.payment.document.url}}>
+                        <a href="{{organizerrefund.payment.document.url}}" target="_blank">
+                            <img class="rounded border border-dark" src="{% static 'images/not_document.svg' %}" style="width: 200px;">
+                        </a>
                     </div>
-                    {% endif %}
-            </div>
-            {% else %}
-            <div class="alert alert-info" role="alert">
-                Sin comprobante de pago.
-                {% if perms.events.add_payment %}
-                <p>Para agregar un comprobante de pagos para reintegros del organizador ingrese aquí</p> <br/>
-                <a class="btn btn-primary" href="{% url 'organizer_refund_payment_create' pk=organizerrefund.organizer.pk %}?next={% url 'organizer_refund_detail' pk=organizerrefund.pk %}"><i class="fa fa-plus"> Comprobante de pago</i></a>
                 {% endif %}
+                </div>
+                <div class="col-md-12 text-center">
+                    <a href="{{organizerrefund.payment.document.url}}" target="_blank" download><i class="fa fa-download"></i> descargar</a>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12 rounded alert alert-info" role="alert">
+                Sin comprobantes de pago.
+            </div>
+            {% if perms.events.add_payment %}
+            <div class="text-right">
+                <a class="btn btn-primary float-right" href="{% url 'organizer_refund_payment_create' pk=organizerrefund.organizer.pk %}?next={% url 'organizer_refund_detail' pk=organizerrefund.pk %}"><i class="fa fa-plus"></i> Comprobante de pago</a>
             </div>
             {% endif %}
-        </div>
-
-       {% if perms.events.change_organizerrefund %}
-        <div class="col-md-12 text-right">
-            <form action="{% url 'organizer_refund_switch_state' organizerrefund.pk %}" method="post" style="display: inline;">
-                {% csrf_token %}
-            {% if organizerrefund.is_cancelled %}
-                <button type="submit" class="btn btn-success" onclick="return confirm('Está seguro que desea restaurar el gasto?');"><i class="fa fa-check"> Restaurar Gasto </i></button>
-            {% else %}
-                <button type="submit" class="btn btn-danger" onclick="return confirm('Está seguro que desea cancelar el gasto?');"><i class="fa fa-cross"> Cancelar Gasto </i></button>
-            {% endif %}
-            </form>            
-        </div>
         {% endif %}
-
-    </div>
+            </div>
+        </div>
+    <a class="btn btn-danger col-2 float-right mx-1" href="{{request.META.HTTP_REFERER}}"><i class="fas fa-undo"></i> Volver</a>
 </div>
-
-<div id="popup" class="modal fade" role="dialog">
-</div>
-<div id="pdf-dialog" class="modal fade" role="dialog">
-    <canvas id="canvas-dialog"></canvas>
-</div>
-<div id="img-dialog" class="modal fade" role="dialog">
-        <img id="img-dialog">
-</div>
-
 {% endblock %}
 
 {% block extra_js %}
     <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
-    <script src="{% static 'js/modal_form.js' %}"></script>
     <script src="{% static 'js/load_pdf_files.js' %}"></script>
 {% endblock %}

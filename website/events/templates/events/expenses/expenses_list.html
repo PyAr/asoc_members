@@ -1,14 +1,14 @@
 {% extends "events_base_paginated_list.html" %}
-
+{% load humanize %}
 {% block route-navigator %}
-<div class="route-navigator" >
-        <ol class="breadcrumb">
-            <li><a href="{% url 'events_home' %}">Inicio</a></li>
-            <li><a href="{% url 'event_list' %}">Eventos</a></li>
-            <li><a href="{% url 'event_detail' pk=event.pk %}">{{event.name}}</a></li>
-            <li class="active"><a href="{% url 'expenses_list' event_pk=event.pk%}">Gastos</a></li>
-        </ol>
-</div>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+      <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
+      <li class="breadcrumb-item"><i class="fas fa-calendar-check"></i><a href="{% url 'event_detail' pk=event.pk %}"> {{event.name}}</a></li>
+      <li class="breadcrumb-item" aria-current="page"><i class="fas fa-hand-holding-usd"></i> Gastos</li>
+    </ol>
+</nav>
 {% endblock %}
 
 {% block list_title %}
@@ -25,25 +25,22 @@
                         <th scope="row">Tipo</th>
                         <th scope="row">Origen</th>
                         <th scope="row">Monto</th>
-                        <th scope="row">Descripcion</th>
+                        <th scope="row">Descripción</th>
                         <th class="text-center" scope="row">Pagado</th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for expense in expenses_list %}
-                
                     {% if expense.category == "Prv" %}
                     <tr onclick="window.location='{% url 'provider_expense_detail' pk=expense.pk %}';" class="clikeable">
                     {% else %}
                     <tr onclick="window.location='{% url 'organizer_refund_detail' pk=expense.pk %}';" class="clikeable">
                     {% endif %}
-                        
                     {% if expense.is_cancelled %}
                         <td class="text-danger">{{ expense.get_category_display }} (Cancelado)</td>
                     {% else %}
-                        <td class="text-success">{{ expense.get_category_display }}</td>
+                        <td>{{ expense.get_category_display }}</td>
                     {% endif %}
-                    
                         <td>
                         {% if expense.category == "Prv"%}
                             {{ expense.origin.organization_name }}
@@ -51,8 +48,7 @@
                             {{ expense.origin.user.username }}
                         {% endif %}
                         </td>
-                        
-                        <td>{{ expense.amount }}</td>
+                        <td>${{ expense.amount|intcomma }}</td>
                         <td>{{ expense.description }}</td>
                         <td class="text-center">
                             <span>
@@ -66,7 +62,6 @@
                             </span>
                         </td>
                     </tr>
-                
                 {% empty %}
                     <tr>
                         <td colspan="100%" class="empty-list">
@@ -74,7 +69,6 @@
                         </td>
                     </tr>
                 {% endfor %}
-                
                 </tbody>
             </table>
         </div>
@@ -82,11 +76,12 @@
     <div class="row sponsors-list-actions">
         <div class="col-md-12 text-right">
             {% if perms.events.add_providerexpense %}
-            <a class="btn btn-primary" href="{% url 'provider_expense_create' event_pk=event.pk %}"><i class="fa fa-plus"></i> Pago Proveedor</a>
+            <a class="btn btn-primary float-right col-3 mx-1" href="{% url 'provider_expense_create' event_pk=event.pk %}"><i class="fas fa-money-bill-wave-alt"></i> Pago Proveedor</a>
             {% endif %}
             {% if perms.events.add_organizerrefund %}
-            <a class="btn btn-primary" href="{% url 'organizer_refund_create' event_pk=event.pk %}"><i class="fa fa-plus"></i> Reintegro</a>
+            <a class="btn btn-info float-right col-3 mx-1" href="{% url 'organizer_refund_create' event_pk=event.pk %}"><i class="fas fa-wallet"></i> Reintegro</a>
             {% endif %}
+            <a class="btn btn-danger col-3 float-right mx-1" href="{{request.META.HTTP_REFERER}}"><i class="fas fa-undo"></i> Volver</a>
         </div>
     </div>
 

@@ -1269,7 +1269,7 @@ class ProviderExpenseSwitchState(PermissionRequiredMixin, View):
             messages.SUCCESS,
             EXPENSE_MODIFIED
         )
-        return redirect('expenses_list', event_pk=expense.event.pk)
+        return redirect('provider_expense_detail', pk=expense.pk)
 
 
 class OrganizerRefundSwitchState(PermissionRequiredMixin, View):
@@ -1287,7 +1287,7 @@ class OrganizerRefundSwitchState(PermissionRequiredMixin, View):
             messages.SUCCESS,
             EXPENSE_MODIFIED
         )
-        return redirect('expenses_list', event_pk=expense.event.pk)
+        return redirect('organizer_refund_detail', pk=expense.pk)
 
 
 events_list = EventsListView.as_view()

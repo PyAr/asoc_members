@@ -1,241 +1,345 @@
 {% extends "events_base.html" %}
 {% load static %}
+{% load humanize %}
 {% block content %}
 <div class="container">
+    {% block route-navigator %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-calendar-check"></i><a href="{% url 'event_detail' event.pk %}"> {{event.name}}</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-handshake"></i><a href="{% url 'sponsoring_list' event.pk %}"> Sponsoreos</a></li>
+          <li class="breadcrumb-item" aria-current="page"><i class="fas fa-donate"></i> {{sponsoring.sponsor.organization_name}} ({{sponsoring.sponsorcategory.name}})</li>
+        </ol>
+    </nav>
+    {% endblock %}
 
-    <div class="route-navigator" >
-            <ol class="breadcrumb">
-                <li><a href="{% url 'events_home' %}">Inicio</a></li>
-                <li><a href="{% url 'event_list' %}">Eventos</a></li>
-                <li><a href="{% url 'event_detail' pk=event.pk %}">{{event.name}}</a></li>
-                <li><a href="{% url 'sponsoring_list' event_pk=event.pk%}">Patrocinios</a></li>
-                <li class="active"><a href="{% url 'sponsoring_detail' pk=sponsoring.pk%}">
-                        {{sponsoring.sponsor.organization_name}} ({{sponsoring.sponsorcategory.name}})
-                </a></li>
-            </ol>
-    </div>
-    <h2>Patrocinio {{sponsoring.sponsorcategory.name}} ({{sponsoring.state}})</h2>
-    <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-        <div class="panel panel-default">
-            <div class="panel-heading" role="tab" id="headingSponsoringData">
-            <h4 class="panel-title">
-                <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseSponsoringData" aria-expanded="true" aria-controls="collapseSponsoringData">
-                Datos del evento y del patrocinador
-                </a>
-            </h4>
-            </div>
-            <div id="collapseSponsoringData" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingSponsoringData">
-                <div class="panel-body">
-                    <div class="row sponsoring-detail">
-                        <div class="col-md-6">
-                            <h4>Datos Evento</h4>
-                            {% include "events/event_describe_table.html" with event=event %}
-                        </div>
-                        <div class="col-md-6">
-                            <h4>Datos Patrocinador </h4>
-                            {% include "sponsors/sponsor_describe_table.html" with sponsor=sponsoring.sponsor %}
-                        </div>
-                        
-                    </div>
+    <h2>Sponsor {{sponsoring.sponsor.organization_name}}</h2>
+    <h2><small class="text-muted">Categoría: {{sponsoring.sponsorcategory.name}} (${{sponsoring.sponsorcategory.amount|intcomma}}) [{{sponsoring.state}}]</small></h2>
+    <h3><small class="text-muted">Última modificación: {{sponsoring.modified}}</small></h3>
+    <h3>Detalles <button class="btn btn-info col-2 float-right" data-toggle="collapse" href="#EventAndSponsorDetails" aria-expanded="false" aria-controls="collapseExample" id="detailButton"><i class="fa" aria-hidden="true"></i> Ver</button></h3>
+    {% if sponsoring.state == "no facturado" %}
+    <div class="collapse show my-2" id="EventAndSponsorDetails">
+    {% else %}
+    <!-- FIXME: no anda bien el CSS cuando está collapsado la primera vez -->
+    <div class="collapse my-2" id="EventAndSponsorDetails">
+    {% endif %}
+        <div class="card card-body">
+            <div class="row sponsoring-detail">
+                <div class="col-md-6">
+                    <h4>Datos Evento</h4>
+                    {% include "events/event_describe_table.html" with event=event %}
+                </div>
+                <div class="col-md-6">
+                    <h4>Datos Patrocinador </h4>
+                    {% include "sponsors/sponsor_describe_table.html" with sponsor=sponsoring.sponsor %}
                 </div>
             </div>
         </div>
-        
-        
     </div>
 
-    
-
-    <div class="row">
+    <!-- Detalles -->
+    <div class="row my-2">
+        <!-- Factura -->
         {% if sponsoring.invoice %}
-        <div class="col-md-6">
-            <div class="row">
-                <div class="col-md-12">
-                    <h4>Factura</h4>
-                    <strong>Monto:</strong> ${{sponsoring.invoice.amount}}<br/>
-                    <strong>Documento:</strong> <a href="{{sponsoring.invoice.document.url}}" target="_blank"> descargar <i class="fa fa-download"></i></a>
-                    
-                </div>    
+        <div class="col-md-5">
+            <h4>Factura</h4>
+            <strong>Sponsor:</strong> {{sponsoring.sponsor.organization_name}}<br/>
+            <strong>Monto:</strong> ${{sponsoring.invoice.amount|intcomma}}<br/>
+            <strong>Documento:</strong> <a href="{{sponsoring.invoice.document.url}}" target="_blank" download><i class="fa fa-download"></i> descargar</a><br/>
+            <strong>Última modificación:</strong> {{sponsoring.invoice.modified}}<br/>
+            <!-- PREVIEW -->
+            {% if sponsoring.invoice.extension == ".pdf" %}
+            <div id="invoice-pdf-div" invoice-url="{{sponsoring.invoice.document.url}}">
+                <a href="{{sponsoring.invoice.document.url}}" target="_blank">
+                    <canvas class="rounded border border-dark" id="pdf-canvas"></canvas>
+                </a>
             </div>
-            
-            <div class="row">
-                {% if sponsoring.invoice.extension == ".pdf" %}
-                <div id="invoice-pdf-div" class="col-md-12 text-left" invoice-url={{sponsoring.invoice.document.url}}>   
-                    <canvas id="pdf-canvas"></canvas> 
+            {% elif sponsoring.invoice.is_image_document %}
+            <img src="{{sponsoring.invoice.document.url}}" style="width: 400px;">
+            {% else %}
+            <img src="{% static 'images/not_document.svg' %}" style="width: 400px;">
+            {% endif %}
+            {% if sponsoring.state == "facturado" and perms.events.set_invoice_approved %}
+            <!-- Aprobar Factura -->
+            <form action="{% url 'invoice_set_approved' sponsoring.invoice.pk %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-block btn-success mx-1" ><i class="fas fa-thumbs-up"></i> Aprobar Factura</button>
+            </form>
+            <button data-toggle="modal" data-target="#NotImplementedModal" class="btn btn-block btn-danger my-2 mx-1"><i class="fas fa-thumbs-down"></i> Rechazar Factura</button> 
+            <!-- Modal -->
+            <div class="modal fade" id="NotImplementedModal" tabindex="-1" aria-labelledby="NotImplementedModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title text-danger" id="NotImplementedModalLabel"> <i class="fas fa-exclamation-triangle"></i> Rechazar factura</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body bg-danger text-white">
+                            Esta funcionalidad aún no está implementada. 🙏 Perdón!
+                        </div>
+                        <div class="modal-footer">
+                            Si la factura está mal comunicate con <a href="https://t.me/lecovi"><i class="fab fa-telegram"></i> @lecovi</a>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
                 </div>
-                {% elif sponsoring.invoice.is_image_document %}
-                <div class="col-md-12">
-                    <img src="{{sponsoring.invoice.document.url}}" style="width: 400px;">
-                </div>
-                {% else %}
-                <div class="col-md-12">
-                    <img src="{% static 'images/not_document.svg' %}" style="width: 400px;">
-                </div>
-                {% endif %}
             </div>
-
+            <!-- End Modal -->
+            {% endif %}
+            <!-- Registrar Pago -->
             <div class="row text-right">
                 <div class="col-md-12">
-                {% if sponsoring.state == "facturado" and perms.events.set_invoice_approved %}
-                    <form action="{% url 'invoice_set_approved' sponsoring.invoice.pk %}" method="post">
-                        {% csrf_token %}
-                        <span class="text-right">
-                            <input type="submit" class="btn btn-success" value="Aprobar Factura"/>
-                        </span>
-                    </form>
-                {% endif %}
                 {% if sponsoring.state == "pendiente de pago" and perms.events.set_invoice_complete_payment %}
                     <form method="post">
                         {% csrf_token %}
-                        <span class="text-right">
-                            <input type="submit" class="btn btn-success" value="Pago completo" formaction="{% url 'invoice_set_complete_payment' sponsoring.invoice.pk %}"/>
-                            <input type="submit" class="btn btn-success" value="Pago parcial" formaction="{% url 'invoice_set_partial_payment' sponsoring.invoice.pk %}"/>
-                        </span>
+                        <button type="submit" class="btn btn-success float-right col-5 mx-1" formaction="{% url 'invoice_set_complete_payment' sponsoring.invoice.pk %}"><i class="fas fa-check-circle"></i> Pago Completo</button>
+                        <button type="submit" class="btn btn-info float-right col-5 mx-1" value="Pago parcial" formaction="{% url 'invoice_set_partial_payment' sponsoring.invoice.pk %}"><i class="fas fa-star-half-alt"></i> Pago Parcial</button>
                     </form>
                 {% endif %}
                 {% if sponsoring.state == "pago parcial" and perms.events.set_invoice_complete_payment %}
                     <form method="post">
                         {% csrf_token %}
-                        <span class="text-right">
-                            <input type="submit" class="btn btn-success" value="Pago completo" formaction="{% url 'invoice_set_complete_payment' sponsoring.invoice.pk %}"/>
-                        </span>
+                        <button type="submit" class="btn btn-success float-right col-5 mx-1" formaction="{% url 'invoice_set_complete_payment' sponsoring.invoice.pk %}"><i class="fas fa-check-circle"></i> Pago Completo</button>
                     </form>
                 {% endif %}
                 </div>
             </div>
-            
         </div>
-        <div class="col-md-6">
-            <div class="row">
-                <div class="col-md-5">
-                    <h4>Afectaciones</h4> 
-                </div> 
-                {% if not sponsoring.close and sponsoring.invoice.invoice_ok and perms.events.add_invoiceaffect %}
-                <div class="col-md-7 text-left" style="padding: 10px">
-                    <a class="btn btn-primary" onclick="return open_modal('{% url 'sponsoring_invoice_affect_create' sponsoring.invoice.pk %}')"><i class="fa fa-plus"> Agregar</i></a>
-                </div>
-                {% elif not sponsoring.invoice.invoice_ok %}
-
-                <div class="col-md-7 text-left" style="padding: 10px">
-                    <div class="alert alert-info" role="alert">
-                                Necesita aprobar la factura, para agregar afectaciones.
+        <!-- Afectaciones -->
+        <div class="col-md-7">
+            <h4>Afectaciones</h4> 
+            {% if not sponsoring.close and sponsoring.invoice.invoice_ok and perms.events.add_invoiceaffect %}
+            <button class="btn btn-block btn-primary my-1" data-toggle="modal" data-target="#NewSponsoringInvoiceAffect"><i class="fas fa-plus"></i> Agregar</button>
+            <!-- NewSponsoringInvoice Modal -->
+            <div class="modal fade" id="NewSponsoringInvoiceAffect" tabindex="-1" aria-labelledby="NewSponsoringInvoiceAffectLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="NewSponsoringInvoiceAffectLabel"><i class="fas fa-receipt"></i> Afectación Factura <span class="text-muted">{{sponsoring.sponsor.organization_name}} ({{sponsoring.sponsorcategory.name}} <small>${{sponsoring.sponsorcategory.amount|intcomma}}</small>) @ {{event.name}} [#{{sponsoring.pk}}]</span></h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form role="form" action="{% url 'sponsoring_invoice_affect_create' sponsoring.invoice.pk %}" method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="form-group row">
+                                <label for="category" class="font-weight-bold col-sm-2 col-form-label text-right">Tipo *</label>
+                                <div class="col-sm-10">
+                                    <select class="form-control" id="id_category" name="category" required>
+                                        <!-- Options -->
+                                        <!-- FIXME: sacar las opciones del modelo InvoiceAffect -->
+                                        <option value="Pay">Pago</option>
+                                        <option value="Hold">Retención</option>
+                                        <option value="Oth">Otros</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="amount" class="font-weight-bold col-sm-2 col-form-label text-right">Monto *</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="id_amount" name="amount" placeholder="Valor de la afectación" required>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="observations" class="font-weight-bold col-sm-2 col-form-label float-right">Observaciones</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="id_observations" name="observations" placeholder="Comentarios">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="document" class="font-weight-bold col-sm-2 col-form-label text-right">Archivo</label>
+                                <div class="col-sm-10">
+                                    <input type="file" class="form-control" id="id_document" name="document" placeholder="Archivo de la factura [PDF|JPG|SVG]" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger float-right col-3 mx-1" data-dismiss="modal" aria-label="Close">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-success float-right col-3 mx-1"><i class="fas fa-save"></i> Crear</button>
+                        </div>
+                        </form>
                     </div>
-                    
+                </div>
+            </div>
+            <!-- End of Modal -->
+            {% elif not sponsoring.invoice.invoice_ok %}
+            <div class="alert alert-warning" role="alert">
+                <i class="fas fa-exclamation-triangle"></i> Necesita aprobar la factura, para agregar afectaciones.
+            </div>
+            {% endif %}
+            {% for affect in sponsoring.invoice.invoice_affects.all %}
+            <div class="row">
+            {%if affect.document %}
+                {% if affect.extension == ".pdf" %}
+                <a class="col-md-4" href="{{affect.document.url}}" target="_blank">
+                    <div class="pdf-affect" affect-url="{{affect.document.url}}">
+                        <canvas class="rounded border border-dark"></canvas>
+                    </div>
+                </a>
+                {% elif affect.is_image_document %}
+                <div class="col-md-4 img-affect" affect-url={{affect.document.url}}>
+                    <a href="{{affect.document.url}}" target="_blank">
+                        <img class="rounded border border-dark" src="{{affect.document.url}}" width="202px">
+                    </a>
+                </div>
+                {% else %}
+                <div class="col-md-4" affect-url={{affect.document.url}}>
+                    <a href="{{affect.document.url}}" target="_blank">
+                        <img class="rounded border border-dark" src="{% static 'images/not_document.svg' %}" style="width: 202px;">
+                    </a>
                 </div>
                 {% endif %}
+            {% else %}
+                <div class="col-md-4">
+                    <a href="{{affect.document.url}}" target="_blank">
+                        <img class="rounded border border-dark" src="{% static 'images/not_document.svg' %}" style="width: 202px;">
+                    </a>
+                </div>
+            {% endif %}
+                <div class="col-md-8 affect-description align-middle">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Tipo</th>
+                                <td>{{ affect.get_category_display }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Monto</th>
+                                <td>${{ affect.amount|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Observaciones</th>
+                                <td>{{ affect.observations }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Documento</th>
+                                {% if affect.document %}
+                                <td><a href="{{affect.document.url}}" target="_blank" download> <i class="fa fa-download"></i> descargar</a></td>
+                                {% else %}
+                                <td>Sin documento adjunto</td>
+                                {% endif %}
+                            </tr>
+                            <tr>
+                                <th scope="row">Última modificación</th>
+                                <td>{{ affect.modified }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <hr>
             </div>
-            {% for affect in sponsoring.invoice.invoice_affects.all %}
-                <div class="row">
-                    {%if affect.document %}
-                        {% if affect.extension == ".pdf" %}
-                        <div class="col-md-5 pdf-affect" affect-url={{affect.document.url}}>
-                            <canvas></canvas>
-                        </div>
-                        {% elif affect.is_image_document %}
-                        <div class="col-md-5 img-affect" affect-url={{affect.document.url}}>
-                                <img src="{{affect.document.url}}" style="width: 200px;">
-                        </div>
-                        {% else %}
-                        <div class="col-md-5" affect-url={{affect.document.url}}>
-                            <img src="{% static 'images/not_document.svg' %}" style="width: 200px;">
-                        </div>
-                        {% endif %}
-                    {% else %}
-                        <div class="col-md-5">
-                            <img src="{% static 'images/not_document.svg' %}" style="width: 200px;">
-                        </div>
-                    {% endif %}
-                    <div class="col-md-7 affect-description align-middle">
-                        <table class="table">
-                            <tbody>
-                                <tr>
-                                    <th scope="row">Tipo</th>
-                                    <td>{{ affect.get_category_display }}</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">Monto</th>
-                                    <td>{{ affect.amount }}</td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">Observaciones</th>
-                                    <td>{{ affect.observations }}</td>
-                                </tr>
-                                
-                                <tr>
-                                    <th scope="row">Documento</th>
-                                    {% if affect.document %}
-                                    <td><a href="{{affect.document.url}}" target="_blank"> descargar <i class="fa fa-download"></i></a></td>
-                                    {% else %}
-                                    <td>Sin documento adjunto</td>
-                                    {% endif %}
-                                </tr>
-                                
-                            </tbody>
-                        </table>
-                    </div>
-                    <hr>
-                </div>
             {% empty %}
-                <div class="alert alert-info" role="alert">
-                    No se cargaron afectaciones a la factura actual.
-                </div>
+            <div class="alert alert-info" role="alert">
+                <i class="fas fa-info"></i> No se cargaron afectaciones a la factura actual.
+            </div>
             {% endfor %}
         </div>
         {% else %}
-
         <div class="col-md-12">
-            <div class="alert alert-info" role="alert">
-                Patrocinio sin datos de facturación
+            <div class="alert alert-warning" role="alert">
+                <i class="fas fa-exclamation-circle"></i> Sponsor sin factura emitida.
             </div>
         </div>
         {% endif %}
     </div>
 
     <div class="row">
-            <div class="col-md-12 text-right">
-                {% if sponsoring.close %}
-                <a class="btn btn-disabled btn-block text-uppercase" href="#"><i class="fa fa-expeditedssl"></i> Cerrado</a>
-                {% else %}
-                    
-                   
-                    
-                    
-                        {% if perms.events.close_sponsoring %}
-                        
-                        <a class="btn btn-primary"
-                            onclick="return open_confirm_dialog()"
-                                >Cerrar patrocinio</a>
-                        {% endif %}
-                        {% if sponsoring.state == "no facturado" and perms.events.add_invoice %}
-                            <a class="btn btn-success"
-                            onclick="return open_modal('{% url 'sponsoring_invoice_create' sponsoring.pk %}')"
-                                >Facturar</a>
-                        {% endif %}
-                        
-                    
-                    
-                {% endif%}
+        <div class="col-md-12 text-right">
+            {% if sponsoring.close %}
+            <button class="btn btn-disabled btn-block text-uppercase"><i class="fab fa-expeditedssl"></i> Cerrado</button>
+            {% else %}
+                {% if sponsoring.state == "no facturado" and perms.events.add_invoice %}
+            <button class="btn btn-success col-2 float-right mx-1" data-toggle="modal" data-target="#NewSponsoringInvoice"><i class="fas fa-file-invoice-dollar"></i> Facturar</a></button>
+
+            <!-- NewSponsoringInvoice Modal -->
+            <div class="modal fade" id="NewSponsoringInvoice" tabindex="-1" aria-labelledby="NewSponsoringInvoiceLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="NewSponsoringInvoiceLabel"><i class="fas fa-file-invoice-dollar"></i> Factura <span class="text-muted">{{sponsoring.sponsor.organization_name}} ({{sponsoring.sponsorcategory.name}} <small>${{sponsoring.sponsorcategory.amount|intcomma}}</small>) @ {{event.name}} [#{{sponsoring.pk}}]</span></h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form role="form" action="{% url 'sponsoring_invoice_create' sponsoring.pk %}" method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="form-group row">
+                                <label for="amount" class="font-weight-bold col-sm-2 col-form-label text-right">Monto</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="id_amount" name="amount" placeholder="Valor de la factura" required>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="observations" class="font-weight-bold col-sm-2 col-form-label float-right">Observaciones</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" id="id_observations" name="observations" placeholder="Comentarios">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="document" class="font-weight-bold col-sm-2 col-form-label text-right">Archivo</label>
+                                <div class="col-sm-10">
+                                    <input type="file" class="form-control" id="id_document" name="document" placeholder="Archivo de la factura [PDF|JPG|SVG]" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger float-right col-3 mx-1" data-dismiss="modal" aria-label="Close">
+                                <i class="fas fa-times"></i> Cancelar</button>
+                            <button type="submit" class="btn btn-success float-right col-3 mx-1"><i class="fas fa-save"></i> Crear</button>
+                        </div>
+                        </form>
+                    </div>
+                </div>
             </div>
+            <!-- End of Modal -->
+                {% endif %}
+                {% if perms.events.close_sponsoring %}
+                <button class="btn btn-danger float-right mx-1" data-toggle="modal" data-target="#CloseSponsoring"><i class="fas fa-door-closed"></i> Cerrar patrocinio</button>
+                <!-- CloseSponsoring Modal -->
+            <div class="modal fade" id="CloseSponsoring" tabindex="-1" aria-labelledby="CloseSponsoringLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title text-danger" id="CloseSponsoringLabel"><i class="fas fa-door-closed"></i> Cerrar <span class="text-muted">{{sponsoring.sponsor.organization_name}} ({{sponsoring.sponsorcategory.name}} <small>${{sponsoring.sponsorcategory.amount|intcomma}}</small>) @ {{event.name}} [#{{sponsoring.pk}}]</span></h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form role="form" action="{% url 'sponsoring_set_close' sponsoring.pk %}" method="POST">
+                            ¿Esta seguro que desea cerrar el patrocinio actual?. Esto bloqueará todas las acciones sobre el mismo.
+                                {% csrf_token %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger float-right col-3 mx-1" data-dismiss="modal" aria-label="Close">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-success float-right col-3 mx-1"><i class="fas fa-door-closed"></i> Cerrar patrocinio</button>
+                        </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- End of Modal -->
+                {% endif %}
+            {% endif%}
         </div>
-
-
+    </div>
 </div>
-<div id="popup" class="modal fade" role="dialog">
-</div>
-<div id="pdf-dialog" class="modal fade" role="dialog">
-    <canvas id="canvas-dialog"></canvas>
-</div>
-<div id="img-dialog" class="modal fade" role="dialog">
-        <img id="img-dialog">
-</div>
-
-<div id="confirm-dialog" class="modal fade" role="dialog">
-    {% include "events/sponsorings/sponsoring_close_modal_confirm.html" %}
-</div>       
 {% endblock %}
-
 {% block extra_js %}
-    <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
-    <script src="{% static 'js/modal_form.js' %}"></script>
-    <script src="{% static 'js/load_pdf_files.js' %}"></script>
+<script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
+<script src="{% static 'js/load_pdf_files.js' %}"></script>
+<script>
+    $("#sponsorDescribeTable").addClass("table-sm");
+    $("#eventDescribeTable").addClass("table-sm");
+</script>
 {% endblock %}

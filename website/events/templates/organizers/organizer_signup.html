@@ -2,20 +2,22 @@
 {% load crispy_forms_tags %}
 {% block content %}
 <div class="container">
-  <div class="route-navigator" >
+  {% block route-navigator %}
+  <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
-          <li><a href="{% url 'events_home' %}">Inicio</a></li>
-          <li><a href="{% url 'organizer_list' %}">Organizadores</a></li>
-          <li class="active"><a href="{% url 'organizer_signup' %}">Crear</a></li>
+        <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+        <li class="breadcrumb-item"><i class="fas fa-user-friends"></i><a href="{% url 'organizer_list' %}"> Organizadores</a></li>
+        <li class="breadcrumb-item" aria-current="page"><i class="fas fa-certificate"></i> Nuevo</li>
       </ol>
-  </div>
+  </nav>
+  {% endblock %}
   <h3>Crear nuevo organizador</h3>
   
-  <form method="post">
+  <form method="POST">
     {% csrf_token %}
     {% crispy form %}
-    <a class="btn btn-default" href="{% url 'organizer_list' %}">Volver</a>
-    <input type="submit" class="btn btn-success" value="Registrar" />
+    <button type="submit" class="btn btn-success col-2 float-right mx-1"><i class="fas fa-save"></i> Registrar</button>
+    <a class="btn btn-default btn-danger col-2 float-right mx-1" href="{% url 'organizer_list' %}"><i class="fas fa-undo"></i> Volver</a>
   </form>
 </div>
 {% endblock %}

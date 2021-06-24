@@ -44,7 +44,7 @@ $(document).ready(function()
   if($('#invoice-pdf-div').length){
 		url = $('#invoice-pdf-div').attr('invoice-url');
 		canvas = document.getElementById('pdf-canvas');
-		renderPDF(url, canvas, 400);
+		renderPDF(url, canvas, 450);
 	}
 
 	// if there are invoice affects read all pdf's 
@@ -60,8 +60,8 @@ $(document).ready(function()
 	if($('#pdf-payment').length){
 		//TODO
 		url = $('#pdf-payment').attr('payment-url');
-		canvas = $('#pdf-payment').children('canvas')[0];
-		renderPDF(url, canvas, 300);
+		canvas = $('#pdf-payment').children('a').children('canvas')[0];
+		renderPDF(url, canvas, 350);
 		
 	}
 

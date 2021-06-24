@@ -1,31 +1,33 @@
 {% extends "events_base.html" %}
 {% load static %}
+{% load humanize %}
 {% block content %}
 <div class="container">
+    {% block route-navigator %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
+          <li class="breadcrumb-item" aria-current="page"><i class="fas fa-calendar-check"></i> {{event.name}}</li>
+        </ol>
+    </nav>
+    {% endblock %}
 
-    <div class="route-navigator" >
-            <ol class="breadcrumb">
-                <li><a href="{% url 'events_home' %}">Inicio</a></li>
-                <li><a href="{% url 'event_list' %}">Eventos</a></li>
-                <li class="active"><a href="{% url 'event_detail' pk=event.pk %}">{{event.name}}</a></li>
-            </ol>
-    </div>
-
-    <div class="row event-detail">
+    <div class="row my-3">
         <div class="col-md-6">
             <h3>Detalle del evento </h3>
-            
+
             {% include "events/event_describe_table.html" with event=event %}
 
             {% if event.close %}
             <a class="btn btn-disabled btn-block text-uppercase" href="#"><i class="fa fa-expeditedssl"></i> Cerrado</a>
             {% else %}
-            <a class="btn btn-primary btn-block text-uppercase" href="{% url 'event_change' event.pk %}">Editar</a>
+            <a class="btn btn-primary btn-block text-uppercase" href="{% url 'event_change' event.pk %}"><i class="fas fa-edit"></i> Editar</a>
             {% endif %}
         </div>
         <div class="col-md-6">
             {% if perms.events.view_event_organizers %}
-                <h3>Organizadores <span class="badge badge-light">{{organizers.count}}</span></h3>
+                <h3>Organizadores <small><span class="badge badge-dark">{{organizers.count}}</span></small></h3>
                 {% if organizers %}
                     <ul>
                         {% for organizer in organizers %}
@@ -39,61 +41,86 @@
                      
                 {% endif %}
                 {% if perms.events.add_eventorganizer %}
-                    <a class="btn btn-primary btn-block text-uppercase" href="{% url 'admin:events_event_change' event.pk %}">Agregar Organizadores</a>
+                    <a class="btn btn-primary btn-block text-uppercase" href="{% url 'admin:events_event_change' event.pk %}" target="_blank"><i class="fas fa-user-plus"></i> Agregar Organizadores</a>
                 {% endif %}
             {% endif %}
         </div>
     </div>
 
-    <div class="row sponsors-categories">
-            <div class="col-md-12">
-                <h3>Categorias de Sponsors</h3>
-            </div>
-            <div class="row">
-            {% for sponsor_category in event.sponsors_categories.all %}
-                <div class="col-sm-3 col-md-3">
-                    <div class="thumbnail">
-                        <div class="card-header">
-                            <h3 class="text-center text-camelcase">{{ sponsor_category.name }}</h3>
-                        </div>
-                        <div class="card-body">
-                            <h2 class="text-center">${{ sponsor_category.amount }}</h2>
-                            {% if not sponsor_category.sponsors.count %}
-                            <p>No se han registrado sponsors asociados a esta categoria</p>
-                            {% else %}
-                            <p>Se han registrado un total de {{ sponsor_category.sponsors.count }} sponsors, para esta categoría</p>
-                            {% endif %}
-                        </div>
-                    </div>
+    <div class="row my-2">
+        <div class="col-md-12">
+            <h3>Categorias de Sponsors</h3>
+        </div>
+
+        <div class="col-12 card-deck">
+        {% for sponsor_category in event.sponsors_categories.all %}
+            <!-- Category Card -->
+            <div class="card border-secondary text-center my-1">
+                <div class="card-header text-uppercase font-weight-bold"><i class="fas fa-donate"></i> {{ sponsor_category.name }}</div>
+                <div class="card-body">
+                    <h2>${{ sponsor_category.amount|intcomma }}</h2>
                 </div>
-                {% if forloop.counter|divisibleby:4 %}
-                    </div><div class="row">
-                {% endif %}
-                
-            {% endfor %}
-                {% if not event.close %}  
-                {% if perms.events.add_sponsorcategory %}
-                <div class="col-sm-3 col-md-3">
-                    <div class="thumbnail">
-                        <div class="card-header">
-                            <h3 class="text-center text-camelcase">Agregar</h3>
+                <div class="card-footer font-weight-light text-info">
+                    Sponsors: {{ sponsor_category.sponsors.count }}
+                </div>
+            </div>
+            {% if forloop.counter|divisibleby:4 %}
+        </div>
+        <div class="col-12 card-deck">
+            {% endif %}
+        {% endfor %}
+        {% if not event.close %}
+            {% if perms.events.add_sponsorcategory %}
+        <!-- New Sponsor Category Card -->
+            <div class="card border-info text-center my-1" data-toggle="modal" data-target="#NewSponsorCategory" role="button">
+                <div class="card-header text-uppercase font-weight-bold">Nueva Categoría</div>
+                <div class="card-body">
+                    <img src="{% static 'images/add.png' %}" alt="Agregar categoría de sponsor">
+                </div>
+                <div class="card-footer font-weight-light text-primary"><i class="fas fa-plus-circle"></i> Agregar</div>
+            </div>
+        <!-- NewSponsorCategory Modal -->
+        <div class="modal fade" id="NewSponsorCategory" tabindex="-1" aria-labelledby="NewSponsorCategoryLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="NewSponsorCategoryLabel"><i class="fas fa-donate"></i> Agregar categoría de Sponsor</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form role="form" action="{% url 'event_create_sponsor_category' event.pk %}" method="POST">
+                        {% csrf_token %}
+                        <div class="form-group row">
+                            <label for="name" class="font-weight-bold col-sm-2 col-form-label">Nombre</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="id_name" name="name" placeholder="Nombre de la categoría" required>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div class="single-action">
-                                    <img src="{% static 'images/add.png' %}" onclick="return open_modal('{% url 'event_create_sponsor_category' event.pk %}')" alt="Agregar">
+                        <div class="form-group row">
+                            <label for="amount" class="font-weight-bold col-sm-2 col-form-label">Monto</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="id_amount" name="amount" placeholder="Valor de la categoría" required>
                             </div>
                         </div>
                     </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger float-right col-3 mx-1" data-dismiss="modal" aria-label="Close">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success float-right col-3 mx-1"><i class="fas fa-save"></i> Crear</button>
+                    </div>
                 </div>
-                {% endif %}
-                {% endif %}
             </div>
-    </div>   
+        </div>
+        <!-- End of Modal -->
+            {% endif %}
+        {% endif %}
+        </div>
+    </div>
 </div>
-<div id="popup" class="modal fade" role="dialog">
-</div>       
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'js/modal_form.js' %}"></script>
 {% endblock %}

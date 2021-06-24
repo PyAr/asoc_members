@@ -2,26 +2,33 @@
 {% load static %}
 {% block content %}
 <div class="container">
-
-    <div class="route-navigator" >
-            <ol class="breadcrumb">
-                <li><a href="{% url 'events_home' %}">Inicio</a></li>
-                <li><a href="{% url 'sponsor_list' %}" >Patrocinadores</a></li>
-                <li class="active"><a href="{% url 'sponsor_detail' pk=sponsor.pk %}">{{sponsor.organization_name}}</a></li>
-            </ol>
-    </div>
-    
+    {% block route-navigator %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-handshake"></i><a href="{% url 'events_home' %}"> Sponsors</a></li>
+          {% if form.instance.pk %}
+          <li class="breadcrumb-item"><a href="{% url 'sponsor_detail' pk=form.instance.pk %}"><i class="fas fa-hand-point-right"></i> {{form.instance.organization_name}}</a></li>
+          <li class="breadcrumb-item" aria-current="page"><i class="fas fa-edit"></i> Edición</li>
+          {% else %}
+          <li class="breadcrumb-item" aria-current="page"><i class="fas fa-hand-point-right"></i> {{sponsor.organization_name}}</li>
+          {% endif %}
+        </ol>
+    </nav>
+    {% endblock %}
     <div class="row sponsor-detail">
+        <div class="col-md-2"></div>
         <div class="col-md-8">
-            <h3>Datos del patrocinador </h3>
+            <h3>Datos del Sponsor </h3>
             
             {% include "sponsors/sponsor_describe_table.html" with sponsor=sponsor show_enabled=True %}
             
             {% if perms.events.change_sponsor %}
-            <a class="btn btn-primary btn-block text-uppercase" href="{% url 'sponsor_change' sponsor.pk %}">Editar</a>
+            <a class="btn btn-primary col-2 float-right mx-1" href="{% url 'sponsor_change' sponsor.pk %}"><i class="fas fa-pencil-alt"></i> Editar</a>
             {% endif %}
+            <a class="btn btn-danger col-2 float-right mx-1" href="{% url 'sponsor_list' %}"><i class="fas fa-undo"></i> Volver</a>
         </div>
-        
+        <div class="col-md-2"></div>
     </div>
 </div>
 

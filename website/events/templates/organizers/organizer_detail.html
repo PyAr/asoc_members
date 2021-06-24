@@ -2,17 +2,16 @@
 {% load static %}
 {% block content %}
 <div class="container">
+    {% block route-navigator %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-user-friends"></i><a href="{% url 'organizer_list' %}"> Organizadores</a></li>
+          <li class="breadcrumb-item" aria-current="page"><i class="fas fa-user"></i> {{organizer.user.username}}</li>
+        </ol>
+    </nav>
+    {% endblock %}
 
-    <div class="route-navigator" >
-            <ol class="breadcrumb">
-                <li><a href="{% url 'events_home' %}">Inicio</a></li>
-                {% if perms.events.view_organizers %}
-                <li><a href="{% url 'organizer_list' %}" >Organizadores</a></li>
-                {% endif %}
-                <li class="active"><a href="{% url 'organizer_detail' pk=organizer.pk %}">{{organizer.user.username}}</a></li>
-            </ol>
-    </div>
-    
     <div class="row organizer-detail">
         <div class="col-md-6">
             <h3>Datos del organizador </h3>
@@ -27,13 +26,13 @@
                         <td>{{ organizer.last_name }}</td>
                     </tr>
                     <tr>
-                            <th scope="row">Usuario</th>
-                            <td>{{ organizer.user.username }}</td>
+                        <th scope="row">Usuario</th>
+                        <td>{{ organizer.user.username }}</td>
                     </tr>
                 </tbody>
             </table>
             {% if is_request_user %}
-            <a class="btn btn-primary btn-block text-uppercase" href="{% url 'organizer_change' organizer.pk %}">Editar</a>
+            <a class="btn btn-primary btn-block text-uppercase" href="{% url 'organizer_change' organizer.pk %}"><i class="fas fa-pencil-alt"></i> Editar</a>
             {% endif %}
             {% if organizer.has_unpayment_refunds and perms.events.add_payment %}
                 <p>El organizasor contiene reintegros sin pagar. Para agregar un comprobante de pago para los reintegros del organizador ingrese aquí</p> <br/>
@@ -41,7 +40,6 @@
             {% endif %}
         </div>
         <div class="col-md-6">
-            
                 <h3>Datos de cuenta bancaria</h3>
                 {% if organizer.account_data %}
                 <table class="table table-striped">
@@ -80,12 +78,12 @@
                 {% if is_request_user %}
                     {% if organizer.account_data %}
                     <a class="btn btn-primary btn-block text-uppercase" 
-                    href="{% url 'organizer_update_bank_account_data' organizer.account_data.pk %}">Actualizar cuenta</a>
+                    href="{% url 'organizer_update_bank_account_data' organizer.account_data.pk %}"><i class="fas fa-money-check"></i> Actualizar cuenta</a>
                     {% else %}
                     <a class="btn btn-primary btn-block text-uppercase" 
                     href="{% url 'organizer_create_bank_account_data' organizer.pk %}">
                     {# onclick="return open_modal('{% url 'organizer_create_bank_account_data' organizer.pk %}')"> #}
-                    Crear cuenta
+                    <i class="fas fa-money-check-alt"></i> Crear cuenta
                     </a>
                     {% endif %}
                 {% endif %}
@@ -102,7 +100,6 @@
                     <tr>
                         <th scope="row">Nombre de usuario</th>
                         <th scope="row">Correo Electrónico</th>
-                        
                         <th scope="row">Contraseña</th>
                         
                     </tr>
@@ -111,7 +108,7 @@
                     <tr>
                         <td>{{ organizer.user.username }}</td>
                         <td>{{ organizer.user.email }}</td>
-                        <td>********* <span style="text-align: right; width: 100%;"><a href="{% url 'change_password' %}">(cambiar contraseña)</a></span> </td>
+                        <td>********* <span style="text-align: right; width: 100%;"><a href="{% url 'change_password' %}"><i class="fas fa-key"></i> Cambiar</a></span> </td>
                     </tr>
                 </tbody>
             </table>
@@ -120,7 +117,7 @@
     {% endif %}
 </div>
 <div id="popup" class="modal fade" role="dialog">
-</div>       
+</div>
 {% endblock %}
 
 {% block extra_js %}

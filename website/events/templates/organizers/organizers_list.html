@@ -1,13 +1,14 @@
 {% extends "events_base_paginated_list.html" %}
 
 {% block route-navigator %}
-<div class="route-navigator" >
-        <ol class="breadcrumb">
-            <li><a href="{% url 'events_home' %}">Inicio</a></li>
-            <li class="active"><a href="{% url 'organizer_list' %}">Organizadores</a></li>
-        </ol>
-</div>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+      <li class="breadcrumb-item" aria-current="page"><i class="fas fa-user-friends"></i> Organizadores</li>
+    </ol>
+</nav>
 {% endblock %}
+
 {% block list_title %}
 <h1>Organizadores</h1>
 {%endblock%}
@@ -25,10 +26,8 @@
                 </thead>
                 <tbody>
                 {% for organizer in organizer_list %}
-                
                     <tr onclick="window.location='{% url 'organizer_detail' pk=organizer.pk %}';" class="clikeable">
-                        
-                        <td >{{ organizer.user.username }}</td>
+                        <td>{{ organizer.user.username }}</td>
                         <td>{{ organizer.first_name }}</td>
                         <td>{{ organizer.last_name }}</td>
                     </tr>
@@ -40,7 +39,6 @@
                         </td>
                     </tr>
                 {% endfor %}
-                
                 </tbody>
             </table>
         </div>
@@ -48,8 +46,9 @@
     <div class="row organizers-list-actions">
         <div class="col-md-12 text-right">
             {% if perms.events.add_organizer %}
-            <a class="btn btn-primary" href="{% url 'organizer_signup' %}">Crear</a>
+            <a class="btn btn-primary col-2 float-right mx-1" href="{% url 'organizer_signup' %}"><i class="fas fa-certificate"></i> Crear</a>
             {% endif %}
+            <a class="btn btn-danger col-2 float-right mx-1" href="{{request.META.HTTP_REFERER}}"><i class="fas fa-undo"></i> Volver</a>
         </div>
     </div>
     

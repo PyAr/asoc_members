@@ -5,6 +5,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
+from stdnum.ar import cbu
 
 from events.models import (
     BankAccountData,
@@ -20,6 +21,15 @@ from events.models import (
     SponsorCategory,
     Sponsoring
 )
+
+
+def validate_cbu(cbu_number, form):
+    if not cbu_number.isdigit():
+        form._errors["cbu"] = form.error_class(['El CBU tiene que tener sólo dígitos'])
+    elif len(cbu_number) != 22:
+        form._errors["cbu"] = form.error_class(['El CBU tiene que tener 22 dígitos'])
+    elif not cbu.is_valid(cbu_number):
+        form._errors["cbu"] = form.error_class(['El CBU especificado no es un CBU válido'])
 
 
 class OrganizerUserSignupForm(UserCreationForm):
@@ -38,6 +48,8 @@ class OrganizerUserSignupForm(UserCreationForm):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
+        self.helper.label_class = "col-sm-2"
+        self.helper.field_class = "col-sm-10"
         # TODO: ver layout para solo tener los campos requeridos.
         self.helper.layout = Layout(
             'username',
@@ -71,6 +83,8 @@ class EventUpdateForm(forms.ModelForm):
         self.helper.form_tag = False
         self.fields['name'].disabled = True
         self.fields['commission'].disabled = True
+        self.helper.label_class = "col-sm-2"
+        self.helper.field_class = "col-sm-10"
 
     class Meta:
         model = Event
@@ -83,6 +97,8 @@ class OrganizerUpdateForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
+        self.helper.label_class = "col-sm-2"
+        self.helper.field_class = "col-sm-10"
 
     class Meta:
         model = Organizer
@@ -102,12 +118,13 @@ class SponsorCategoryForm(forms.ModelForm):
 
 
 class BankAccountDataForm(forms.ModelForm):
-
     def __init__(self, *args, **kwargs):
         super(BankAccountDataForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
+        self.helper.label_class = "col-sm-2"
+        self.helper.field_class = "col-sm-10"
 
     class Meta:
         model = BankAccountData
@@ -116,6 +133,12 @@ class BankAccountDataForm(forms.ModelForm):
             'account_type', 'account_number', 'cbu'
         ]
 
+    def clean(self):
+        super(BankAccountDataForm, self).clean()
+        cbu_number = self.cleaned_data.get('cbu')
+        validate_cbu(cbu_number=cbu_number, form=self)
+        return self.cleaned_data
+
 
 class SponsorForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -123,6 +146,8 @@ class SponsorForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
+        self.helper.label_class = "col-sm-3"
+        self.helper.field_class = "col-sm-9"
 
     class Meta:
         model = Sponsor
@@ -134,17 +159,23 @@ class SponsorForm(forms.ModelForm):
             'address',
             'contact_info',
         ]
+        widgets = {
+            'contact_info': forms.Textarea(attrs={'rows': 4, 'cols': 40}),
+        }
 
 
 class SponsoringForm(forms.ModelForm):
     def __init__(self, event, *args, **kwargs):
         super(SponsoringForm, self).__init__(*args, **kwargs)
-        # Pre-filter sponsorcategory by event
-        self.fields['sponsorcategory'].queryset = SponsorCategory.objects.filter(event=event)
-        self.fields['sponsor'].queryset = Sponsor.objects.filter(enabled=True)
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
+        self.helper.label_class = "col-sm-2"
+        self.helper.field_class = "col-sm-10"
+
+        # Pre-filter sponsorcategory by event
+        self.fields['sponsorcategory'].queryset = SponsorCategory.objects.filter(event=event)
+        self.fields['sponsor'].queryset = Sponsor.objects.filter(enabled=True)
 
     class Meta:
         model = Sponsoring
@@ -153,6 +184,9 @@ class SponsoringForm(forms.ModelForm):
             'sponsor',
             'comments',
         ]
+        widgets = {
+            'comments': forms.Textarea(attrs={'rows': 4, 'cols': 40}),
+        }
 
 
 class InvoiceForm(forms.ModelForm):
@@ -195,13 +229,30 @@ class ProviderForm(forms.ModelForm):
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
+        self.helper.label_class = "col-sm-2"
+        self.helper.field_class = "col-sm-10"
+        self.fields['bank_entity'].required = False
+        self.fields['account_type'].required = False
+        self.fields['account_number'].required = False
+        self.fields['cbu'].required = False
 
     class Meta:
         model = Provider
         fields = [
-            'organization_name', 'document_number', 'bank_entity',
-            'account_type', 'account_number', 'cbu'
+            'organization_name',
+            'document_number',
+            'bank_entity',
+            'account_type',
+            'account_number',
+            'cbu',
         ]
+
+    def clean(self):
+        super(ProviderForm, self).clean()
+        cbu_number = self.cleaned_data.get('cbu')
+        if len(cbu_number) > 0:
+            validate_cbu(cbu_number=cbu_number, form=self)
+        return self.cleaned_data
 
 
 class ProviderExpenseForm(forms.ModelForm):
@@ -218,6 +269,8 @@ class ProviderExpenseForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
+        self.helper.label_class = "col-sm-2"
+        self.helper.field_class = "col-sm-10"
 
     class Meta:
         model = ProviderExpense
@@ -246,6 +299,8 @@ class OrganizerRefundForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
+        self.helper.label_class = "col-sm-2"
+        self.helper.field_class = "col-sm-10"
 
     class Meta:
         model = OrganizerRefund
@@ -265,6 +320,8 @@ class PaymentForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
+        self.helper.label_class = "col-sm-2"
+        self.helper.field_class = "col-sm-10"
 
     class Meta:
         model = Payment

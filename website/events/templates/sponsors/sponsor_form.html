@@ -2,32 +2,34 @@
 {% load crispy_forms_tags %}
 {% block content %}
 <div class="container">
-
-    <div class="route-navigator" >
-            <ol class="breadcrumb">
-                <li><a href="{% url 'events_home' %}">Inicio</a></li>
-                <li><a href="{% url 'sponsor_list' %}">Patrocinadores</a></li>
-                {% if form.instance.pk %}
-                <li><a href="{% url 'sponsor_detail' pk=form.instance.pk %}">{{form.instance.organization_name}}</a></li>
-                <li class="active"><a href="#">Edición</a></li>
-                {% else %}
-                <li class="active"><a href="#">Crear</a></li>
-                {% endif %}
-                
-                
-            </ol>
-    </div>
+    {% block route-navigator %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-handshake"></i><a href="{% url 'events_home' %}"> Sponsors</a></li>
+          {% if form.instance.pk %}
+        <li class="breadcrumb-item"><i class="fas fa-hand-point-right"></i> <a href="{% url 'sponsor_detail' pk=form.instance.pk %}">{{form.instance.organization_name}}</a></li>
+        <li class="breadcrumb-item" aria-current="page"><i class="fas fa-edit"></i>Edición</li>
+        {% else %}
+        <li class="breadcrumb-item" aria-current="page"><i class="fas fa-certificate"></i> Crear</li>
+        {% endif %}
+        </ol>
+    </nav>
+    {% endblock %}
     
     <form method="POST">
         {% csrf_token %}
         {% crispy form %}
-        {% if form.instance.pk %}
-        <a class="btn btn-default" href="{% url 'sponsor_detail' form.instance.pk %}">Volver</a>
-        <input type="submit" class="btn btn-success" value="Actualizar!">
-        {% else %}
-        <a class="btn btn-default" href="{% url 'sponsor_list' %}">Volver</a>
-        <input type="submit" class="btn btn-success" value="Crear">
-        {% endif %}
+        <button type="submit" class="btn btn-success col-2 float-right mx-1">
+            <i class="fas fa-save"></i> 
+            {% if form.instance.pk %}
+            Actualizar
+            {% else %}
+            Crear
+            {% endif %}
+        </button>
+        <a class="btn btn-danger col-2 float-right mx-1" href="{% url 'sponsor_list' %}"><i class="fas fa-undo"></i> Volver</a>
+        
     </form>
        
 </div>       

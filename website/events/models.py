@@ -262,12 +262,13 @@ class Sponsoring(SaveReversionMixin, AuditUserTime):
     sponsorcategory = models.ForeignKey(
         'SponsorCategory',
         related_name='sponsor_by',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name=_('categoría'),
     )
     sponsor = models.ForeignKey(
         'Sponsor',
         related_name='sponsoring',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
     )
     comments = models.TextField(_('comentarios'), blank=True)
     close = models.BooleanField(_('cerrado'), default=False)
@@ -338,7 +339,7 @@ class Sponsor(SaveReversionMixin, AuditUserTime):
     document_number = models.CharField(
         _('CUIT'),
         max_length=13,
-        help_text=_('CUIT'),
+        help_text=_('La CUIT'),
         validators=[validate_cuit],
         unique=True
     )
@@ -348,7 +349,10 @@ class Sponsor(SaveReversionMixin, AuditUserTime):
     address = models.CharField(
         _('direccion'),
         max_length=LONG_MAX_LEN,
-        help_text=_('Dirección'),
+        help_text=_(
+            'Dirección completa: calle, número, piso, depto, código postal, '
+            'partido, localidad, provincia.'
+        ),
         blank=True
     )
 
@@ -363,7 +367,7 @@ class Sponsor(SaveReversionMixin, AuditUserTime):
         max_length=DEFAULT_MAX_LEN,
         blank=True,
         default='',
-        help_text=_('Especifica otra condición frente al iva'),
+        help_text=_('Especifica otra condición frente al IVA'),
     )
     # Overrinding objects to explicit when need to show inactive objects.
     objects = ActiveManager()
@@ -466,9 +470,10 @@ class InvoiceAffect(SaveReversionMixin, AuditUserTime):
     PAYMENT = 'Pay'
     WITHHOLD = 'Hold'
     OTHER = 'Oth'
+    # FIXME: en 'sponsoring_detail.html' en NewSponsoringInvoiceAffect Modal está harcodeado
     TYPE_CHOICES = (
         (PAYMENT, 'Pago'),
-        (WITHHOLD, 'Retencion'),
+        (WITHHOLD, 'Retención'),
         (OTHER, 'Otros')
     )
 
@@ -609,21 +614,32 @@ class Provider(SaveReversionMixin, AuditUserTime):
     bank_entity = models.CharField(
         _('entidad bancaria'),
         max_length=DEFAULT_MAX_LEN,
-        help_text=_('Nombre de la entiedad bancaria.')
+        help_text=_('Nombre de la entiedad bancaria.'),
     )
+
     account_number = models.CharField(
         _('número de cuenta'),
         max_length=13,
-        help_text=_('Número de cuenta.')
+        help_text=_('Número de cuenta.'),
     )
-    account_type = models.CharField(_('Tipo cuenta'), max_length=3, choices=ACCOUNT_TYPE_CHOICES)
+
+    account_type = models.CharField(
+        _('Tipo cuenta'),
+        max_length=3,
+        choices=ACCOUNT_TYPE_CHOICES,
+    )
 
     organization_name = models.CharField(
         _('razón social'),
         max_length=DEFAULT_MAX_LEN,
-        help_text=_('Razón social o nombre del propietario de la cuenta.')
+        help_text=_('Razón social o nombre del propietario de la cuenta.'),
     )
-    cbu = models.CharField(_('CBU'), max_length=DEFAULT_MAX_LEN, help_text=_('CBU de la cuenta'))
+    cbu = models.CharField(
+        _('CBU'),
+        max_length=DEFAULT_MAX_LEN,
+        help_text=_('CBU de la cuenta'),
+        validators=[validation_module.validate],
+    )
 
     def __str__(self):
         return f"{self.organization_name} - {self.document_number}"
