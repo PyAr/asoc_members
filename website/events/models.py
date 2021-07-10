@@ -653,6 +653,11 @@ class Provider(SaveReversionMixin, AuditUserTime):
         )
         ordering = ['-created']
 
+    @property
+    def account_type_name(self):
+        """Return the *name* of the account type."""
+        return dict(self.ACCOUNT_TYPE_CHOICES)[self.account_type]
+
 
 @reversion.register
 class Payment(SaveReversionMixin, AuditUserTime):

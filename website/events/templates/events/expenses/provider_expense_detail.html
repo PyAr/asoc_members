@@ -17,15 +17,34 @@
 
     <h2>Gasto Proveedor</h2>
     <div class="row my-2">
-        <!-- FACTURA -->
         <div class="col-md-6">
-            <h4>Factura</h4>
+            <!-- DATOS PARA EL PAGO -->
+            <h4>Datos para el pago</h4>
             <div class="table-responsive">
                 <table class="table table-sm table-bordered table-striped table-hover">
                     <tr>
                         <th scope="row">Proveedor</th>
-                        <td>{{providerexpense.provider}}</td>
+                        <td>{{providerexpense.provider.organization_name}}</td>
                     </tr>
+                    <tr>
+                        <th scope="row">Banco</th>
+                        <td>{{providerexpense.provider.bank_entity}}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Cuenta</th>
+                        <td>{{providerexpense.provider.account_type_name}} {{providerexpense.provider.account_number}}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">CBU</th>
+                        <td>{{providerexpense.provider.cbu}}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- FACTURA -->
+            <h4>Factura</h4>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered table-striped table-hover">
                     <tr>
                         <th scope="row">Tipo</th>
                         <td>{{providerexpense.get_invoice_type_display}}</td>
