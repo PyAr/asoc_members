@@ -107,6 +107,8 @@ def process_expenses(event):
 
     expense_data = []
     for expense in expenses:
+        if expense.is_cancelled:
+            continue
         description = "{} ({}, {})".format(
             expense.description, expense.invoice_date, expense.category)
         if expense.invoice_type == Expense.INVOICE_TYPE_A:
