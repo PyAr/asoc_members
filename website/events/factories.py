@@ -11,6 +11,7 @@ from events.models import (
 
 fake = Faker("es_MX")
 
+
 class ProviderFactory(DjangoModelFactory):
     document_number = factory.fuzzy.FuzzyInteger(1, 99999999)
     bank_entity = fake.company
@@ -20,7 +21,7 @@ class ProviderFactory(DjangoModelFactory):
     cbu = fake.bban
 
     class Meta:
-        model = Provider 
+        model = Provider
         django_get_or_create = (
             "document_number",
         )

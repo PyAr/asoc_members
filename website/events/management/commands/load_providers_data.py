@@ -15,8 +15,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         providers_count = Provider.objects.count()
         q = options["count"]
-        provider = ProviderFactory.create_batch(q)
+        ProviderFactory.create_batch(q)
         providers_count = Provider.objects.count() - providers_count
         self.stdout.write(
-            self.style.SUCCESS("Successfully created Providers instances (count %d)" % providers_count)
+            self.style.SUCCESS("Successfully created Providers instances (count %d)" 
+            % providers_count)
         )
