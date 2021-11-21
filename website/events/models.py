@@ -344,10 +344,7 @@ class Sponsor(SaveReversionMixin, AuditUserTime):
         (PEQUENO_CONTRIBUYENTE, 'Pequeño Contribuyente Eventual'),
         (MONOTRIBUTISTA_SOCIAL, 'Monotributista Social'),
         (PEQUENO_CONTRIBUYENTE_SOCIAL, 'Pequeño Contribuyente  Eventual Social'),
-
     )
-
-
 
     enabled = models.BooleanField(_('habilitado'), default=False)
     active = models.BooleanField(_('activo'), default=True)
