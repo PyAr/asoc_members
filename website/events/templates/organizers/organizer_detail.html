@@ -35,8 +35,8 @@
             <a class="btn btn-primary btn-block text-uppercase" href="{% url 'organizer_change' organizer.pk %}"><i class="fas fa-pencil-alt"></i> Editar</a>
             {% endif %}
             {% if organizer.has_unpayment_refunds and perms.events.add_payment %}
-                <p>El organizasor contiene reintegros sin pagar. Para agregar un comprobante de pago para los reintegros del organizador ingrese aquí</p> <br/>
-                <a class="btn btn-primary" href="{% url 'organizer_refund_payment_create' pk=organizer.pk %}"><i class="fa fa-plus"> Comprobante de pago</i></a>
+                <p>El organizador contiene reintegros sin pagar. Para agregar un comprobante de pago para los reintegros del organizador ingrese aquí</p> <br/>
+                <a class="btn btn-primary" role="button" aria-pressed="true" href="{% url 'organizer_refund_payment_create' pk=organizer.pk %}"><i class="fa fa-plus"></i> Comprobante de pago</a>
             {% endif %}
         </div>
         <div class="col-md-6">
