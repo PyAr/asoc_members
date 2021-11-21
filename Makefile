@@ -8,6 +8,8 @@ help:
 	@echo "ps    -- show status"
 	@echo "dockershell -- run bash inside docker"
 	@echo "shell_plus -- run django shell_plus inside docker"
+	@echo "load_members_testdata -- populate the DB with members"
+	@echo "load_providers_test_data -- populate the DB with providers"
 
 RUN=docker-compose exec web
 MANAGE=${RUN} ./manage.py
