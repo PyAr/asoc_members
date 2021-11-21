@@ -59,7 +59,6 @@ class Command(BaseCommand):
 
             # some info to identify the payer in case it's not in our DB
             id_helper = {
-                'cardholder': info['card']['cardholder'],
                 'reason': info['description'],
                 'payment_id': info['id'],
             }
