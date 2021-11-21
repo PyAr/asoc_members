@@ -62,4 +62,7 @@ shell_plus:
 load_members_testdata:
 	${MANAGE} load_data_test 20
 
+load_providers_test_data:
+	${MANAGE} load_providers_data 20
+
 .PHONY: help start stop ps clean test dockershell shell_plus only_test pep8
