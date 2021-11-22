@@ -1,12 +1,14 @@
 {% extends "members_base_paginated_list.html" %}
 
 {% block route-navigator %}
-<div class="route-navigator" >
-        <ol class="breadcrumb">
-            <li><a href="{% url 'reports_main' %}">Inicio</a></li>
-            <li class="active"><a href="{% url 'members_list' %}">Miembros</a></li>
-        </ol>
-</div>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><i class="fas fa-home"></i> <a href="{% url 'reports_main' %}">Inicio</a></li>
+      <li class="breadcrumb-item" aria-current="page">Miembros</li>
+    </ol>
+</nav>
+
+
 {% endblock %}
 {% block list_title %}
 <h1>Miembros</h1>
