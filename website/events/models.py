@@ -319,13 +319,31 @@ class Sponsor(SaveReversionMixin, AuditUserTime):
     CONSUMIDOR_FINAL = 'consumidor final'
     EXTERIOR = 'exterior'
     OTRO = 'otro'
+    RESPONSABLE_NO_INSCRIPTO = 'responsable no inscripto'
+    IVA_NO_RESPONSABLE = 'iva no responsable'
+    IVA_SUJETO_EXENTO = 'iva sujeto exento'
+    SUJETO_NO_CATEGORIZADO = 'sujeto no categorizado'
+    IVA_LIBERADO = 'iva liberado'
+    IVA_RESPONSABLE_INSCRIPTO_AGENTE = 'iva responsable inscripto agente'
+    PEQUENO_CONTRIBUYENTE = 'pequeño contribuyente eventual'
+    MONOTRIBUTISTA_SOCIAL = 'monotributista social'
+    PEQUENO_CONTRIBUYENTE_SOCIAL = 'pequeno contribuyente eventual social'
 
     VAT_CONDITIONS_CHOICES = (
         (RESPONSABLE_INSCRIPTO, 'Responsable Inscripto'),
-        (MONOTRIBUTO, 'Monotributo'),
         (CONSUMIDOR_FINAL, 'Consumidor Final'),
         (EXTERIOR, 'Exterior'),
         (OTRO, 'Otro'),
+        (RESPONSABLE_NO_INSCRIPTO, 'IVA Responsable no Inscripto'),
+        (IVA_NO_RESPONSABLE, 'IVA No Responsable'),
+        (IVA_SUJETO_EXENTO, 'IVA Sujeto Exento'),
+        (SUJETO_NO_CATEGORIZADO, 'Sujeto no Categorizado'),
+        (MONOTRIBUTO, 'Responsable Monotributo'),
+        (IVA_LIBERADO, 'IVA Liberado'),
+        (IVA_RESPONSABLE_INSCRIPTO_AGENTE, 'IVA Responsable Inscripto - Agente de Percepción'),
+        (PEQUENO_CONTRIBUYENTE, 'Pequeño Contribuyente Eventual'),
+        (MONOTRIBUTISTA_SOCIAL, 'Monotributista Social'),
+        (PEQUENO_CONTRIBUYENTE_SOCIAL, 'Pequeño Contribuyente  Eventual Social'),
     )
 
     enabled = models.BooleanField(_('habilitado'), default=False)
