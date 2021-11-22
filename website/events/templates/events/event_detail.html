@@ -41,7 +41,7 @@
                      
                 {% endif %}
                 {% if perms.events.add_eventorganizer %}
-                    <a class="btn btn-primary btn-block text-uppercase" href="{% url 'admin:events_event_change' event.pk %}" target="_blank"><i class="fas fa-user-plus"></i> Agregar Organizadores</a>
+                    <a class="btn btn-primary btn-block text-uppercase" href="{% url 'admin:events_event_change' event.pk %}" target="_blank"><i class="fas fa-user-plus"></i>Vincular Organizadores</a>
                 {% endif %}
             {% endif %}
         </div>
