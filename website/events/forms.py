@@ -19,7 +19,8 @@ from events.models import (
     ProviderExpense,
     Sponsor,
     SponsorCategory,
-    Sponsoring
+    Sponsoring,
+    SponsorshipDiscounts,
 )
 
 
@@ -117,6 +118,20 @@ class SponsorCategoryForm(forms.ModelForm):
         fields = ['name', 'amount']
 
 
+class SponsorshipDiscountForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(SponsorshipDiscountForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+        self.helper.label_class = "col-sm-2"
+        self.helper.field_class = "col-sm-10"
+
+    class Meta:
+        model = SponsorshipDiscounts
+        fields = ['name', 'description', 'discount', 'event']
+
+
 class BankAccountDataForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(BankAccountDataForm, self).__init__(*args, **kwargs)
@@ -176,12 +191,15 @@ class SponsoringForm(forms.ModelForm):
         # Pre-filter sponsorcategory by event
         self.fields['sponsorcategory'].queryset = SponsorCategory.objects.filter(event=event)
         self.fields['sponsor'].queryset = Sponsor.objects.filter(enabled=True)
+        self.fields['sponsorship_discount'].queryset = \
+            SponsorshipDiscounts.objects.filter(event=event)
 
     class Meta:
         model = Sponsoring
         fields = [
             'sponsorcategory',
             'sponsor',
+            'sponsorship_discount',
             'comments',
         ]
         widgets = {

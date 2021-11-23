@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.models import Group
@@ -50,6 +51,7 @@ from events.forms import (
     ProviderExpenseForm,
     SponsorForm,
     SponsorCategoryForm,
+    SponsorshipDiscountForm,
     SponsoringForm
 )
 from events.helpers.notifications import email_notifier
@@ -69,7 +71,8 @@ from events.models import (
     ProviderExpense,
     Sponsor,
     SponsorCategory,
-    Sponsoring
+    Sponsoring,
+    SponsorshipDiscounts,
 )
 from events.helpers.sponsoring_pending import (
     calculate_sponsoring_pending,
@@ -169,7 +172,9 @@ class EventDetailView(PermissionRequiredMixin, generic.DetailView):
         user = self.request.user
         if user.has_perm('events.' + CAN_VIEW_EVENT_ORGANIZERS_CODENAME):
             organizers = event.organizers.all()
+            sponsorship_discount = event.discount.all()
             context['organizers'] = organizers
+            context['sponsorship_discount'] = sponsorship_discount
         return context
 
     def has_permission(self):
@@ -345,6 +350,61 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
             return redirect('event_detail', pk=self._get_event().pk)
         else:
             return super(SponsorCategoryCreateView, self).handle_no_permission()
+
+
+class SponsorshipDiscountCreateView(
+        SuccessMessageMixin,
+        PermissionRequiredMixin,
+        generic.edit.CreateView):
+
+    model = SponsorshipDiscounts
+    form_class = SponsorshipDiscountForm
+    template_name = 'events/event_create_sponsor_discount_form.html'
+    permission_required = 'events.add_sponsorcategory'
+    success_message = 'Descuento creado correctamente.'
+
+    def _get_event(self):
+        return get_object_or_404(Event, pk=self.kwargs['pk'])
+
+    def form_valid(self, form):
+        form.instance.event = self._get_event()
+        return super(SponsorshipDiscountCreateView, self).form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super(SponsorshipDiscountCreateView, self).get_context_data(**kwargs)
+        event = self._get_event()
+        context['event'] = event
+        return context
+
+    def get_success_url(self):
+        url = reverse('event_detail', kwargs={'pk': self._get_event().pk})
+        return url
+
+    def has_permission(self):
+        ret = super(SponsorshipDiscountCreateView, self).has_permission()
+        # Must be event organizer.
+        event = self._get_event()
+        if ret and not is_event_organizer(self.request.user, event):
+            self.permission_denied_message = MUST_BE_EVENT_ORGANIZAER_MESSAGE
+            return False
+        return ret
+
+    def handle_no_permission(self):
+        if self.get_permission_denied_message() == MUST_BE_EVENT_ORGANIZAER_MESSAGE:
+            messages.add_message(
+                self.request,
+                messages.WARNING,
+                MUST_BE_EVENT_ORGANIZAER_MESSAGE)
+            return redirect('sponsoring_detail', pk=self._get_sponsoring().pk)
+        else:
+            return super(SponsorshipDiscountCreateView, self).handle_no_permission()
+
+    def get_initial(self, *args, **kwargs):
+        initial = super(SponsorshipDiscountCreateView, self).get_initial(**kwargs)
+        event = self._get_event()
+        if event:
+            initial['event'] = event
+        return initial
 
 
 class OrganizersListView(PermissionRequiredMixin, generic.ListView):
@@ -1294,6 +1354,7 @@ events_list = EventsListView.as_view()
 event_detail = EventDetailView.as_view()
 event_change = EventChangeView.as_view()
 event_create_sponsor_category = SponsorCategoryCreateView.as_view()
+event_create_sponsor_discount = SponsorshipDiscountCreateView.as_view()
 
 organizers_list = OrganizersListView.as_view()
 organizer_detail = OrganizerDetailView.as_view()

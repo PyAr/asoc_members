@@ -1,0 +1,26 @@
+{% extends "events_base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    {% block route-navigator %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-calendar-check"></i><a href="{% url 'event_detail' pk=event.pk %}"> {{event.name}}</a></li>
+          <li class="breadcrumb-item" aria-current="page"><i class="fas fa-wallet"></i> Crear</li>
+        </ol>
+    </nav>
+    {% endblock %}
+    <h3>Descuentos</h3>
+    <form method="POST">
+        {% csrf_token %}
+        {% crispy form %}
+        <button type="submit" class="btn btn-success col-2 float-right mx-1">
+            <i class="fas fa-save"></i> 
+            Crear
+        </button>
+        <a class="btn btn-danger col-2 float-right mx-1" href="{{request.META.HTTP_REFERER}}"><i class="fas fa-undo"></i> Volver</a>
+    </form>
+</div>
+{% endblock %}
