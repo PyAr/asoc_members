@@ -62,7 +62,7 @@
 
                 {% if perms.events.add_sponsorship_discount %}
                     <a class="btn btn-primary btn-block text-uppercase" href="{% url 'event_create_sponsor_discount' event.pk %}" target="_blank"><i class="fas fa-ticket-alt"></i> Crear Descuento</a>
-                {% ndif %}
+                {% endif %}
             {% endif %}
         </div>
     </div>
