@@ -41,7 +41,27 @@
                      
                 {% endif %}
                 {% if perms.events.add_eventorganizer %}
-                    <a class="btn btn-primary btn-block text-uppercase" href="{% url 'admin:events_event_change' event.pk %}" target="_blank"><i class="fas fa-user-plus"></i>Vincular Organizadores</a>
+                    <a class="btn btn-primary btn-block text-uppercase" href="{% url 'admin:events_event_change' event.pk %}" target="_blank"><i class="fas fa-user-plus"></i> Vincular Organizadores</a>
+                {% endif %}
+            {% endif %}
+
+            {% if perms.events.view_event_organizers %}
+                <br>
+                <h3>Descuentos <small><span class="badge badge-dark">{{sponsorship_discount.count}}</span></small></h3>
+                {% if sponsorship_discount %}
+                    <ul>
+                        {% for discount in sponsorship_discount %}
+                            <li>{{discount.name}} ({{discount.discount}}%)</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="alert alert-info" role="alert">
+                        No hay descuentos asociados al evento!
+                    </div>
+                {% endif %}
+
+                {% if perms.events.add_sponsorship_discount %}
+                    <a class="btn btn-primary btn-block text-uppercase" href="{% url 'event_create_sponsor_discount' event.pk %}" target="_blank"><i class="fas fa-ticket-alt"></i> Crear Descuento</a>
                 {% endif %}
             {% endif %}
         </div>

@@ -16,7 +16,19 @@
     {% endblock %}
 
     <h2>Sponsor {{sponsoring.sponsor.organization_name}}</h2>
-    <h2><small class="text-muted">Categoría: {{sponsoring.sponsorcategory.name}} (${{sponsoring.sponsorcategory.amount|intcomma}}) [{{sponsoring.state}}]</small></h2>
+    {% if sponsoring.sponsorship_discount.discount %}
+        <h2><small class="text-muted">Categoría: {{sponsoring.sponsorcategory.name}} (${{sponsoring.sponsorcategory.amount|intcomma}}) - Descuento: {{sponsoring.sponsorship_discount.discount}}% - Total: {{total_reminder}} ${{ sponsoring.total_amount|intcomma }}
+    {% else %}
+        <h2><small class="text-muted">Categoría: {{sponsoring.sponsorcategory.name}} (${{sponsoring.sponsorcategory.amount|intcomma}}) - Total: ${{ sponsoring.sponsorcategory.amount|intcomma }}
+    {% endif %}
+        <br>
+    {% if sponsoring.state == "no facturado" %}
+        <span class="text-danger">[{{sponsoring.state}}]</span>
+    {% else %}
+        <span class="text-success">[{{sponsoring.state}}]</span>
+    {% endif %}
+    </small></h2>
+
     <h3><small class="text-muted">Última modificación: {{sponsoring.modified}}</small></h3>
     <h3>Detalles <button class="btn btn-info col-2 float-right" data-toggle="collapse" href="#EventAndSponsorDetails" aria-expanded="false" aria-controls="collapseExample" id="detailButton"><i class="fa" aria-hidden="true"></i> Ver</button></h3>
     {% if sponsoring.state == "no facturado" %}
@@ -263,7 +275,7 @@
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="NewSponsoringInvoiceLabel"><i class="fas fa-file-invoice-dollar"></i> Factura <span class="text-muted">{{sponsoring.sponsor.organization_name}} ({{sponsoring.sponsorcategory.name}} <small>${{sponsoring.sponsorcategory.amount|intcomma}}</small>) @ {{event.name}} [#{{sponsoring.pk}}]</span></h5>
+                            <h5 class="modal-title" id="NewSponsoringInvoiceLabel"><i class="fas fa-file-invoice-dollar"></i> Factura <span class="text-muted">{{sponsoring.sponsor.organization_name}} ({{sponsoring.sponsorcategory.name}} <small>${{sponsoring.total_amount|intcomma}}</small>) @ {{event.name}} [#{{sponsoring.pk}}]</span></h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
@@ -274,7 +286,7 @@
                             <div class="form-group row">
                                 <label for="amount" class="font-weight-bold col-sm-2 col-form-label text-right">Monto</label>
                                 <div class="col-sm-10">
-                                    <input type="text" class="form-control" id="id_amount" name="amount" placeholder="Valor de la factura" required>
+                                    <input type="text" class="form-control" id="id_amount" name="amount" value="{{sponsoring.total_amount}}" placeholder="Valor de la factura" required>
                                 </div>
                             </div>
                             <div class="form-group row">

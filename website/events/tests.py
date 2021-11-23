@@ -103,6 +103,18 @@ def admin_event_associate_organizers_post_data(event, organizers):
         'event_organizers-__prefix__-id': [''],
         'event_organizers-__prefix__-event': ['1'],
         'event_organizers-__prefix__-organizer': [''],
+
+        'discount-TOTAL_FORMS': ['1'],
+        'discount-INITIAL_FORMS': ['0'],
+        'discount-MIN_NUM_FORMS': ['0'],
+        'discount-MAX_NUM_FORMS': ['1000'],
+
+        'discount-__prefix__-id': [''],
+        'discount-__prefix__-event': ['1'],
+        'discount-__prefix__-name': [''],
+        'discount-__prefix__-description': [''],
+        'discount-__prefix__-discount': [''],
+
         '_save': ['Save']
     }
 
@@ -353,7 +365,6 @@ class EventAdminTest(TestCase):
 
         url = reverse('admin:events_event_change', kwargs={'object_id': event.pk})
         self.client.login(username='administrator', password='administrator')
-
         organizers = []
         for organizer in Organizer.objects.all():
             organizers.append(organizer)

@@ -190,7 +190,6 @@ class Event(SaveReversionMixin, AuditUserTime):
         verbose_name=_('organizadores'),
         related_name='events'
     )
-
     close = models.BooleanField(_('cerrado'), default=False)
 
     def get_absolute_url(self):
@@ -211,6 +210,25 @@ class Event(SaveReversionMixin, AuditUserTime):
             (CAN_VIEW_EVENT_ORGANIZERS_CODENAME, _('puede ver organizadores del evento')),
         )
         ordering = ['-start_date']
+
+
+class SponsorshipDiscounts(models.Model):
+    """SponsorShip Discount."""
+
+    class Meta:
+        verbose_name_plural = "Sponsorship Discounts"
+
+    name = models.CharField(_('nombre'), max_length=32)
+    description = models.TextField(_('descripción'), null=True, blank=True)
+    discount = models.DecimalField(_('descuento (%)'), max_digits=18, decimal_places=2)
+    event = models.ForeignKey(
+        Event,
+        related_name='discount',
+        on_delete=models.SET_NULL,
+        null=True)
+
+    def __str__(self):
+        return self.name
 
 
 @reversion.register
@@ -270,8 +288,23 @@ class Sponsoring(SaveReversionMixin, AuditUserTime):
         related_name='sponsoring',
         on_delete=models.CASCADE,
     )
+    sponsorship_discount = models.ForeignKey(
+        'SponsorshipDiscounts',
+        verbose_name=_('Descuento'),
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
     comments = models.TextField(_('comentarios'), blank=True)
     close = models.BooleanField(_('cerrado'), default=False)
+
+    @property
+    def total_amount(self):
+        if self.sponsorship_discount:
+            amount = self.sponsorcategory.amount * (1 - self.sponsorship_discount.discount / 100)
+        else:
+            amount = self.sponsorcategory.amount
+        return format(amount, '.2f')
 
     def __str__(self):
         return (

@@ -4,6 +4,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from events.helpers.notifications import email_notifier
 from events.models import (
     Event,
+    SponsorshipDiscounts,
     EventOrganizer,
     Invoice,
     InvoiceAffect,
@@ -20,6 +21,11 @@ from events.models import (
 from reversion_compare.admin import CompareVersionAdmin
 
 
+class SponsorshipDiscountsInline(admin.TabularInline):
+    model = SponsorshipDiscounts
+    exclude = ('created_by', 'changed_by',)
+
+
 class EventOrganizerInline(admin.TabularInline):
     model = EventOrganizer
     exclude = ('created_by', 'changed_by',)
@@ -28,7 +34,7 @@ class EventOrganizerInline(admin.TabularInline):
 
 class EventAdmin(CompareVersionAdmin):
     fields = ('name', 'commission', 'category', 'start_date', 'place', 'close')
-    inlines = (EventOrganizerInline,)
+    inlines = (SponsorshipDiscountsInline, EventOrganizerInline)
     list_display = ('name', 'start_date', 'place', 'category', 'close')
     search_fields = ('start_date', 'place', )
     list_filter = ('category', 'close')
@@ -43,9 +49,7 @@ class EventAdmin(CompareVersionAdmin):
                     event=instance.event, organizer=instance.organizer).exists()
                 if not exists_organizer:
                     notify_organizers.append(instance.organizer)
-
         super(EventAdmin, self).save_formset(request, form, formset, change)
-
         if len(notify_organizers):
             current_site = get_current_site(request)
             context = {
@@ -104,7 +108,7 @@ class InvoiceAdmin(CompareVersionAdmin):
 
 
 class SponsorCategoryAdmin(CompareVersionAdmin):
-    fields = ('name', 'amount', 'event')
+    fields = ('name', 'amount', 'event', 'sponsorship_discount')
     list_display = ('name', 'amount', 'event', 'sponsoring_number')
     search_fields = ('name', 'event__name')
     list_select_related = (
@@ -292,6 +296,11 @@ class ProviderAdmin(CompareVersionAdmin):
     list_display = ('organization_name', 'document_number')
 
 
+class SponsorshipDiscountsAdmin(CompareVersionAdmin):
+    exclude = []
+
+
+admin.site.register(SponsorshipDiscounts, SponsorshipDiscountsAdmin)
 admin.site.register(Provider, ProviderAdmin)
 admin.site.register(Payment, PaymentAdmin)
 admin.site.register(ProviderExpense, ProviderExpenseAdmin)

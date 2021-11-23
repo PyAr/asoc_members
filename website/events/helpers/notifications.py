@@ -9,6 +9,7 @@ User = get_user_model()
 class EmailNotification():
     ORGANIZER_ASSOCIATED_TO_EVENT = 'organizer_associated_to_event'
     SPONSOR_JUST_CREATED = 'sponsor_just_created'
+
     INVOICE_JUST_CREATED = 'invoice_just_created'
     INVOICE_AFFECT_JUST_CREATED = 'invoice_affect_just_created'
     SPONSOR_JUST_ENABLED = 'sponsor_just_enabled'

@@ -14,6 +14,11 @@ urlpatterns = [
         views.event_create_sponsor_category,
         name='event_create_sponsor_category'
     ),
+    path(
+        'eventos/<pk>/descuentos-sponsor/crear/',
+        views.event_create_sponsor_discount,
+        name='event_create_sponsor_discount'
+    ),
 
     # Sponsoring urls.
     path('eventos/<event_pk>/patrocinios/', views.sponsoring_list, name='sponsoring_list'),
