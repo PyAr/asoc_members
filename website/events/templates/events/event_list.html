@@ -38,14 +38,18 @@
                     <td>{{ event.place }}</td>
                     <td>
                         
-                        <span><i class="fa fa-cog"></i> <a title="editar evento" href="{% url 'event_detail' pk=event.pk %}">
-                            General
-                        </a>
+                        <span>
+                            <i class="fa fa-cog"></i> 
+                            <a title="editar evento" href="{% url 'event_detail' pk=event.pk %}">
+                                General
+                            </a>
                         </span>
+                        |
                         <span><i class="fas fa-handshake"></i><a title="administrar evento" href="{% url 'sponsoring_list' event_pk=event.pk %}">
                             Sponsoreos
                         </a>
                         </span>
+                        |
                         <span><i class="fas fa-dollar-sign"></i> <a title="administrar evento" href="{% url 'expenses_list' event_pk=event.pk %}">
                             Gastos
                         </span>
