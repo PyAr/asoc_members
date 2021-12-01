@@ -4,13 +4,27 @@
 {% block content %}
 <div class="container">
     {% block route-navigator %}
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
-          <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
-          <li class="breadcrumb-item" aria-current="page"><i class="fas fa-calendar-check"></i> {{event.name}}</li>
-        </ol>
+    <nav aria-label="breadcrumb" class="events-details-nav">
+        <div>
+            <ol class="breadcrumb">
+            <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+            <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
+            <li class="breadcrumb-item" aria-current="page"><i class="fas fa-calendar-check"></i> {{event.name}}</li>
+            </ol>
+        </div>
+        <div>
+            Ir a:
+            <i class="fas fa-handshake"></i><a title="administrar evento" href="{% url 'sponsoring_list' event_pk=event.pk %}">
+                Sponsoreos
+            </a>
+            |
+            <i class="fas fa-dollar-sign"></i> 
+            <a title="administrar evento" href="{% url 'expenses_list' event_pk=event.pk %}">
+                Gastos
+            </a>
+        </div>
     </nav>
+
     {% endblock %}
 
     <div class="row my-3">
