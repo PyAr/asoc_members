@@ -222,7 +222,8 @@ def calculate_super_user_task():
 
     # Unpaid organizer refunds
     unpaid_organizer_refunds = OrganizerRefund.objects.filter(
-        payment__isnull=True
+        payment__isnull=True,
+        cancelled_date__isnull=True,
     ).values('organizer').annotate(
         Sum('amount'),
         Count('pk'),
