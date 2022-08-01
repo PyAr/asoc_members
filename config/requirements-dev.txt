@@ -1,6 +1,6 @@
 -r requirements.txt
 ipdb==0.11
-ipython==7.29.0
+ipython==7.31.1
 logassert==4
 factory_boy==3.2.0
 flake8==3.7.7
