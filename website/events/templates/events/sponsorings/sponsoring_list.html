@@ -1,13 +1,27 @@
 {% extends "events_base_paginated_list.html" %}
 {% load humanize %}
 {% block route-navigator %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
-      <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
-      <li class="breadcrumb-item"><i class="fas fa-calendar-check"></i><a href="{% url 'event_detail' event.pk %}"> {{event.name}}</a></li>
-      <li class="breadcrumb-item" aria-current="page"><i class="fas fa-handshake"></i> Sponsoreos</li>
-    </ol>
+<nav aria-label="breadcrumb" class="events-details-nav">
+    <div>
+       <ol class="breadcrumb">
+        <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+        <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
+        <li class="breadcrumb-item"><i class="fas fa-calendar-check"></i><a href="{% url 'event_detail' event.pk %}"> {{event.name}}</a></li>
+        <li class="breadcrumb-item" aria-current="page"><i class="fas fa-handshake"></i> Sponsoreos</li>
+      </ol>  
+    </div>
+    <div>
+        Ir a:  
+        <i class="fa fa-cog"></i> 
+        <a title="editar evento" href="{% url 'event_detail' pk=event.pk %}">
+            General
+        </a>
+        |
+        <i class="fas fa-dollar-sign"></i> 
+        <a title="administrar evento" href="{% url 'expenses_list' event_pk=event.pk %}">
+            Gastos
+        </a>
+    </div>
 </nav>
 {% endblock %}
 

@@ -17,7 +17,14 @@
 
     <h2>Sponsor {{sponsoring.sponsor.organization_name}}</h2>
     <h2><small class="text-muted">Categoría: {{sponsoring.sponsorcategory.name}} (${{sponsoring.sponsorcategory.amount|intcomma}}) [{{sponsoring.state}}]</small></h2>
-    <h3><small class="text-muted">Última modificación: {{sponsoring.modified}}</small></h3>
+    
+    <h3>
+        <small class="text-muted">
+            Comentarios: <i>{{sponsoring.comments|default:"--"}}</i>
+        </small>
+    </h3>
+    
+    <h4><small class="text-muted">Última modificación: {{sponsoring.modified}}</small></h4>
     <h3>Detalles <button class="btn btn-info col-2 float-right" data-toggle="collapse" href="#EventAndSponsorDetails" aria-expanded="false" aria-controls="collapseExample" id="detailButton"><i class="fa" aria-hidden="true"></i> Ver</button></h3>
     {% if sponsoring.state == "no facturado" %}
     <div class="collapse show my-2" id="EventAndSponsorDetails">
