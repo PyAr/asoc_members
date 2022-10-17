@@ -66,31 +66,35 @@ def process_incomes(event):
 
     income_data = []
     for sponsoring in sponsorings:
-        # payment state
         try:
             invoice = Invoice.objects.get(sponsoring=sponsoring)
         except Invoice.DoesNotExist:
-            payment = PaymentState.not_invoiced
+            payment_state = PaymentState.not_invoiced
         else:
             if invoice.complete_payment:
-                payment = PaymentState.complete
+                payment_state = PaymentState.complete
             elif invoice.partial_payment:
-                payment = PaymentState.partial
+                payment_state = PaymentState.partial
             else:
-                payment = PaymentState.missing
+                payment_state = PaymentState.missing
 
         # sponsor info
         sponsor_info = "{} ({})".format(
             sponsoring.sponsor.organization_name, sponsoring.sponsorcategory.name)
 
-        amount = sponsoring.sponsorcategory.amount
+        # give priority to the real final amount, if present, as in some payments (e.g.
+        # international ones) the final amount is different
+        amount = invoice.amount
+        if invoice.real_final_amount is not None:
+            amount = invoice.real_final_amount
+
         income_data.append({
             'amount': amount,
-            'payment': payment.value,
+            'payment': payment_state.value,
             'sponsorship': sponsor_info,
         })
 
-        total = "available" if payment == PaymentState.complete else "pending"
+        total = "available" if payment_state == PaymentState.complete else "pending"
         income_totals[total] = income_totals[total] + amount
 
     show_table("Detailed sponsorships status:", income_data)

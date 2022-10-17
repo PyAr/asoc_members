@@ -436,6 +436,15 @@ class Invoice(SaveReversionMixin, AuditUserTime):
         on_delete=models.SET_NULL,
         null=True
     )
+    # the final bank transaction may differ in some corner case from the theoretical original
+    # one; if this field is not Null, it's the one to consider in financial reports
+    real_final_amount = models.DecimalField(
+        _('monto final real en el banco'),
+        max_digits=18,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
         return f"Factura por {self.amount} a {self.sponsoring}"
