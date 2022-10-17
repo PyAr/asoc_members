@@ -840,21 +840,6 @@ class MembersReportTests(TestCase):
             },
         ])
 
-    def test_last_payments_limited(self):
-        member = create_member(first_payment_year=2017, first_payment_month=5)
-        ps = create_payment_strategy()
-
-        # 15 payments
-        amount = 100
-        for second in range(15):
-            tstamp = datetime.datetime(2020, 3, 22, 14, 32, second)
-            logic.create_payment(member, tstamp, amount, ps)
-
-        # it should show only 12, still ordered
-        info = views.MemberDetailView()._get_last_payments(member)
-        self.assertEqual(len(info), 12)
-        self.assertEqual(info[0]['timestamp'], '2020-03-22 14:32:14')
-
     def test_last_payments_with_invoice(self):
         member = create_member(first_payment_year=2017, first_payment_month=5)
         ps = create_payment_strategy()
