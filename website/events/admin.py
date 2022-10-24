@@ -80,6 +80,7 @@ class InvoiceAdmin(CompareVersionAdmin):
     fields = (
         'sponsoring',
         'amount',
+        'real_final_amount',
         'observations',
         'document',
         'invoice_ok',
