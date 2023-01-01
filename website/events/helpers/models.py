@@ -1,9 +1,14 @@
+# for local setup 
+# before running this file on your local system follow the given commands in your terminal
+# pip install django
+# pip install django-extensions
 from django.contrib.auth import get_user_model
 from django.db import models
 from django_extensions.db.models import TimeStampedModel
 from events.middleware import get_current_user
 
-import reversion
+from django.urls import reverse
+Redirect_Variable = reverse()
 
 User = get_user_model()
 
@@ -40,7 +45,7 @@ class SaveReversionMixin:
     '''Mixin to override save, wrapping with create_revision.
     To better work keep on left on inheritance.'''
     def save(self, *args, **kwargs):
-        with reversion.create_revision():
+        with reverse.create_revision():
             super(SaveReversionMixin, self).save(*args, **kwargs)
 
 

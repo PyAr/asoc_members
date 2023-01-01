@@ -1,9 +1,16 @@
+# for local setup 
+# use the given command before importing the modueles from events 
+# pip install events
 import enum
 from decimal import Decimal
 
 from django.core.management.base import BaseCommand
 
 from events.models import Event, Expense, Invoice, Sponsoring
+
+# for local setup 
+# use the given command before importing the modueles from events 
+# pip install rapidtables
 
 from rapidtables import make_table
 

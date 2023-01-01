@@ -4,6 +4,10 @@ import os
 
 from django.core.management.base import BaseCommand
 
+# for local setup 
+# use given command before importing the gdrive module : otherwise the import would not work
+# pip install utils
+# pip install gdrive
 from utils import gdrive, afip
 
 # https://drive.google.com/drive/u/0/folders/1EJjXYrwYxfUaBdOiswlP-xvUBlqrkAHl

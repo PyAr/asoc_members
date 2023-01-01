@@ -1,6 +1,10 @@
 """
 Populates database with sample data.
 """
+
+# for local setup 
+# use the given command before importing the modueles from events 
+# pip install events
 from django.core.management.base import BaseCommand
 from events.factories import ProviderFactory
 from events.models import Provider
