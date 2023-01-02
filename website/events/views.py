@@ -1152,7 +1152,11 @@ class OrganizerRefundPaymentCreateView(PermissionRequiredMixin, generic.edit.Cre
         go_to = self.request.GET.get('next', None)
         organizer = self._get_organizer()
         context['organizer'] = organizer
-        refunds = OrganizerRefund.objects.filter(organizer=organizer, payment__isnull=True).all()
+        refunds = OrganizerRefund.objects.filter(
+            organizer=organizer,
+            payment__isnull=True,
+            cancelled_date__isnull=True,
+        ).all()
         context['refunds'] = refunds
         context['go_to'] = go_to
         return context
