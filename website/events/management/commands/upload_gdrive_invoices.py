@@ -77,19 +77,19 @@ class Command(BaseCommand):
             year = int(yearmonth[:4])
             month = int(yearmonth[4:])
 
+        # we filter on the date the invoice was *uploaded* to the system, otherwise we'd miss
+        # those ones that are created too late, which is not rare for refunds
         print("Filtering expenses for year={!r} month={!r}".format(year, month))
-        expenses = Expense.objects.filter(
-            invoice_date__year=year,
-            invoice_date__month=month,
-        ).all()
+        expenses = Expense.objects.filter(created__year=year, created__month=month).all()
         print("Found {} expenses".format(len(expenses)))
 
-        # ensure needed dirs are present in google drive
         explorer = gdrive.Explorer()
-        yearmonth_foldername = "{}{:02d}".format(year, month)
-        base_folder_id = ensure_directory(explorer, BASE_FOLDER, yearmonth_foldername)
 
         for exp in expenses:
+            # ensure needed parent directory is present in google drive
+            yearmonth_foldername = "{}{:02d}".format(exp.invoice_date.year, exp.invoice_date.month)
+            base_folder_id = ensure_directory(explorer, BASE_FOLDER, yearmonth_foldername)
+
             # build useful vars for later
             orig_name = os.path.basename(exp.invoice.name)
             extension = orig_name.rsplit('.')[-1].lower()
