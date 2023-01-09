@@ -17,10 +17,10 @@ Podés pagar el año entero (un total de ${{ annual_fee }}) directamente por tra
 ... o con tarjetas de crédito, débito, pagofácil, rapipago, etc:
 
     {% if member.category == member.category.ACTIVE %}
-        https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=282968656-74cdbc78-c57f-491c-b540-48e4d4878304
+        https://mpago.la/1GRnhvx
 
     {% elif member.category == member.category.SUPPORTER %}
-        https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=282968656-0a979fe3-9e1d-4223-b5c3-1db274690afa
+        https://mpago.la/2ywCi56
 
     {% else %}
         {{ on_purpose_missing_var }} {% endif %}
@@ -28,10 +28,10 @@ Podés pagar el año entero (un total de ${{ annual_fee }}) directamente por tra
 Lo más sencillo es anotarse al débito automático mensual, usando una tarjeta de crédito:
 
     {% if member.category == member.category.ACTIVE %}
-        http://mpago.la/2yb62i
+        https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=2c938084859618f001859796dd44013f
 
     {% elif member.category == member.category.SUPPORTER %}
-        http://mpago.la/1EH9Tq
+        https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=2c9380848597624101859798a584002f
 
     {% else %}
         {{ on_purpose_missing_var }} {% endif %}
