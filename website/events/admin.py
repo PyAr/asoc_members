@@ -64,7 +64,6 @@ class OrganizerAdmin(CompareVersionAdmin):
     fields = ('first_name', 'last_name', 'user')
     list_display = ('username', 'email', 'first_name', 'last_name')
     search_fields = ('user__email', 'first_name', 'last_name')
-    readonly_fields = ('first_name', 'last_name', 'user')
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -202,7 +201,6 @@ class ExpenseAdmin(CompareVersionAdmin):
     list_select_related = (
         'event',
     )
-    readonly_fields = fields
 
     # To create or delete must be from ProviderExpense or OrganizerRefund
     def has_add_permission(self, request, obj=None):
