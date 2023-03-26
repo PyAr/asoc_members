@@ -1,27 +1,46 @@
 ,city,lats,lngs,size
-0,"San Rafael, Mendoza ",-34.6126025,-68.330514,1
-1,Rosario,-32.9595004,-60.6615415,1
-2,"Villa Adelina, Buenos Aires",-34.5273655,-58.5474701,1
-3,Buenos Aires,-34.6075682,-58.4370894,1
-4,"La Población, Córdoba ",-32.0672347,-65.0300572,1
-5,"Boedo, Ciudad Autonoma de Buenos Aires",-34.6302518,-58.41879,1
-6,ciudad autónoma de buenos aires ,-34.6075682,-58.4370894,1
-7,San Isidro,38.1707587,-0.8387399,1
-8,"Rafaela, Santa Fe",-31.259832,-61.450145,1
-9,"Rosario, Santa Fe, Argentina ",-32.9595004,-60.6615415,1
-10,CABA,-34.6075682,-58.4370894,1
-11,Gualeguay,-33.1504259,-59.3106789,1
-12,Hurlingham ,-34.5933423,-58.6378405,1
-13,Resistencia ,-27.4511235,-58.9865196,1
-14,"Olivos, Buenos Aires",-34.5219524,-58.4954525,1
-15,"La Plata, Buenos Aires",-34.9206797,-57.9537638,1
-16,baradero,-33.8120471,-59.5051759,1
-17,Caba,-34.6075682,-58.4370894,1
-18,Parque Patricios,-34.6374817,-58.4012386,1
-19,"Banfield, Buenos Aires",-34.7456882,-58.3692333,1
-20,"Luyaba, Córdoba",-32.1575383,-65.05144253246311,1
-21,"Monte vera,santa fe",-31.5168247,-60.6758789,1
-22,"Jesús María, Córdoba",-30.9764132,-64.0957082,1
-23,"Córdoba, Córdoba ",37.8845813,-4.7760138,1
-24,"Vicente Lopez, buenos aires",-34.5244484,-58.5036282,1
-25,"Buenos Aires, CABA",-34.6075682,-58.4370894,1
+0,Caba ,-34.6075682,-58.4370894,1
+1,"Santa Fe, Rafaela",-31.2532729,-61.4874461,1
+2,"vicente lopez, buenos aires",-34.5244484,-58.5036282,1
+3,"Jesús María, Córdoba",-30.9764132,-64.0957082,1
+4,"Rafaela, Santa Fe ",-31.2532729,-61.4874461,1
+5,"Buenos Aires, CABA",-34.6075682,-58.4370894,1
+6,"Barracas, Ciudad Autónoma de Buenos Aires",-34.6452854,-58.3875619,1
+7,"Resistencia, Chaco",-27.4511235,-58.9865196,1
+8,Ciudad de Buenos Aires ,-34.6075682,-58.4370894,1
+9,Berazategui,-34.7632677,-58.2116604,1
+10,CABA ,-34.6075682,-58.4370894,1
+11,Ciudad autonoma de buenos aires,-34.6075682,-58.4370894,1
+12,CABA,-34.6075682,-58.4370894,1
+13,"La Plata, Buenos Aires",-34.9206797,-57.9537638,1
+14,Córdoba capital,-31.4166867,-64.1834193,1
+15,"La Plata, Buenos Aires ",-34.9206797,-57.9537638,1
+16,"Castelli, buenos aires",-36.0867298,-57.8105802,1
+17,Rosario,-32.9595004,-60.6615415,1
+18,La Plata,-34.9206797,-57.9537638,1
+19,"Florida Oeste, Vicente López, Buenos Aires ",-34.5387664,-58.5144051,1
+20,"Barracas, Buenos Aires",-34.6452854,-58.3875619,1
+21,Buenos Aires,-34.6075682,-58.4370894,1
+22,Capital federal bs as,-34.5048856,-58.4936419,1
+23,"Las Perdices, Córdoba",-32.6993173,-63.7051586,1
+24,Lanus,-34.7033363,-58.3953235,1
+25,caba,-34.6075682,-58.4370894,1
+26,"San Isidro, Buenos Aires ",-34.4739792,-58.5264866,1
+27,"Vicente López,BsAs",,,1
+28,Gualeguay,-33.1504259,-59.3106789,1
+29,ciudad autónoma de buenos aires ,,,1
+30,Ciudad autónoma de buenos aires,,,1
+31,"Rafaela, Santa Fe",-31.2532729,-61.4874461,1
+32,Corrientes Capital ,-27.498136,-58.814561,1
+33,"Formosa, Formosa, Argentina",-26.1852983,-58.1744976,1
+34,"Lanus, Buenos Aires",-34.7033363,-58.3953235,1
+35,"Santa Fe, Santa Fe",35.6876096,-105.938456,1
+36,"San Francisco, Córdoba",-31.4249815,-62.0840299,1
+37,"Vicente López, Provincia de Buenos Aires",-34.5244484,-58.5036282,1
+38,"CABA, Buenos Aires",-34.6075682,-58.4370894,1
+39,Córdoba,37.8845813,-4.7760138,1
+40,"Boedo, ciudad autonoma de buenos aires",-34.6302518,-58.41879,1
+41,"Almafuerte, Córdoba",-32.1917687,-64.255066,1
+42,Córdoba capital ,-31.4166867,-64.1834193,1
+43,Caba,-34.6075682,-58.4370894,1
+44,"Ciudad de Salta, Salta",-24.7891828,-65.4103205,1
