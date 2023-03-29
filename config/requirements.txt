@@ -1,3 +1,4 @@
+httplib2>=0.22.0  # not needed directly, but 0.22.0 fixes "Cannot set verify_mode to CERT_NONE when check_hostname is enabled" problem
 certg==4.2
 certifi>=2020.4.5.1
 django-configurations==2.2
