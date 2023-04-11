@@ -15,4 +15,4 @@ Pillow==9.3.0
 psycopg2_binary==2.8.6
 python-stdnum==1.14
 rapidtables==0.1.11
-sentry-sdk==0.19.5
+sentry-sdk==1.14.0
