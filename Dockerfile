@@ -24,5 +24,5 @@ WORKDIR /code/website
 RUN sed -i 's/CipherString = DEFAULT@SECLEVEL=2/CipherString = DEFAULT@SECLEVEL=1/' /etc/ssl/openssl.cnf
 
 # Bring pyafipws branch and install it's dependencies
-RUN wget https://github.com/PyAr/pyafipws/archive/py3k.zip && unzip py3k.zip && mv pyafipws-py3k pyafipws
+RUN wget https://github.com/PyAr/pyafipws/archive/main.zip && unzip main.zip && mv pyafipws-main pyafipws
 RUN pip install --no-cache-dir -r /code/website/pyafipws/requirements.txt
