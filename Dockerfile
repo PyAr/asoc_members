@@ -9,8 +9,6 @@ RUN mkdir /config
 RUN apt-get update && apt-get install -y inkscape && apt-get clean
 COPY /config/requirements.txt /config/
 RUN pip install --no-cache-dir -r /config/requirements.txt
-# Workaround to use pyafipws in python3 (first instally m2crypto pinned to the version that actually builds)
-RUN pip install m2crypto==0.33.0
 
 # Copy code
 WORKDIR /code
