@@ -9,8 +9,6 @@ RUN mkdir /config
 RUN apt-get update && apt-get install -y inkscape && apt-get clean
 COPY /config/requirements.txt /config/
 RUN pip install --no-cache-dir -r /config/requirements.txt
-# Workaround to use pyafipws in python3 (first instally m2crypto pinned to the version that actually builds)
-RUN pip install m2crypto==0.33.0
 
 # Copy code
 WORKDIR /code
@@ -24,5 +22,5 @@ WORKDIR /code/website
 RUN sed -i 's/CipherString = DEFAULT@SECLEVEL=2/CipherString = DEFAULT@SECLEVEL=1/' /etc/ssl/openssl.cnf
 
 # Bring pyafipws branch and install it's dependencies
-RUN wget https://github.com/PyAr/pyafipws/archive/py3k.zip && unzip py3k.zip && mv pyafipws-py3k pyafipws
+RUN wget https://github.com/PyAr/pyafipws/archive/main.zip && unzip main.zip && mv pyafipws-main pyafipws
 RUN pip install --no-cache-dir -r /code/website/pyafipws/requirements.txt
