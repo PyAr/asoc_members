@@ -20,10 +20,10 @@ Tenés que pagar la cuota social. En tu caso, para Socia/o tipo {{ member.catego
 Débito mensual, usando una tarjeta de crédito:
 
     {% if member.category == member.category.ACTIVE %}
-        https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=2c938084859618f001859796dd44013f
+        https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=2c9380848597624101859798a584002f
 
     {% elif member.category == member.category.SUPPORTER %}
-        https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=2c9380848597624101859798a584002f
+        https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=2c938084859618f001859796dd44013f
 
     {% else %}
         {{ on_purpose_missing_var }} {% endif %}
