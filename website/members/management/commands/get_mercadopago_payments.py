@@ -11,6 +11,18 @@ from . import _mp
 logger = logging.getLogger('management_commands')
 
 
+SUBSCRIPTIONS = {
+    "Cuota mensual socio adherente 2018",
+    "Cuota mensual socio activo 2018",
+    "Socies Adherentes cuota 2019",
+    "Socies Actives cuota 2019",
+    "Socies Actives cuota 2020",
+    "Socies Adherentes cuota 2020",
+    "Socies Adherentes cuota 2023",
+    "Socies Actives cuota 2023",
+}
+
+
 class Command(BaseCommand):
     help = 'Import payments from JSON file'
 
@@ -41,15 +53,20 @@ class Command(BaseCommand):
         payments = []
         for info in results:
 
-            if info['operation_type'] != 'recurring_payment':
+            # discard weird records about cards authorizations
+            if "payer" not in info:
+                logger.debug("Discarding non-payer record: %s", info)
                 continue
 
-            # needed information to record the payment
-            timestamp = parse_datetime(info['date_approved'])
-            amount = Decimal(info['transaction_amount'])
             payer_id = info['payer']['id']
             assert payer_id is not None
             payer_id = str(payer_id)
+
+            # only suscriptions are handled here
+            reason = info['description']
+            if reason not in SUBSCRIPTIONS:
+                logger.debug("Discarding non-subscription record: %s", info)
+                continue
 
             # apply filters, if given
             if filter_payment_id is not None and info['id'] != filter_payment_id:
@@ -57,9 +74,13 @@ class Command(BaseCommand):
             if filter_payer_id is not None and payer_id != filter_payer_id:
                 continue
 
+            # needed information to record the payment
+            timestamp = parse_datetime(info['date_approved'])
+            amount = Decimal(info['transaction_amount'])
+
             # some info to identify the payer in case it's not in our DB
             id_helper = {
-                'reason': info['description'],
+                'reason': reason,
                 'payment_id': info['id'],
             }
 
