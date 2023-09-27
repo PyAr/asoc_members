@@ -11,18 +11,6 @@ from . import _mp
 logger = logging.getLogger('management_commands')
 
 
-SUBSCRIPTIONS = {
-    "Cuota mensual socio adherente 2018",
-    "Cuota mensual socio activo 2018",
-    "Socies Adherentes cuota 2019",
-    "Socies Actives cuota 2019",
-    "Socies Actives cuota 2020",
-    "Socies Adherentes cuota 2020",
-    "Socies Adherentes cuota 2023",
-    "Socies Actives cuota 2023",
-}
-
-
 class Command(BaseCommand):
     help = 'Import payments from JSON file'
 
@@ -62,9 +50,17 @@ class Command(BaseCommand):
             assert payer_id is not None
             payer_id = str(payer_id)
 
-            # only suscriptions are handled here
+            # only suscriptions are handled here; examples:
+            #   Cuota mensual socio adherente 2018
+            #   Socies Actives cuota 2019
+            #   Socies Adherentes cuota 2023
             reason = info['description']
-            if reason not in SUBSCRIPTIONS:
+            reason_is_subscription = reason.startswith((
+                "Socies Adherentes cuota",
+                "Socies Actives cuota",
+                "Cuota mensual",
+            ))
+            if not reason_is_subscription:
                 logger.debug("Discarding non-subscription record: %s", info)
                 continue
 
