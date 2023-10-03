@@ -41,15 +41,28 @@ class Command(BaseCommand):
         payments = []
         for info in results:
 
-            if info['operation_type'] != 'recurring_payment':
+            # discard weird records about cards authorizations
+            if "payer" not in info:
+                logger.debug("Discarding non-payer record: %s", info)
                 continue
 
-            # needed information to record the payment
-            timestamp = parse_datetime(info['date_approved'])
-            amount = Decimal(info['transaction_amount'])
             payer_id = info['payer']['id']
             assert payer_id is not None
             payer_id = str(payer_id)
+
+            # only suscriptions are handled here; examples:
+            #   Cuota mensual socio adherente 2018
+            #   Socies Actives cuota 2019
+            #   Socies Adherentes cuota 2023
+            reason = info['description']
+            reason_is_subscription = reason.startswith((
+                "Socies Adherentes cuota",
+                "Socies Actives cuota",
+                "Cuota mensual",
+            ))
+            if not reason_is_subscription:
+                logger.debug("Discarding non-subscription record: %s", info)
+                continue
 
             # apply filters, if given
             if filter_payment_id is not None and info['id'] != filter_payment_id:
@@ -57,9 +70,13 @@ class Command(BaseCommand):
             if filter_payer_id is not None and payer_id != filter_payer_id:
                 continue
 
+            # needed information to record the payment
+            timestamp = parse_datetime(info['date_approved'])
+            amount = Decimal(info['transaction_amount'])
+
             # some info to identify the payer in case it's not in our DB
             id_helper = {
-                'reason': info['description'],
+                'reason': reason,
                 'payment_id': info['id'],
             }
 
