@@ -41,8 +41,9 @@ class Command(BaseCommand):
         payments = []
         for info in results:
 
-            # discard weird records about cards authorizations
-            if "payer" not in info:
+            # discard weird records about cards authorizations (payer may not be
+            # there or just be empty)
+            if not info.get("payer"):
                 logger.debug("Discarding non-payer record: %s", info)
                 continue
 
