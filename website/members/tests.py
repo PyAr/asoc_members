@@ -2,6 +2,7 @@ import datetime
 import tempfile
 import logassert
 import uuid
+from decimal import Decimal
 from io import BytesIO
 from unittest.mock import patch
 
@@ -638,6 +639,26 @@ class CreateRecurringPaymentTestCase(TestCase):
         # check we have still only two payments
         all_quotas = Quota.objects.all()
         self.assertEqual(len(all_quotas), 2)
+
+    def test_strange_amount(self):
+        # needed objects
+        payer_id = 'test@example.com'
+        ps = create_payment_strategy(platform=PaymentStrategy.MERCADO_PAGO, payer_id=payer_id)
+        create_member(patron=ps.patron, first_payment_year=2017, first_payment_month=5)
+
+        # create the payment
+        tstamp = make_aware(datetime.datetime(year=2017, month=2, day=5))
+        weird_amount = DEFAULT_FEE * Decimal("0.77")
+        records = [
+            create_payment_record(payer_id, timestamp=tstamp, amount=weird_amount),
+        ]
+        logic.create_recurring_payments(records)
+
+        # check
+        self.assertLoggedWarning("Payment with strange amount for member")
+
+        (payed_fee,) = Quota.objects.all()
+        self.assertEqual(payed_fee.payment.amount, weird_amount)
 
 
 class GetDebtStateTestCase(TestCase):
