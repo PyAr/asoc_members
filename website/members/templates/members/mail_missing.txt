@@ -39,10 +39,10 @@ También podés pagar el año entero (un total de ${{ annual_fee }}) directament
 ... o con tarjetas de crédito, débito, pagofácil, rapipago, etc:
 
     {% if member.category == member.category.ACTIVE %}
-        https://mpago.la/1GRnhvx
+        https://mpago.la/2SBgjW8
 
     {% elif member.category == member.category.SUPPORTER %}
-        https://mpago.la/2ywCi56
+        https://mpago.la/1E4WvNU
 
     {% else %}
         {{ on_purpose_missing_var }} {% endif %}
