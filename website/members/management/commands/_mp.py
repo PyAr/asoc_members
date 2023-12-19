@@ -36,8 +36,7 @@ def get_raw_mercadopago_info():
         results.extend(response['response']['results'])
         if not response['response']['results']:
             if paging["total"] == max_total_exposed:
-                # didn't get any result when hitting the endpoint that brings more
-                # results that any other
+                # didn't get any result and reported "total" is the biggest seen so far
                 break
         offset += quant_results
 
