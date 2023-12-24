@@ -23,7 +23,8 @@ jobs:
           python-version: 3.9
       - name: Bootstrap everything
         run: |
-          pip install -U docker-compose 
+          pip install -U "docker < 7"  # compatibility issues; see https://github.com/docker/docker-py/issues/3194
+          pip install -U docker-compose
           docker-compose up -d
           docker-compose exec -T web pip install -r /code/config/requirements-dev.txt
       - name: Run tests

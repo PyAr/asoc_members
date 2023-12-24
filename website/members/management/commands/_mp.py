@@ -1,7 +1,7 @@
 import logging
 import os
 
-from mercadopago import MP
+from mercadopago import SDK
 
 LIMIT = 500
 
@@ -9,25 +9,36 @@ logger = logging.getLogger('mercadopago')
 
 
 def get_raw_mercadopago_info():
-    """Get records from Mercadopago API."""
-    mercadopago_client_id = os.getenv('MERCADOPAGO_CLIENT_ID')
-    mercadopago_client_secret = os.getenv('MERCADOPAGO_CLIENT_SECRET')
+    """Get records from Mercadopago API.
 
-    mp = MP(mercadopago_client_id, mercadopago_client_secret)
+    As different hits bring different "total" values indicated, we record what is the
+    max of those, and only stop hitting when we get no results from one of those endpoints.
+    """
     logger.debug('Connecting with mercadopago')
+    auth_token = os.getenv('MERCADOPAGO_AUTH_TOKEN')
+    mp = SDK(auth_token)
 
-    filters = {'status': 'approved'}
+    filters = {'status': 'approved', 'limit': LIMIT, 'begin_date': 'NOW-3MONTHS'}
     offset = 0
     results = []
+    max_total_exposed = 0
     while True:
-        response = mp.search_payment(filters, limit=LIMIT, offset=offset)
+        filters["offset"] = offset
+        response = mp.payment().search(filters)
         assert response['status'] == 200
+
+        quant_results = len(response['response']['results'])
+        paging = response['response']['paging']
+        max_total_exposed = max(max_total_exposed, paging["total"])
         logger.debug(
-            'Getting response from mercadopago, paging %s', response['response']['paging'])
+            'Getting response from mercadopago, len=%d paging=%s', quant_results, paging)
+
         results.extend(response['response']['results'])
-        if len(response['response']['results']) < LIMIT:
-            break
-        offset += LIMIT
+        if not response['response']['results']:
+            if paging["total"] == max_total_exposed:
+                # didn't get any result and reported "total" is the biggest seen so far
+                break
+        offset += quant_results
 
     logger.info('Got response from mercadopago, %d items', len(results))
     return results
