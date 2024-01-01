@@ -36,6 +36,7 @@ def create_payment(
         member, timestamp, amount, payment_strategy, first_unpaid=None,
         comments='', custom_fee=None):
     """Create a payment from the given strategy to the specific member."""
+    logger.info("Creating payment! member=%s amount=%r custom_fee=%r", member, amount, custom_fee)
     # get the latest unpaid monthly fee
     if first_unpaid is None:
         try:
