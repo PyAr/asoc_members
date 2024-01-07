@@ -147,14 +147,15 @@ def create_recurring_payments(recurring_records, custom_fee=None):
             # use current category fee as custom fee (unless the user forced other one) to
             # ensure always *1* quota is recorded; however verify that current amount is
             # the same as the member's category fee and show a warning if needed
-            if custom_fee is None:
-                custom_fee = payment_info['amount']
-                if custom_fee != member.category.fee:
+            this_custom_fee = custom_fee
+            if this_custom_fee is None:
+                this_custom_fee = payment_info['amount']
+                if this_custom_fee != member.category.fee:
                     logger.warning(
                         "Payment with strange amount for member %s: %s", member, payment_info)
             create_payment(
                 member, payment_info['timestamp'], payment_info['amount'],
-                strategy, custom_fee=custom_fee)
+                strategy, custom_fee=this_custom_fee)
 
     logger.info("Processed %d payers without new payments", count_without_new_payments)
 
