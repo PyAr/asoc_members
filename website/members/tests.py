@@ -38,19 +38,25 @@ from .factories import (
 DEFAULT_FEE = 100
 
 
-def create_category():
+def create_category(fee=DEFAULT_FEE):
     """Create a testing Category."""
-    category = Category(name='testcategory', description="", fee=DEFAULT_FEE)
+    category = Category(name='testcategory', description="", fee=fee)
     category.save()
     return category
 
 
 def create_member(
-        first_payment_year=None, first_payment_month=None, patron=None, registration_date=None):
+        first_payment_year=None,
+        first_payment_month=None,
+        patron=None,
+        registration_date=None,
+        category=None,
+):
     """Create a testing Member."""
     first_payment_year = first_payment_year
     first_payment_month = first_payment_month
-    category = create_category()
+    if category is None:
+        category = create_category()
     return Member.objects.create(
         first_payment_year=first_payment_year, first_payment_month=first_payment_month,
         category=category, patron=patron, registration_date=registration_date)
@@ -659,6 +665,34 @@ class CreateRecurringPaymentTestCase(TestCase):
 
         (payed_fee,) = Quota.objects.all()
         self.assertEqual(payed_fee.payment.amount, weird_amount)
+
+    def test_multiple_different_amounts(self):
+        # needed objects
+        payer_id1 = 'test@example.com'
+        ps = create_payment_strategy(platform=PaymentStrategy.MERCADO_PAGO, payer_id=payer_id1)
+        member1 = create_member(patron=ps.patron, first_payment_year=2017, first_payment_month=5)
+
+        payer_id2 = 'other@example.com'
+        category2 = create_category(DEFAULT_FEE * 2)
+        ps = create_payment_strategy(platform=PaymentStrategy.MERCADO_PAGO, payer_id=payer_id2)
+        member2 = create_member(
+            patron=ps.patron, first_payment_year=2017, first_payment_month=5, category=category2)
+
+        # create the payment
+        tstampA = make_aware(datetime.datetime(year=2017, month=2, day=5))
+        tstampB = make_aware(datetime.datetime(year=2017, month=2, day=6))
+        records = [
+            create_payment_record(payer_id2, timestamp=tstampB, amount=DEFAULT_FEE * 2),
+            create_payment_record(payer_id1, timestamp=tstampA, amount=DEFAULT_FEE * 1),
+        ]
+        logic.create_recurring_payments(records)
+
+        # check
+        payed_fee_1, payed_fee_2 = Quota.objects.all()
+        self.assertEqual(payed_fee_1.member, member2)
+        self.assertEqual(payed_fee_1.payment.timestamp, tstampB)
+        self.assertEqual(payed_fee_2.member, member1)
+        self.assertEqual(payed_fee_2.payment.timestamp, tstampA)
 
 
 class GetDebtStateTestCase(TestCase):
