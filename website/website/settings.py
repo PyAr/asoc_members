@@ -25,7 +25,7 @@ class Base(Configuration):
     # Quick-start development settings - unsuitable for production
     # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
-    # Configuring email from enviorenment and setting mailhog as default
+    # Configuring email from environment and setting mailhog as default
     EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
     EMAIL_HOST = os.environ.get('EMAIL_HOST', 'mail')
     EMAIL_PORT = os.environ.get('EMAIL_PORT', 1025)
@@ -231,7 +231,6 @@ class Prod(Base):
     EMAIL_PORT = os.environ.get('EMAIL_PORT', '587')
     EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS')
     EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', True)
     EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '10'))
     EMAIL_FROM = os.environ.get('EMAIL_FROM', 'do_not_reply@python.org.ar')
