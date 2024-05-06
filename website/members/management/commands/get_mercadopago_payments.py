@@ -74,6 +74,9 @@ class Command(BaseCommand):
             # needed information to record the payment
             timestamp = parse_datetime(info['date_approved'])
             amount = Decimal(info['transaction_amount'])
+            if amount <= 0:
+                logger.debug("Discarding invalid amount: %s", info)
+                continue
 
             # some info to identify the payer in case it's not in our DB
             id_helper = {
