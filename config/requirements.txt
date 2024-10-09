@@ -6,7 +6,7 @@ django-crispy-forms==1.11.1
 django-extensions==3.1.0
 django-reversion-compare==0.13.0
 django-storages[azure]==1.11.1
-django==3.2.25
+django==4.2.16
 google-api-python-client==1.12.8
 gunicorn==22.0.0
 mercadopago==2.2.1
