@@ -97,8 +97,8 @@ class Base(Configuration):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('POSTGRES_DB', "memberships"),
-            'USER': os.environ.get('POSTGRES_USER', "postgres"),
+            'NAME': os.environ.get('POSTGRES_DB', "postgres"),
+            'USER': os.environ.get('POSTGRES_USER', "asoc_members"),
             'PASSWORD': os.environ.get('POSTGRES_PASSWORD', "secret"),
             'HOST': os.environ.get('POSTGRES_HOST', "postgres"),
             'PORT': os.environ.get('POSTGRES_PORT', 5432),
