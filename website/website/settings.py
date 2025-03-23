@@ -59,6 +59,7 @@ class Base(Configuration):
         'events.apps.EventsConfig',
         'reversion',
         'reversion_compare',
+        'pycamp'
     ]
 
     MIDDLEWARE = [
