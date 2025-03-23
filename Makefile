@@ -38,7 +38,7 @@ stop:
 # rarely used: only when we want to stop and remove everything created by bootstrapping
 clean:
 	docker-compose stop
-	docker-compose down --rmi local
+	docker-compose down -v --rmi local
 
 ps:
 	docker-compose ps
