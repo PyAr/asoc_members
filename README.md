@@ -40,6 +40,22 @@ Password (again):
 Superuser created successfully.
 ```
 
+### Loading a dump
+
+If you need to load a dump, you can use the following sequence:
+
+```bash
+$ make clean  # Ensure a clean and fresh environment
+$ docker compose up  # to start the services without migrations
+# open a new terminal
+$ docker compose cp <dump_file>.dump postgres:/tmp/  # Copy DB dump into container
+$ docker compose exec postgres pg_restore /tmp/<dump_file> > <dump_file>.sql  # convert DUMP to SQL
+$ docker compose cp <dump_file>.sql postgres:/tmp/  # Copy SQL into container
+$ docker compose exec postgres psql --username=asoc_members --dbname=postgres --file=/tmp/<dump_file>.sql  # Load SQL into de DB
+# stop the services (Ctrl+C in the opened terminal)
+$ make run  # start the services again
+```
+
 ## Deploy a staging (PENDING TO CONFIGURE)
 
 Cada merge a master genera una imagen actualizada en docker hub con el tag `latest` y automaticamente se actualiza el deploy.
