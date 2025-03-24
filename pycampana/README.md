@@ -1,6 +1,6 @@
 Instalar: 
 ```bash
-$ pip install jupyterlab pandas wordcloud
+$ pip install jupyterlab pandas wordcloud ipywidgets ipyleaflet geopy
 ```
 
 Luego correr: `$ jupyter lab`
