@@ -68,3 +68,9 @@ Todas las contribuciones son mas que bienvenidas, pero para empezar a contribuir
     Una vez tengas todo revisado haz un pull request al branch master de este proyecto https://github.com/PyAr/asoc_members/ , haciendo referencia al issue.
 
 Una vez tu pull request sea aprobado tu código pasará a la inmortalidad de PyAr :)
+
+## Más preguntas
+
+* Estado de los baños. Importante. En el PyCamp de España fue relevante.
+* Ascendente del signo del sodíaco.
+* 
