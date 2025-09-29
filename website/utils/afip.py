@@ -22,6 +22,8 @@ PDF_PATH = "/tmp"
 
 INVOICE_TYPE = 6
 
+IVA_CATEGORY = 5
+
 IVA_CODES = {
     Decimal('10.5'): 4,
     Decimal(0): 3,
@@ -181,6 +183,7 @@ class _BaseInvoice:
         self.header["cbt_desde"] = self.header["cbte_nro"]
         self.header["cbt_hasta"] = self.header["cbte_nro"]
         wsfev1.CrearFactura(**self.header)
+        wsfev1.EstablecerCampoFactura("condicion_iva_receptor_id", str(IVA_CATEGORY))
 
         # agrego un comprobante asociado (solo notas de crédito / débito)
         for cmp_asoc in self.cmp_asocs:
