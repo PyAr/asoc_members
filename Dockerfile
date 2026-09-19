@@ -1,4 +1,4 @@
-FROM python:3.11
+FROM python:3.14-slim
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /code:$PYTHONPATH
 
@@ -6,7 +6,7 @@ RUN mkdir /code
 RUN mkdir /config
 
 # Install dependencies
-RUN apt-get update && apt-get install -y inkscape && apt-get clean
+RUN apt-get update && apt-get install -y inkscape wget unzip zlib1g-dev libjpeg-dev libpq-dev gcc && apt-get clean
 COPY /config/requirements.txt /config/
 RUN pip install --no-cache-dir -r /config/requirements.txt
 
