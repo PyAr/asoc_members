@@ -3,14 +3,14 @@ volumes:
 
 services:
   postgres:
-    image: postgres:17
+    image: postgres:18
     restart: always
     environment:
       - POSTGRES_DB=memberships
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=secret
     volumes:
-      - pgdata:/var/lib/postgresql/data/
+      - pgdata:/var/lib/postgresql/data/data/
 
   web:
     build: .
