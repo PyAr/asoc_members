@@ -56,6 +56,7 @@ class Base(Configuration):
         'django_extensions',
         'members.apps.MembersConfig',
         'crispy_forms',
+        'crispy_bootstrap4',
         'events.apps.EventsConfig',
         'reversion',
         'reversion_compare',
@@ -144,6 +145,7 @@ class Base(Configuration):
         os.path.join(BASE_DIR, "static"),
     ]
 
+    CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
     CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
     MEDIA_URL = '/media/'
