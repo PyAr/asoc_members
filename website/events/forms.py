@@ -58,7 +58,7 @@ class OrganizerUserSignupForm(UserCreationForm):
 
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")
-        password2 = super(OrganizerUserSignupForm, self).clean_password2()
+        password2 = self.cleaned_data.get("password2")
         if bool(password1) ^ bool(password2):
             raise forms.ValidationError("Fill out both fields")
         return password2
