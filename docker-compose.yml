@@ -1,11 +1,9 @@
-version: '2'
-
 volumes:
   pgdata:
 
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:15
     restart: always
     environment:
       - POSTGRES_DB=memberships

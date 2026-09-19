@@ -56,6 +56,7 @@ class Base(Configuration):
         'django_extensions',
         'members.apps.MembersConfig',
         'crispy_forms',
+        'crispy_bootstrap4',
         'events.apps.EventsConfig',
         'reversion',
         'reversion_compare',
@@ -137,6 +138,8 @@ class Base(Configuration):
     # Static files (CSS, JavaScript, Images)
     # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
+    DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
     STATIC_URL = '/static/'
     STATIC_ROOT = os.path.join(BASE_DIR, '..', 'static')
 
@@ -144,6 +147,7 @@ class Base(Configuration):
         os.path.join(BASE_DIR, "static"),
     ]
 
+    CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
     CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
     MEDIA_URL = '/media/'

@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
 from django.contrib.auth.models import User
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from stdnum.ar import cbu
 
 from events.models import (
