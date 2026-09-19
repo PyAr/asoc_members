@@ -3,6 +3,12 @@ certg==4.2
 certifi>=2020.4.5.1
 django-configurations==2.5.1
 django-crispy-forms==2.1
+crispy-bootstrap4==2024.1
+logassert==4
+factory_boy==3.2.0
+flake8==3.7.7
+pytz==2024.1
+diff-match-patch==20230430
 django-extensions==3.2.3
 django-reversion-compare==0.16.0
 django-storages[azure]==1.14.6
