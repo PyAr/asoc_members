@@ -3,7 +3,7 @@ volumes:
 
 services:
   postgres:
-    image: postgres:15
+    image: postgres:16
     restart: always
     environment:
       - POSTGRES_DB=memberships
