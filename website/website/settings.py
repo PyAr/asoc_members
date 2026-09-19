@@ -138,6 +138,8 @@ class Base(Configuration):
     # Static files (CSS, JavaScript, Images)
     # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
+    DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
     STATIC_URL = '/static/'
     STATIC_ROOT = os.path.join(BASE_DIR, '..', 'static')
 
