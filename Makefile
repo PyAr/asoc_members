@@ -17,7 +17,7 @@ MANAGE=${RUN} ./manage.py
 # rarely used: only first time project is cloned, or when infrastructure dependencies change
 bootstrap:
 	docker compose up -d
-	${RUN} pip install -r /code/config/requirements-dev.txt
+	${RUN} uv pip install --system -e /code[dev]
 
 # run all the tests; to avoid migrations everytime and run only some of them, do for example:
 # 	make test ARGS="-k members.tests.ReportCompleteTests"
