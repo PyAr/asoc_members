@@ -11,37 +11,37 @@ help:
 	@echo "load_members_testdata -- populate the DB with members"
 	@echo "load_providers_test_data -- populate the DB with providers"
 
-RUN=docker-compose exec web
+RUN=docker compose exec web
 MANAGE=${RUN} ./manage.py
 
 # rarely used: only first time project is cloned, or when infrastructure dependencies change
 bootstrap:
-	docker-compose up -d
-	${RUN} pip install -r /code/config/requirements-dev.txt
+	docker compose up -d
+	${RUN} uv pip install --system -e /code[dev]
 
 # run all the tests; to avoid migrations everytime and run only some of them, do for example:
 # 	make test ARGS="-k members.tests.ReportCompleteTests"
 test:
-	docker-compose start
+	docker compose start
 	${MANAGE} test -v2 --noinput $(ARGS)
 
 # normally used to run the service locally
 run:
-	docker-compose start
+	docker compose start
 	${MANAGE} migrate
 	${MANAGE} runserver 0.0.0.0:8127
 
 # normally used to turn the services off
 stop:
-	docker-compose stop
+	docker compose stop
 
 # rarely used: only when we want to stop and remove everything created by bootstrapping
 clean:
-	docker-compose stop
-	docker-compose down --rmi local
+	docker compose stop
+	docker compose down --rmi local
 
 ps:
-	docker-compose ps
+	docker compose ps
 
 createsuperuser:
 	${MANAGE} createsuperuser

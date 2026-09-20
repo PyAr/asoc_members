@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.14-slim
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /code:$PYTHONPATH
 
@@ -6,9 +6,13 @@ RUN mkdir /code
 RUN mkdir /config
 
 # Install dependencies
-RUN apt-get update && apt-get install -y inkscape && apt-get clean
-COPY /config/requirements.txt /config/
-RUN pip install --no-cache-dir -r /config/requirements.txt
+RUN apt-get update && apt-get install -y inkscape wget wget unzip zlib1g-dev libjpeg-dev libpq-dev gcc && apt-get clean
+
+# Install uv and dependencies
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uv* /bin/
+COPY pyproject.toml /code/
+WORKDIR /code
+RUN uv pip install --system --no-cache -e .[dev]
 
 # Copy code
 WORKDIR /code
@@ -21,6 +25,6 @@ WORKDIR /code/website
 # for more info: https://github.com/PyAr/asoc_members/issues/133 )
 RUN sed -i 's/CipherString = DEFAULT@SECLEVEL=2/CipherString = DEFAULT@SECLEVEL=1/' /etc/ssl/openssl.cnf
 
-# Bring pyafipws branch and install it's dependencies
+# Bring pyafipws branch and install its dependencies
 RUN wget https://github.com/PyAr/pyafipws/archive/main.zip && unzip main.zip && mv pyafipws-main pyafipws
-RUN pip install --no-cache-dir -r /code/website/pyafipws/requirements.txt
+RUN uv pip install --system --no-cache -r /code/website/pyafipws/requirements.txt

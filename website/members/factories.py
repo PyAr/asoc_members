@@ -138,7 +138,7 @@ class QuotaFactory(DjangoModelFactory):
     def year(self, n):
         first_month = self.member.first_payment_month
         first_year = self.member.first_payment_year
-        payed_quotas = self.member.quota_set.count()
+        payed_quotas = self.member.quota_set.count() if self.member.pk else 0
 
         years_ahead = math.floor((first_month + payed_quotas - 1) / 12)
 
@@ -147,7 +147,7 @@ class QuotaFactory(DjangoModelFactory):
     @factory.lazy_attribute_sequence
     def month(self, n):
         first_month = self.member.first_payment_month
-        payed_quotas = self.member.quota_set.count()
+        payed_quotas = self.member.quota_set.count() if self.member.pk else 0
         months_ahead = payed_quotas % 12
         months_sum = first_month + months_ahead
         if months_sum > 12:
