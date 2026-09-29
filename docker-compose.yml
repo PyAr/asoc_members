@@ -13,13 +13,6 @@ services:
       - POSTGRES_PASSWORD=secret
     volumes:
       - pgdata:/var/lib/postgresql/data/
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 2s
-      timeout: 5s
-      retries: 30
-      # Grace period so the initdb self-restart on first boot doesn't count as a failure right away.
-      start_period: 20s
 
   web:
     build: .
