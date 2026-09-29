@@ -23,7 +23,8 @@ jobs:
           python-version: 3.9
       - name: Bootstrap everything
         run: |
-          docker compose up -d
+          # --parallel 1 avoids a compose v2 race where a container starts before its network attach finishes.
+          docker compose up -d --parallel 1
           # Silence exec errors while postgres is mid-restart on initdb; just retry until it's ready.
           for i in $(seq 1 60); do docker compose exec -T postgres pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
           docker compose exec -T web pip install -r /code/config/requirements-dev.txt
