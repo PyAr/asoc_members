@@ -3,6 +3,14 @@ version: '2'
 volumes:
   pgdata:
 
+# Static subnet so postgres can get a fixed IP: its container doesn't reliably
+# register in the network's DNS/discovery map on some Docker Engine versions.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
 services:
   postgres:
     image: postgres:latest
@@ -13,6 +21,9 @@ services:
       - POSTGRES_PASSWORD=secret
     volumes:
       - pgdata:/var/lib/postgresql/data/
+    networks:
+      default:
+        ipv4_address: 172.28.0.10
 
   web:
     build: .
@@ -21,9 +32,9 @@ services:
     volumes:
       - .:/code
     command: "tail -f /dev/null"
-    # Compose v2's embedded DNS is unreliable on some hosts; links writes postgres's IP to /etc/hosts instead.
-    links:
-      - postgres
+    environment:
+      # Bypass DNS resolution entirely and hit postgres's fixed IP directly.
+      - POSTGRES_HOST=172.28.0.10
 
   mail:
     image: mailhog/mailhog
