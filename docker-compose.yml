@@ -21,6 +21,9 @@ services:
     volumes:
       - .:/code
     command: "tail -f /dev/null"
+    # Compose v2's embedded DNS is unreliable on some hosts; links writes postgres's IP to /etc/hosts instead.
+    links:
+      - postgres
 
   mail:
     image: mailhog/mailhog
