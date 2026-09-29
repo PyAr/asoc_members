@@ -24,9 +24,11 @@ jobs:
       - name: Bootstrap everything
         run: |
           docker compose up -d
+          # Wait for postgres's internal initdb restart; otherwise compose v2's embedded DNS can break.
+          timeout 60 bash -c 'until docker compose exec -T postgres pg_isready -U postgres; do sleep 1; done'
           docker compose exec -T web pip install -r /code/config/requirements-dev.txt
       - name: Run tests
         run: |
-          docker compose start
+          # Don't use "docker compose start" here: restarting a networked container breaks service DNS resolution.
           docker compose exec -T web ./manage.py test -v2 --noinput
 
