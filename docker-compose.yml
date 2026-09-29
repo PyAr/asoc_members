@@ -4,6 +4,19 @@ volumes:
   pgdata:
 
 services:
+  web:
+    build: .
+    ports:
+      - "8127:8127"
+      - "8025:8025"
+    volumes:
+      - .:/code
+    command: "tail -f /dev/null"
+    environment:
+      # Talk to postgres/mail over localhost; see the network_mode note below.
+      - POSTGRES_HOST=localhost
+      - EMAIL_HOST=localhost
+
   postgres:
     image: postgres:latest
     restart: always
@@ -13,16 +26,14 @@ services:
       - POSTGRES_PASSWORD=secret
     volumes:
       - pgdata:/var/lib/postgresql/data/
-
-  web:
-    build: .
-    ports:
-      - "8127:8127"
-    volumes:
-      - .:/code
-    command: "tail -f /dev/null"
+    # Share web's network namespace: its own container->container networking
+    # never reliably attaches on some Docker Engine versions.
+    network_mode: "service:web"
+    depends_on:
+      - web
 
   mail:
     image: mailhog/mailhog
-    ports:
-      - "8025:8025"
+    network_mode: "service:web"
+    depends_on:
+      - web
