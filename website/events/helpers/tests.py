@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from django.core.files import File
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from events.helpers.permissions import (
     associate_users_permissions,
     super_organizer_permissions,
