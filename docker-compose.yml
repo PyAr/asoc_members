@@ -5,7 +5,9 @@ volumes:
 
 services:
   postgres:
-    image: postgres:latest
+    # Pinned: postgres 18+ changed its expected data dir layout and refuses to
+    # start against a volume mounted directly at /var/lib/postgresql/data.
+    image: postgres:16
     restart: always
     environment:
       - POSTGRES_DB=memberships
