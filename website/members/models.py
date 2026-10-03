@@ -197,13 +197,24 @@ class Person(TimeStampedModel):
 
     @property
     def thumbnail(self):
+        photo = None
         if self.picture:
-            photo = self.picture.url
-        else:
+            try:
+                # Check if the file actually exists in storage when possible
+                if hasattr(self.picture, 'storage') and self.picture.storage.exists(self.picture.name):
+                    photo = self.picture.url
+                elif not hasattr(self.picture, 'storage'):
+                    photo = self.picture.url
+            except Exception:
+                pass
+        
+        if not photo:
             photo = static("images/default_thumbnail.jpg")
+
         return format_html(
-            f'<a href="{photo}"><img src="{photo}" \
-                    class="img-thumbnail" width="150"></a>')
+            '<a href="{}"><img src="{}" class="img-thumbnail" width="150"></a>',
+            photo, photo
+        )
 
     def __str__(self):
         return f"{self.last_name}, {self.first_name}"

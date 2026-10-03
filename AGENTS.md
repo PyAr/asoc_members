@@ -23,9 +23,13 @@ This file provides core instructions for OpenCode agents working in the `asoc_me
 
 - **Framework**: Django web application running inside Docker (`docker-compose.yml`) with `django-configurations`.
 - **Entrypoint**: `website/manage.py`.
-- **Core Apps**:
+- **Core Apps & URL Map**:
   - `website/members/`: Main business logic for membership management, payments (MercadoPago integrations, invoicing, quotas, reports).
+    - Routes (`/`): `/solicitud-alta/`, `/reportes/`, `/reportes/deudas`, `/reportes/completos`, `/reportes/incompletos`, `/reportes/ingcuotas`, `/reportes/ingdinero`, `/reportes/miembros`, `/reportes/miembros/<pk>/`.
+  - `website/events/`: Management of events, sponsors, expenses, and providers.
+    - Routes (`/eventos/`): `/eventos/`, `/eventos/eventos/`, `/eventos/eventos/<pk>/configuracion/`, `/eventos/eventos/<pk>/patrocinios/`, `/eventos/eventos/<pk>/gastos/`, etc.
   - `website/pyar_auth/`: Authentication views/forms.
+    - Routes (`/cuentas/`): `/cuentas/login/`, `/cuentas/logout/`, `/cuentas/perfil/`, `/cuentas/clave/`, etc.
   - `website/website/`: Django project settings (`settings.py`), URL router (`urls.py`), and WSGI config.
 - **Configuration**: Environment variables managed via `.env.dist` / `local_settings.py.example`.
 - **Docker Setup**: Application runs inside Docker containers (`docker compose`). Use `make` commands.
@@ -39,3 +43,6 @@ This file provides core instructions for OpenCode agents working in the `asoc_me
   - **URLs** must be written in **Spanish** (for SEO purposes, per issue #163).
 - **Database & Migrations**: Every model change requires a corresponding migration (`make migrations`).
 - **Tests**: Add unit/integration tests for new features and bug fixes when possible.
+- **Versioning & Releases**:
+  - When preparing a new release for production, tag the commit in git (e.g. `git tag -a vX.Y.Z -m "Release vX.Y.Z"`).
+  - Update the `image` tag in `docker-compose.yml` (e.g. `image: asoc_members:vX.Y.Z`) to keep the Docker image version in sync with the git tag.
