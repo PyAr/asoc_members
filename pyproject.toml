@@ -7,7 +7,7 @@ name = "asoc_members"
 version = "0.1.0"
 description = "Memberships management for the Python Argentina's ONG"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 authors = [
     { name = "Asociación Civil Python Argentina", email = "presidencia@ac.python.org.ar" }
 ]
@@ -33,7 +33,7 @@ dependencies = [
     "django-extensions==3.2.3",
     "django-reversion-compare==0.16.0",
     "django-storages[azure]==1.14.6",
-    "django==4.2.16",
+    "django==6.1.1",
     "google-api-python-client==2.149.0",
     "gunicorn==23.0.0",
     "mercadopago==3.1.1",
@@ -45,8 +45,11 @@ dependencies = [
     "sentry-sdk==2.16.0",
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "ipdb==0.13.9",
     "ipython==8.10.0",
+    "logassert==4",
+    "factory_boy==3.2.0",
+    "flake8==3.7.7",
 ]

@@ -1,16 +1,41 @@
 # AGENTS.md
 
-## Commands & Workflow
-- **Bootstrap:** `make bootstrap` (first time or after dependency changes; runs `docker compose up -d` and installs `config/requirements-dev.txt`)
-- **Run Locally:** `make run` (starts services, runs migrations, serves on `0.0.0.0:8127`)
-- **Run Tests:** `make test` (runs full Django test suite via Docker)
-- **Focused Test:** `make test ARGS="-k members.tests.ReportCompleteTests"`
-- **Stop Services:** `make stop`
-- **Clean Environment:** `make clean`
-- **Django Management:** `docker compose exec web ./manage.py <command>` or via `make` shortcuts (`make migrate`, `make migrations`, `make createsuperuser`, `make shell_plus`, `make load_members_testdata`, `make load_providers_test_data`)
+This file provides core instructions for OpenCode agents working in the `asoc_members` repository (Python Argentina Membership Management System).
 
-## Architecture & Conventions
-- **Framework:** Django web application running inside Docker (`docker-compose.yml`).
-- **Entrypoint:** `website/manage.py`.
-- **Configuration:** Environment variables managed via `.env.dist` / `local_settings.py.example`.
-- **Code Style:** PEP8 enforced via `.flake8`.
+## Build, Test, and Development Commands
+
+- **Bootstrap / Setup**: `make bootstrap` (first time or after dependency changes; runs `docker compose up -d` and installs `config/requirements-dev.txt` / dependencies in the container)
+- **Run Locally**: `make run` (starts services, runs migrations, and serves on `0.0.0.0:8127`)
+- **Run Tests**: `make test` (runs full Django test suite via Docker)
+  - Focused Test: `make test ARGS="-k members.tests.ReportCompleteTests"`
+- **Stop Services**: `make stop`
+- **Clean Environment**: `make clean`
+- **Django Management & Utilities**:
+  - Django shell plus: `make shell_plus`
+  - Docker shell: `make dockershell`
+  - Create superuser: `make createsuperuser`
+  - Make migrations: `make migrations`
+  - Run migrations: `make migrate`
+  - Load test data: `make load_members_testdata`
+  - Load providers test data: `make load_providers_test_data`
+
+## Architecture & Codebase Layout
+
+- **Framework**: Django web application running inside Docker (`docker-compose.yml`) with `django-configurations`.
+- **Entrypoint**: `website/manage.py`.
+- **Core Apps**:
+  - `website/members/`: Main business logic for membership management, payments (MercadoPago integrations, invoicing, quotas, reports).
+  - `website/pyar_auth/`: Authentication views/forms.
+  - `website/website/`: Django project settings (`settings.py`), URL router (`urls.py`), and WSGI config.
+- **Configuration**: Environment variables managed via `.env.dist` / `local_settings.py.example`.
+- **Docker Setup**: Application runs inside Docker containers (`docker compose`). Use `make` commands.
+
+## Coding Conventions & Gotchas
+
+- **PEP8 & Style**: PEP8 enforced via `.flake8` (line width limit: 99 columns).
+- **Language**:
+  - Variable names, docstrings, and code comments must be in **English**.
+  - Docstrings must start with an uppercase letter and end with a period (`"""This is a docstring."""`).
+  - **URLs** must be written in **Spanish** (for SEO purposes, per issue #163).
+- **Database & Migrations**: Every model change requires a corresponding migration (`make migrations`).
+- **Tests**: Add unit/integration tests for new features and bug fixes when possible.

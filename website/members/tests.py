@@ -940,8 +940,14 @@ class MemberTests(TestCase):
             'nickname': 'test-nick',
             'picture': 'fake-pic',
         }
+        picture_override = kwargs.pop('picture', None)
         params = {k: kwargs.pop(k, v) for k, v in params.items()}
-        Person.objects.create(**params)
+        if picture_override is not None:
+            if picture_override is not False:
+                params['picture'] = picture_override
+        p = Person.objects.create(**params)
+        if picture_override is False:
+            Person.objects.filter(pk=p.pk).update(picture='False')
 
         assert not kwargs, kwargs  # would indicate a misuse of the parameters
         return member

@@ -112,7 +112,10 @@ class Member(TimeStampedModel):
         missing_nickname = self.person.nickname == ""
         # picture is complicated, bool() is used to check if the Image field has an associated
         # filename, and False itself is used as the "dont want a picture!" flag
-        missing_picture = not self.person.picture and self.person.picture is not False
+        picture_val = self.person.picture
+        is_false = (picture_val is False) or (str(picture_val) == 'False') or (getattr(picture_val, 'name', None) == 'False')
+        has_name = bool(getattr(picture_val, 'name', picture_val)) and str(picture_val) != 'False' and getattr(picture_val, 'name', None) != 'False'
+        missing_picture = not has_name and not is_false
 
         # info from Member itself
         missing_payment = self.first_payment_month is None and self.category.fee > 0

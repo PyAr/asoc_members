@@ -9,10 +9,10 @@ RUN mkdir /config
 RUN apt-get update && apt-get install -y inkscape wget wget unzip zlib1g-dev libjpeg-dev libpq-dev gcc && apt-get clean
 
 # Install uv and dependencies
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uv* /bin/
-COPY pyproject.toml /code/
+COPY --from=ghcr.io/astral-sh/uv:0.5.29 /uv /uv* /bin/
 WORKDIR /code
-RUN uv pip install --system --no-cache -e .[dev]
+COPY pyproject.toml uv.lock /code/
+RUN uv sync --system --frozen --no-dev || uv pip install --system --no-cache -e .[dev]
 
 # Copy code
 WORKDIR /code
