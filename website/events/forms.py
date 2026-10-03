@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
 from django.contrib.auth.models import User
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from stdnum.ar import cbu
 
 from events.models import (
@@ -58,7 +58,7 @@ class OrganizerUserSignupForm(UserCreationForm):
 
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")
-        password2 = super(OrganizerUserSignupForm, self).clean_password2()
+        password2 = self.cleaned_data.get("password2")
         if bool(password1) ^ bool(password2):
             raise forms.ValidationError("Fill out both fields")
         return password2
