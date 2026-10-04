@@ -14,7 +14,13 @@ Example to install in Debian/Ubuntu:
     sudo apt install python3 docker docker-compose
 
 
-## Development
+## Managing Dependencies with uv
+
+This project uses `uv` and `pyproject.toml` for dependency management instead of `pip` and `requirements.txt`.
+
+- **Adding a new dependency:** Add it to the `dependencies` list in `pyproject.toml`.
+- **Adding a development dependency:** Add it to the `[dependency-groups]` `dev` section in `pyproject.toml`.
+- **Updating dependencies:** Run `uv pip compile` or install the updated package version inside the container via `uv`.
 
 These are the normal commands used for development:
 

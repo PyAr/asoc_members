@@ -105,7 +105,7 @@ def organizer_signup(request):
             with transaction.atomic():
                 # Ensure that user, organizer, and group association is atomic.
                 user = form.save(commit=False)
-                user.set_password(get_random_string())
+                user.set_password(get_random_string(length=12))
                 user.save()
                 group = Group.objects.get(name=ORGANIZER_GROUP_NAME)
                 user.groups.add(group)
