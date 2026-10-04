@@ -1,7 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="container" style="max-width: 90%;">
+    <div class="container" style="max-width: 88%;">
+        <div class="route-navigator mt-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'reports_main' %}">Inicio</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Socios con deudas</li>
+            </ol>
+        </div>
+
         {% block heading %}
         <h1 class="text-center mt-3">Reportes</h1>
         <h2 class="text-center text-danger">Socios con deudas</h2>
