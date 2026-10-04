@@ -15,6 +15,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import TemplateView, CreateView, ListView, DetailView
+from django.core.paginator import Paginator
 
 from members import logic, utils
 from members.constants import DEFAULT_PAGINATION
@@ -148,38 +149,86 @@ class ReportDebts(OnlyAdminsViewMixin, View):
         return render(request, 'members/mail_sent.html', context)
 
     def _get_yearmonth(self, request):
+        currently = now()
+        default_year, default_month = logic.decrement_year_month(currently.year, currently.month)
         try:
-            year = int(request.GET['limit_year'])
-            month = int(request.GET['limit_month'])
+            year = int(request.GET.get('limit_year', default_year))
+            month = int(request.GET.get('limit_month', default_month))
         except (KeyError, ValueError):
-            # get by default one month before now, as it's the first month not really
-            # paid (current month is not yet finished)
-            currently = now()
-            year, month = logic.decrement_year_month(currently.year, currently.month)
+            year, month = default_year, default_month
         return year, month
 
     def get(self, request):
         """Produce the report with the given year/month limits."""
         limit_year, limit_month = self._get_yearmonth(request)
+        category_filter = request.GET.get('category', None)
+        debt_range_filter = request.GET.get('debt_range', None)
 
         # get those already confirmed members
-        members = Member.objects\
+        members_qs = Member.objects\
             .filter(legal_id__isnull=False, category__fee__gt=0, shutdown_date__isnull=True)\
-            .order_by('legal_id').all()
+            .select_related('category', 'person', 'organization')\
+            .order_by('legal_id')
+
+        if category_filter:
+            members_qs = members_qs.filter(category__name=category_filter)
 
         debts = []
-        for member in members:
+        summary_counts = {'small': 0, 'medium': 0, 'large': 0}
+
+        category_icons = {
+            'Activo': '⭐ Activo',
+            'Adherente': '🤝 Adherente',
+            'Estudiante': '🎓 Estudiante',
+            'Colaborador': '🛠️ Colaborador',
+            'Honorario': '🎖️ Honorario'
+        }
+
+        for member in members_qs:
+            if not member.registration_date:
+                continue
             debt = logic.get_debt_state(member, limit_year, limit_month)
             if debt:
+                d_len = len(debt)
+                if 1 < d_len <= 3:
+                    summary_counts['small'] += 1
+                    r_type = 'small'
+                elif 3 < d_len <= 12:
+                    summary_counts['medium'] += 1
+                    r_type = 'medium'
+                elif d_len > 12:
+                    summary_counts['large'] += 1
+                    r_type = 'large'
+                else:
+                    r_type = 'other'
+
+                if debt_range_filter and debt_range_filter != r_type:
+                    continue
+
+                cat_name = member.category.name if member.category else ''
                 debts.append({
                     'member': member,
+                    'category_display': category_icons.get(cat_name, cat_name),
                     'debt': utils.build_debt_string(debt),
+                    'debt_len': d_len,
+                    'debt_type': r_type,
                 })
 
+        # Pagination support
+        paginator = Paginator(debts, DEFAULT_PAGINATION)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
         context = {
-            'debts': debts,
+            'debts': page_obj,
+            'is_paginated': page_obj.has_other_pages(),
+            'page_obj': page_obj,
+            'paginator': paginator,
             'limit_year': limit_year,
             'limit_month': limit_month,
+            'categories': Category.objects.all(),
+            'summary_counts': summary_counts,
+            'total_debtors': len(debts),
         }
         return render(request, 'members/report_debts.html', context)
 
