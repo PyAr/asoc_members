@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container" style="max-width: 88%;">
+    <div class="route-navigator mt-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'app_landing' %}"><i class="fas fa-home"></i> Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'reports_main' %}">Socios</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'member_detail' member.pk %}">{{ title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Editar</li>
+        </ol>
+    </div>
+
+    <h2 class="mb-4">{{ title }}</h2>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <div class="form-group mt-4 clearfix">
+            <button type="submit" class="btn btn-success float-right mx-1"><i class="fas fa-save"></i> Guardar</button>
+            <a href="{% url 'member_detail' member.pk %}" class="btn btn-danger float-right mx-1"><i class="fas fa-undo"></i> Volver</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

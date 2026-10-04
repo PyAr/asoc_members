@@ -1,32 +1,61 @@
 {% extends "events_base_paginated_list.html" %}
 
 {% block route-navigator %}
-<nav aria-label="breadcrumb">
+<nav aria-label="breadcrumb" class="mt-3">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
-      <li class="breadcrumb-item" aria-current="page"><i class="fas fa-calendar-alt"></i> Eventos</li>
+      <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'events_home' %}"> Eventos</a></li>
+      <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-calendar-check"></i> Listado de Eventos</li>
     </ol>
 </nav>
 {% endblock %}
 
 {% block list_title %}
-<h1>Eventos</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Eventos</h1>
+    {% if perms.events.add_event %}
+    <a class="btn btn-primary" href="{% url 'admin:events_event_add' %}" target="_blank"><i class="fas fa-certificate"></i> Crear</a>
+    {% endif %}
+</div>
+{%endblock%}
+
+{% block list_filter %}
+<form method='GET'>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="input-group mb-3">
+                <input type="text" name="search" class="form-control" placeholder="Buscar por nombre, lugar, descripción..." value='{{ request.GET.search }}'>
+                <input type="hidden" name="status" value="{{ request.GET.status|default:'open' }}">
+                <div class="input-group-append">
+                    <button type="submit" class="btn btn-success"><i class="fas fa-filter"></i> Filtrar</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-right">
+            <div class="btn-group mb-3" role="group">
+                <a href="?status=open{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}&dir={{ request.GET.dir }}{% endif %}" class="btn {% if request.GET.status == 'open' or not request.GET.status %}btn-primary{% else %}btn-outline-primary{% endif %}">Abiertos</a>
+                <a href="?status=closed{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}&dir={{ request.GET.dir }}{% endif %}" class="btn {% if request.GET.status == 'closed' %}btn-primary{% else %}btn-outline-primary{% endif %}">Cerrados</a>
+                <a href="?status=all{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}&dir={{ request.GET.dir }}{% endif %}" class="btn {% if request.GET.status == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">Todos</a>
+            </div>
+        </div>
+    </div>
+</form>
 {%endblock%}    
 
 {% block list_content %}
 <div class="row events-list">
     <div class="col-md-12">
-        <table class="table table-striped row-clickeable-table text-center">
-            <thead>
-                <tr>
-                    <th scope="row" class="text-left">Nombre</th>
-                    <th scope="row">Tipo</th>
-                    <th scope="row">Comisión</th>
-                    <th scope="row">Fecha</th>
-                    <th scope="row">Lugar</th>
-                    <th scope="row">Acciones</th>
-                </tr>
-            </thead>
+            <table class="table table-striped row-clickeable-table text-center">
+                <thead>
+                    <tr>
+                        <th scope="row" class="text-left"><a href="?sort=name&dir={% if request.GET.sort == 'name' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Nombre {% if request.GET.sort == 'name' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=type&dir={% if request.GET.sort == 'type' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Tipo {% if request.GET.sort == 'type' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row">Comisión</th>
+                        <th scope="row"><a href="?sort=initial_date&dir={% if request.GET.sort == 'initial_date' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Fecha {% if request.GET.sort == 'initial_date' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=place&dir={% if request.GET.sort == 'place' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Lugar {% if request.GET.sort == 'place' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row" class="text-center">Estado</th>
+                        <th scope="row">Acciones</th>
+                    </tr>
+                </thead>
             <tbody>
             {% for event in event_list %}
             
@@ -36,6 +65,13 @@
                     <td>{{ event.commission }}%</td>
                     <td>{% if event.start_date %}{{ event.start_date }}{% endif %}</td>
                     <td>{{ event.place }}</td>
+                    <td class="text-center">
+                        {% if event.close %}
+                            <span class="badge badge-secondary">Cerrado</span>
+                        {% else %}
+                            <span class="badge badge-success">Abierto</span>
+                        {% endif %}
+                    </td>
                     <td>
                         
                         <span>
@@ -52,8 +88,8 @@
                         |
                         <span><i class="fas fa-dollar-sign"></i> <a title="administrar evento" href="{% url 'expenses_list' event_pk=event.pk %}">
                             Gastos
-                        </span>
                         </a>
+                        </span>
                     </td>
                 </tr>
             {% empty %}
@@ -69,10 +105,7 @@
 </div>
 <div class="row organizers-list-actions">
     <div class="col-md-12 text-right">
-        {% if perms.events.add_event %}
-        <a class="btn btn-primary col-2 float-right mx-1" href="{% url 'admin:events_event_add' %}" target="_blank"><i class="fas fa-certificate"></i> Crear</a>
-        {% endif %}
-        <a class="btn btn-danger col-2 float-right mx-1" href="{{request.META.HTTP_REFERER}}"><i class="fas fa-undo"></i> Volver</a>
+        <a class="btn btn-danger col-2 float-right mx-1" href="{% url 'events_home' %}"><i class="fas fa-undo"></i> Volver</a>
     </div>
 </div>
     

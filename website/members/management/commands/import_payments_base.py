@@ -92,6 +92,6 @@ class Command(BaseCommand):
         elif row['platform'] == 'mercadopago':
             self.create_mercadopago(row)
         elif row['platform'] == '-':
-            assert row['Tipo socio'] in ('Cadete', 'Colaborador')
+            assert row['Tipo socio'] in ('Afiliado', 'Cadete', 'Colaborador', 'Estudiante')
         else:
             raise ValueError("Bad platform: {!r}".format(row['platform']))

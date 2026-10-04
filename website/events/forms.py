@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
 from django.contrib.auth.models import User
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from stdnum.ar import cbu
 
 from events.models import (
@@ -58,7 +58,7 @@ class OrganizerUserSignupForm(UserCreationForm):
 
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")
-        password2 = super(OrganizerUserSignupForm, self).clean_password2()
+        password2 = self.cleaned_data.get("password2")
         if bool(password1) ^ bool(password2):
             raise forms.ValidationError("Fill out both fields")
         return password2
@@ -92,17 +92,35 @@ class EventUpdateForm(forms.ModelForm):
 
 
 class OrganizerUpdateForm(forms.ModelForm):
+    username = forms.CharField(label=_('Nombre de Usuario'), required=False)
+    email = forms.EmailField(label=_('Correo Electrónico'), required=False)
+
     def __init__(self, *args, **kwargs):
         super(OrganizerUpdateForm, self).__init__(*args, **kwargs)
+        if self.instance and self.instance.user:
+            self.fields['username'].initial = self.instance.user.username
+            self.fields['email'].initial = self.instance.user.email
+
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.form_tag = False
         self.helper.label_class = "col-sm-2"
         self.helper.field_class = "col-sm-10"
 
+    def save(self, commit=True):
+        organizer = super(OrganizerUpdateForm, self).save(commit=False)
+        if organizer.user:
+            organizer.user.username = self.cleaned_data['username']
+            organizer.user.email = self.cleaned_data['email']
+            if commit:
+                organizer.user.save()
+        if commit:
+            organizer.save()
+        return organizer
+
     class Meta:
         model = Organizer
-        fields = ['first_name', 'last_name']
+        fields = ['first_name', 'last_name', 'username', 'email']
 
 
 class SponsorCategoryForm(forms.ModelForm):

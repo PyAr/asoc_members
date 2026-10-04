@@ -1,24 +1,103 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block route-navigator %}
+<nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'app_landing' %}"><i class="fas fa-home"></i> Inicio</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-users"></i> Socios</li>
+    </ol>
+</nav>
+{% endblock %}
 
 {% block content %}
-    <div class="container">
-        {% block heading %}
-        <h1 class="text-center">Reportes</h1>
-        {% endblock %}
-        <div class="inner-content">
-            {% block inner-content %}
-            <div>
-                <ul>
-                    <li><a href="{% url 'members_list' %}">Miembros</a></li>
-                    <li><a href="{% url 'report_debts' %}">Socios con deudas</a></li>
-                    <li><a href="{% url 'report_complete' %}">Personas en condiciones de ser socios</a></li>
-                    <li><a href="{% url 'report_missing' %}">Personas con pendientes para ser socios</a></li>
-                    <li><a href="{% url 'report_income_quotas' %}">Ingresos, cuotas</a></li>
-                    <li><a href="{% url 'report_income_money' %}">Ingresos, dinero</a></li>
-                </ul>
+<div class="container" style="max-width: 88%;">
+    <div class="dashboard_options">
+        <div class="row text-center">
+            <!-- Members List -->
+            <div class="col-sm-6 col-md-3 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                        <i class="fas fa-list fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Listado de Miembros</h5>
+                        <p class="card-text text-muted small">Ver todos los miembros registrados, filtrar y ordenar.</p>
+                        <a href="{% url 'members_list' %}" class="btn btn-primary mt-auto">Ver Miembros</a>
+                    </div>
+                </div>
             </div>
-            {% endblock %}
+
+            <!-- Debts Report -->
+            <div class="col-sm-6 col-md-3 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                        <i class="fas fa-file-invoice-dollar fa-3x text-danger mb-3"></i>
+                        <h5 class="card-title">Socios con Deudas</h5>
+                        <p class="card-text text-muted small">Reporte y gestión de cuotas adeudadas por socios.</p>
+                        <a href="{% url 'report_debts' %}" class="btn btn-primary mt-auto">Ver Deudas</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Complete Members -->
+            <div class="col-sm-6 col-md-3 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">Miembros Completos</h5>
+                        <p class="card-text text-muted small">Personas en condiciones de ser socios activos.</p>
+                        <a href="{% url 'report_complete' %}" class="btn btn-primary mt-auto">Ver Completos</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Missing Members -->
+            <div class="col-sm-6 col-md-3 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                        <i class="fas fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                        <h5 class="card-title">Miembros Incompletos</h5>
+                        <p class="card-text text-muted small">Personas con documentación o datos pendientes.</p>
+                        <a href="{% url 'report_missing' %}" class="btn btn-primary mt-auto">Ver Incompletos</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Income Quotas -->
+            <div class="col-sm-6 col-md-3 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                        <i class="fas fa-money-check-alt fa-3x text-info mb-3"></i>
+                        <h5 class="card-title">Ingreso de Cuotas</h5>
+                        <p class="card-text text-muted small">Control y reporte de ingresos por cuotas sociales.</p>
+                        <a href="{% url 'report_income_quotas' %}" class="btn btn-primary mt-auto">Ver Cuotas</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Income Money -->
+            <div class="col-sm-6 col-md-3 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                        <i class="fas fa-wallet fa-3x text-secondary mb-3"></i>
+                        <h5 class="card-title">Ingreso de Dinero</h5>
+                        <p class="card-text text-muted small">Reporte general de ingresos financieros.</p>
+                        <a href="{% url 'report_income_money' %}" class="btn btn-primary mt-auto">Ver Ingresos</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signup Form -->
+            <div class="col-sm-6 col-md-3 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                        <i class="fas fa-user-plus fa-3x text-dark mb-3"></i>
+                        <h5 class="card-title">Solicitud de Alta</h5>
+                        <p class="card-text text-muted small">Formulario de inscripción para nuevos socios.</p>
+                        <a href="{% url 'signup' %}" class="btn btn-primary mt-auto">Nueva Solicitud</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
+</div>
 {% endblock %}

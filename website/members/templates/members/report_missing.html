@@ -1,7 +1,16 @@
 {% extends "base.html" %}
 
+{% block route-navigator %}
+<nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><i class="fas fa-users"></i> <a href="{% url 'reports_main' %}">Socios</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-exclamation-circle"></i> Miembros Incompletos</li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
-    <div class="container">
+    <div class="container" style="max-width: 88%;">
         {% block heading %}
         <h1 class="text-center">Reportes</h1>
         <h2 class="text-center">Personas con faltantes para terminar de ser socias</h2>
@@ -9,14 +18,20 @@
         <div class="inner-content">
             {% block inner-content %}
                 <div>
-                <form method="post" action"{% url 'report_missing' %}">
+                <form method="post" action="{% url 'report_missing' %}">
                     {% csrf_token %}
-                    ¿Mandar mails a los seleccionados?
-                    <button id="selected" type="submit">Mandar</button>
-                <table class="table">
+                    <div class="mb-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <span>¿Mandar mails a los seleccionados?</span>
+                            <button id="selected" type="submit" class="btn btn-success btn-sm ml-2">Mandar Mails</button>
+                        </div>
+                        <button type="submit" formaction="{% url 'members_mark_signed_bulk' %}" class="btn btn-primary btn-sm"><i class="fas fa-check"></i> Marcar seleccionados como firmados</button>
+                    </div>
+                <table class="table table-striped row-clickeable-table">
                 <tr> 
                     <th>Nombre</th>
                     <th>Mail</th>
+                    <th>Fecha de creación</th>
                     <th>Falta firmar</th>
                     <th>Falta certif estud</th>
                     <th>Falta pagar</th>
@@ -26,16 +41,17 @@
                     <th>¿Mandar mail?</th>
                 </tr>
                 {% for item in incompletes %}
-                    <tr> 
+                    <tr class="clikeable" onclick="window.location='{% url 'member_detail' pk=item.member.pk %}';"> 
                         <td>{{ item.member.entity.full_name }}</td>
                         <td>{{ item.member.entity.email }}</td>
+                        <td>{{ item.member.created|date:"Y-m-d" }}</td>
                         <td>{{ item.missing_signed_letter }}</td>
                         <td>{{ item.missing_student_certif }}</td>
                         <td>{{ item.missing_payment }}</td>
                         <td>{{ item.missing_nickname }}</td>
                         <td>{{ item.missing_picture }}</td>
                         <td>{{ item.missing_collab_accept }}</td>
-                        <td>
+                        <td onclick="event.stopPropagation();">
                             <input type="checkbox" name="sendmail" value="{{ item.member.id }}" />
                         </td>
                     </tr>

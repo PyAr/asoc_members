@@ -1,7 +1,7 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.html import format_html
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from django.core.exceptions import ValidationError
 from django.core.files.images import get_image_dimensions
@@ -99,20 +99,14 @@ class Member(TimeStampedModel):
         If `for_approval` is indicated, some data will not be reported as missing (as they
         are not really needed for legal approval).
         """
-        cat_student = Category.objects.get(name=Category.STUDENT)
-        cat_collab = Category.objects.get(name=Category.COLLABORATOR)
-
-        # simple flags with "Not Applicable" situation
-        missing_student_certif = (
-            self.category == cat_student and not self.has_student_certificate)
-        missing_collab_accept = (
-            self.category == cat_collab and not self.has_collaborator_acceptance)
-
         # info from Person
         missing_nickname = self.person.nickname == ""
         # picture is complicated, bool() is used to check if the Image field has an associated
         # filename, and False itself is used as the "dont want a picture!" flag
-        missing_picture = not self.person.picture and self.person.picture is not False
+        picture_val = self.person.picture
+        is_false = (picture_val is False) or (str(picture_val) == 'False') or (getattr(picture_val, 'name', None) == 'False')
+        has_name = bool(getattr(picture_val, 'name', picture_val)) and str(picture_val) != 'False' and getattr(picture_val, 'name', None) != 'False'
+        missing_picture = not has_name and not is_false
 
         # info from Member itself
         missing_payment = self.first_payment_month is None and self.category.fee > 0
@@ -126,11 +120,9 @@ class Member(TimeStampedModel):
 
         return {
             'missing_signed_letter': missing_signed_letter,
-            'missing_student_certif': missing_student_certif,
             'missing_payment': missing_payment,
             'missing_nickname': missing_nickname,
             'missing_picture': missing_picture,
-            'missing_collab_accept': missing_collab_accept,
         }
 
 
@@ -194,13 +186,24 @@ class Person(TimeStampedModel):
 
     @property
     def thumbnail(self):
+        photo = None
         if self.picture:
-            photo = self.picture.url
-        else:
+            try:
+                # Check if the file actually exists in storage when possible
+                if hasattr(self.picture, 'storage') and self.picture.storage.exists(self.picture.name):
+                    photo = self.picture.url
+                elif not hasattr(self.picture, 'storage'):
+                    photo = self.picture.url
+            except Exception:
+                pass
+        
+        if not photo:
             photo = static("images/default_thumbnail.jpg")
+
         return format_html(
-            f'<a href="{photo}"><img src="{photo}" \
-                    class="img-thumbnail" width="150"></a>')
+            '<a href="{}"><img src="{}" class="img-thumbnail" width="150"></a>',
+            photo, photo
+        )
 
     def __str__(self):
         return f"{self.last_name}, {self.first_name}"
@@ -232,23 +235,19 @@ class Category(TimeStampedModel):
     """Membership category."""
     ACTIVE = "Activo"
     SUPPORTER = "Adherente"
-    STUDENT = "Estudiante"
-    COLLABORATOR = "Colaborador"
-    TEENAGER = "Cadete"
+    AFFILIATE = "Afiliado"
     BENEFACTOR_PLATINUM = "Benefactora Platino"
     BENEFACTOR_GOLD = "Benefactora Oro"
     BENEFACTOR_SILVER = "Benefactora Plata"
     CATEGORY_CHOICES = (
         (ACTIVE, ACTIVE),
         (SUPPORTER, SUPPORTER),
-        (STUDENT, STUDENT),
-        (COLLABORATOR, COLLABORATOR),
-        (TEENAGER, TEENAGER),
+        (AFFILIATE, AFFILIATE),
         (BENEFACTOR_PLATINUM, BENEFACTOR_PLATINUM),
         (BENEFACTOR_GOLD, BENEFACTOR_GOLD),
         (BENEFACTOR_SILVER, BENEFACTOR_SILVER),
     )
-    HUMAN_CATEGORIES = {ACTIVE, SUPPORTER, STUDENT, COLLABORATOR, TEENAGER}
+    HUMAN_CATEGORIES = {ACTIVE, SUPPORTER, AFFILIATE}
 
     class Meta:
         verbose_name_plural = "categories"
@@ -271,6 +270,9 @@ class Category(TimeStampedModel):
             return False
 
         return self.name == other_name
+
+    def __hash__(self):
+        return hash(self.name)
 
 
 class Patron(TimeStampedModel):

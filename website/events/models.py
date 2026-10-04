@@ -9,9 +9,10 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Sum
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from events.helpers.models import AuditUserTime, SaveReversionMixin, ActiveManager
+from members.models import Person
 from events.constants import (
     CAN_CLOSE_SPONSORING_CODENAME,
     CAN_SET_APPROVED_INVOICE_CODENAME,
@@ -125,6 +126,13 @@ class Organizer(SaveReversionMixin, AuditUserTime):
     @property
     def email(self):
         return self.user.email
+
+    @property
+    def is_member(self):
+        email = self.user.email
+        if not email:
+            return False
+        return Person.objects.filter(email__iexact=email).exists()
 
     def __str__(self):
         return f"{ self.user.username } - {self.email}"
@@ -404,6 +412,30 @@ class Sponsor(SaveReversionMixin, AuditUserTime):
     def get_absolute_url(self):
         return reverse('sponsor_detail', args=[str(self.pk)])
 
+    @property
+    def vat_condition_short(self):
+        mapping = {
+            self.RESPONSABLE_INSCRIPTO: 'RI',
+            self.MONOTRIBUTO: 'M',
+            self.CONSUMIDOR_FINAL: 'CF',
+            self.EXTERIOR: 'EXT',
+            self.OTRO: 'OTR',
+            self.RESPONSABLE_NO_INSCRIPTO: 'RNI',
+            self.IVA_NO_RESPONSABLE: 'NR',
+            self.IVA_SUJETO_EXENTO: 'EXE',
+            self.SUJETO_NO_CATEGORIZADO: 'SNC',
+            self.IVA_LIBERADO: 'LIB',
+            self.IVA_RESPONSABLE_INSCRIPTO_AGENTE: 'RI-AG',
+            self.PEQUENO_CONTRIBUYENTE: 'PCE',
+            self.MONOTRIBUTISTA_SOCIAL: 'MS',
+            self.PEQUENO_CONTRIBUYENTE_SOCIAL: 'PCES',
+        }
+        return mapping.get(self.vat_condition, self.vat_condition)
+
+    @property
+    def sponsorings_count(self):
+        return self.sponsoring.count()
+
 
 def invoice_upload_path(instance, filename):
     """
@@ -681,9 +713,16 @@ class Provider(SaveReversionMixin, AuditUserTime):
         ordering = ['-created']
 
     @property
-    def account_type_name(self):
-        """Return the *name* of the account type."""
-        return dict(self.ACCOUNT_TYPE_CHOICES)[self.account_type]
+    def account_type_short(self):
+        mapping = {
+            self.CC: 'CC',
+            self.CA: 'CA',
+        }
+        return mapping.get(self.account_type, self.account_type)
+
+    @property
+    def events_count(self):
+        return self.expenses.values('event').distinct().count()
 
 
 @reversion.register

@@ -1,6 +1,0 @@
--r requirements.txt
-ipdb==0.13.9
-ipython==8.10.0
-logassert==4
-factory_boy==3.2.0
-flake8==3.7.7

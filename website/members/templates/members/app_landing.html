@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block route-navigator %}
+<nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-home"></i> Inicio - Panel Principal</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 88%;">
+    <div class="dashboard_options my-5">
+        <div class="row text-center justify-content-center">
+            <!-- Members Section -->
+            <div class="col-sm-6 col-md-4 mb-4">
+                <div class="card h-100 shadow-sm border-primary">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center p-5">
+                        <i class="fas fa-users fa-4x text-primary mb-4"></i>
+                        <h3 class="card-title font-weight-bold">Socios</h3>
+                        <p class="card-text text-muted mb-4">Gestión de miembros, cuotas, reportes de deudas e ingresos de socios.</p>
+                        <a href="{% url 'reports_main' %}" class="btn btn-primary btn-lg btn-block mt-auto">Ir a Socios</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Events Section -->
+            <div class="col-sm-6 col-md-4 mb-4">
+                <div class="card h-100 shadow-sm border-success">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center p-5">
+                        <i class="fas fa-calendar-alt fa-4x text-success mb-4"></i>
+                        <h3 class="card-title font-weight-bold">Eventos</h3>
+                        <p class="card-text text-muted mb-4">Gestión de eventos, organizadores, sponsors, proveedores y gastos.</p>
+                        <a href="{% url 'events_home' %}" class="btn btn-success btn-lg btn-block mt-auto">Ir a Eventos</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

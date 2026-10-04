@@ -1,165 +1,326 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags humanize %}
+
+{% block route-navigator %}
+<nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'app_landing' %}"><i class="fas fa-home"></i> Inicio</a></li>
+        <li class="breadcrumb-item"><i class="fas fa-users"></i> <a href="{% url 'reports_main' %}">Socios</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'members_list' %}"><i class="fas fa-list"></i> Listado de Miembros</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ member.entity }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
-
-    <div class="container">
-        <div class="route-navigator" >
-                <ol class="breadcrumb">
-                    <li><a href="{% url 'reports_main' %}">Inicio</a></li>
-                    <li><a href="{% url 'members_list' %}" >Miembros</a></li>
-                    <li class="active"><a href="{% url 'member_detail' pk=member.pk %}">{{ member.entity }}</a></li>
-                </ol>
+<div class="container" style="max-width: 88%;">
+    {% if messages %}
+    <div class="messages mb-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
         </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
-        <div class="row member-detail">
-            {% if member.person %}
-            <h3>Datos Personales</h3>
-            <div class="col-sm-4">
-                <table class="table">
-                    <tbody>
-                        <tr>
-                            <td colspan="2" class="text-center">
-                                {{ member.person.thumbnail }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">ID Legal:</th>
-                            <td>{{ member.legal_id }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Nombre:</th>
-                            <td>{{ member.entity }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Nickname:</th>
-                            <td>{{ member.entity.nickname }}</td>
-                        </tr>                        
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="col-sm-8">
-                <table class="table table-striped">
-                    <tbody>
-                        <tr>
-                            <th scope="row">Documento:</th>
-                            <td>{{ member.entity.document_number }}</td>
-                        </tr>
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0">Gestión del Socio #{{ member.legal_id|default:"-" }}</h3>
+                <div>
+                    <!-- Category Change Modal Trigger -->
+                    {% if not member.shutdown_date %}
+                    <button type="button" class="btn btn-warning btn-sm mx-1" data-toggle="modal" data-target="#changeCategoryModal">
+                        <i class="fas fa-exchange-alt"></i> Cambiar Categoría
+                    </button>
+                    {% endif %}
 
-                        <tr>
-                            <th scope="row">Membresía:</th>
-                            <td>{{ member.entity.membership }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Email:</th>
-                            <td>{{ member.entity.email }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Estado Civil:</th>
-                            <td>{{ member.entity.marital_status }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Profesión:</th>
-                            <td>{{ member.entity.occupation }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Nacimiento:</th>
-                            <td>{{ member.entity.birth_date }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Dirección:</th>
-                            <td>{{ member.entity.address }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Comentarios:</th>
-                            <td>{{ member.entity.comments }}</td>
-                        </tr>
-                    </tbody>
-                </table> 
+                    <!-- Shutdown / Reactivate Button -->
+                    {% if member.shutdown_date %}
+                    <form method="POST" action="{% url 'member_shutdown' member.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reactivate">
+                        <button type="submit" class="btn btn-success btn-sm mx-1"><i class="fas fa-user-check"></i> Reactivar Socio</button>
+                    </form>
+                    {% else %}
+                    <button type="button" class="btn btn-danger btn-sm mx-1" data-toggle="modal" data-target="#shutdownModal">
+                        <i class="fas fa-user-slash"></i> Dar de Baja
+                    </button>
+                    {% endif %}
+                </div>
             </div>
-            {% endif %}
-
-            {% if member.organization %}
-            <h3>Datos de la Organización</h3> 
-            <div class="col-sm-12">
-                <table class="table table-striped">
-                    <tbody>
-                        <tr>
-                            <th scope="row">Nombre</th>
-                            <td>{{ member.entity }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Contacto</th>
-                            <td>{{ member.entity.contact_info }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">N° de Documento / CUIT</th>
-                            <td>{{ member.entity.document_number }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Membresía</th>
-                            <td>{{ member.entity.membership }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Dirección</th>
-                            <td>{{ member.entity.address }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Social Media</th>
-                            <td>{{ member.entity.social_media }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            {% endif %}
-
-            {% if member.patron %}
-            <h3>Datos del Patron</h3> 
-            <div class="col-sm-12">
-                <table class="table table-striped">
-                    <tbody>
-                        <tr>
-                            <th scope="row">Nombre:</th>
-                            <td>{{ member.patron.name }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Email:</th>
-                            <td>{{ member.patron.email }}</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Comentarios:</th>
-                            <td>{{ member.patron.comments }}</td>
-                        </tr>                                                
-                    </tbody>
-                </table>
-            </div>
-            {% endif %}
-                        
-            {% if last_payments_info %}
-            <h3>Ultimos Pagos</h3>
-            <div class="col-sm-12">
-                <table class="table{% if debtor %} bg-danger{% else %} bg-success{% endif %}">
-                    <tbody>
-                    {% for info in last_payments_info %}
-                        <tr>
-                            <th scope="row">{{ info.title }}</th>
-                            <td>{{ info.timestamp }}</td>
-                            <td>{{ info.invoice }}</td>
-                            <td>{{ info.quotas }}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% endif %}
-                
-            {% if missing_letter %}
-            <div class="col-sm-12">
-                <h4>* El miembro necesita firmar la carta de asociación</h4>
-            </div>
-            {% endif %}
-
+            <p class="text-muted mb-2">Estado actual: 
+                {% if member.shutdown_date %}
+                    <span class="badge badge-danger">Dado de baja ({{ member.shutdown_date }})</span>
+                {% else %}
+                    <span class="badge badge-success">Activo ({{ member.category.name|default:"Sin categoría" }})</span>
+                {% endif %}
+            </p>
+            <hr>
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Última cuota paga:</strong> <span class="text-primary">{{ last_quota_str }}</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Fecha de último pago:</strong> <span class="text-primary">{{ last_payment_date }}</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Cuotas adeudadas:</strong> <span class="badge badge-warning">{{ debt_count }}</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Importe adeudado:</strong> <span class="text-danger font-weight-bold">${{ debt_amount|floatformat:2|intcomma }}</span>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="row member-detail">
+        {% if member.person %}
+        <div class="col-md-12 mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3>Datos Personales</h3>
+                <a href="{% url 'member_edit_person' member.pk %}" class="btn btn-primary btn-sm"><i class="fas fa-pencil-alt"></i> Editar Persona</a>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <td colspan="2" class="text-center">
+                            {{ member.person.thumbnail }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">ID Legal:</th>
+                        <td>{{ member.legal_id }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Nombre:</th>
+                        <td>{{ member.entity }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Nickname:</th>
+                        <td>{{ member.entity.nickname }}</td>
+                    </tr>                        
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="col-sm-8">
+            <table class="table table-striped">
+                <tbody>
+                    <tr>
+                        <th scope="row">Documento:</th>
+                        <td>{{ member.entity.document_number }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Membresía:</th>
+                        <td>{{ member.entity.membership }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Email:</th>
+                        <td>{{ member.entity.email }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Estado Civil:</th>
+                        <td>{{ member.entity.marital_status }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Profesión:</th>
+                        <td>{{ member.entity.occupation }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Nacimiento:</th>
+                        <td>{{ member.entity.birth_date }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Dirección:</th>
+                        <td>{{ member.entity.address }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Comentarios:</th>
+                        <td>{{ member.entity.comments }}</td>
+                    </tr>
+                </tbody>
+            </table> 
+        </div>
+        {% endif %}
+
+        {% if member.organization %}
+        <div class="col-md-12 mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3>Datos de la Organización</h3>
+                <a href="{% url 'member_edit_org' member.pk %}" class="btn btn-primary btn-sm"><i class="fas fa-pencil-alt"></i> Editar Organización</a>
+            </div>
+        </div>
+        <div class="col-sm-12">
+            <table class="table table-striped">
+                <tbody>
+                    <tr>
+                        <th scope="row">Nombre</th>
+                        <td>{{ member.entity }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Contacto</th>
+                        <td>{{ member.entity.contact_info }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">N° de Documento / CUIT</th>
+                        <td>{{ member.entity.document_number }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Membresía</th>
+                        <td>{{ member.entity.membership }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Dirección</th>
+                        <td>{{ member.entity.address }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Social Media</th>
+                        <td>{{ member.entity.social_media }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if member.patron %}
+        <div class="col-md-12 mb-3 mt-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3>Datos del Patron</h3>
+                <a href="{% url 'member_edit_patron' member.pk %}" class="btn btn-primary btn-sm"><i class="fas fa-pencil-alt"></i> Editar Patron</a>
+            </div>
+        </div>
+        <div class="col-sm-12">
+            <table class="table table-striped">
+                <tbody>
+                    <tr>
+                        <th scope="row">Nombre:</th>
+                        <td>{{ member.patron.name }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Email:</th>
+                        <td>{{ member.patron.email }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Comentarios:</th>
+                        <td>{{ member.patron.comments }}</td>
+                    </tr>                                                
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+                    
+        <div class="col-md-12 mb-3 mt-4">
+            <h3>Historial de Pagos y Actividad</h3>
+        </div>
+        {% if last_payments_info %}
+        <div class="col-sm-12">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Descripción / Pago</th>
+                        <th>Fecha y Hora</th>
+                        <th>Factura</th>
+                        <th>Cuotas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for info in last_payments_info %}
+                    <tr {% if info.type == 'shutdown' %}class="table-danger"{% endif %}>
+                        <td>{{ info.title }}</td>
+                        <td>{{ info.timestamp }}</td>
+                        <td>{{ info.invoice }}</td>
+                        <td>{{ info.quotas }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="col-sm-12">
+            <div class="alert alert-secondary">No hay pagos registrados en el historial.</div>
+        </div>
+        {% endif %}
+            
+        {% if missing_letter %}
+        <div class="col-sm-12 mt-3">
+            <div class="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
+                <span>* El miembro necesita firmar la carta de asociación.</span>
+                <form method="POST" action="{% url 'member_mark_signed' member.pk %}" class="mb-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check"></i> Marcar carta como firmada</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- Modal: Shutdown -->
+<div class="modal fade" id="shutdownModal" tabindex="-1" role="dialog" aria-labelledby="shutdownModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form method="POST" action="{% url 'member_shutdown' member.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="shutdown">
+          <div class="modal-header">
+            <h5 class="modal-title" id="shutdownModalLabel">Confirmar Baja de Socio</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>¿Está seguro que desea dar de baja al socio <strong>{{ member.entity }}</strong>?</p>
+            <div class="form-group">
+                <label for="shutdown_date">Fecha de baja:</label>
+                <input type="date" class="form-control" id="shutdown_date" name="shutdown_date" required value="{% now 'Y-m-d' %}">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-danger">Confirmar Baja</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Change Category -->
+<div class="modal fade" id="changeCategoryModal" tabindex="-1" role="dialog" aria-labelledby="changeCategoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form method="POST" action="{% url 'member_change_category' member.pk %}">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title" id="changeCategoryModalLabel">Cambiar Categoría de Socio</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+                <label for="category">Nueva Categoría:</label>
+                <select name="category" id="category" class="form-control" required>
+                    {% for cat in all_categories %}
+                    <option value="{{ cat.pk }}" {% if member.category and member.category.pk == cat.pk %}selected{% endif %}>{{ cat.name }} (${{ cat.fee }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 {% endblock %}

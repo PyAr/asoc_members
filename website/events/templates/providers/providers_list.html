@@ -1,16 +1,21 @@
 {% extends "events_base_paginated_list.html" %}
 
 {% block route-navigator %}
-<nav aria-label="breadcrumb">
+<nav aria-label="breadcrumb" class="mt-3">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
-      <li class="breadcrumb-item" aria-current="page"><i class="fas fa-dolly"></i> Proveedores</li>
+      <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'events_home' %}"> Eventos</a></li>
+      <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-dolly"></i> Proveedores</li>
     </ol>
 </nav>
 {% endblock %}
 
 {% block list_title %}
-<h1>Proveedores</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Proveedores</h1>
+    {% if perms.events.add_provider %}
+    <a class="btn btn-primary" href="{% url 'provider_create' %}"><i class="fas fa-certificate"></i> Crear</a>
+    {% endif %}
+</div>
 {%endblock%}
 
 {% block list_content %}
@@ -19,10 +24,13 @@
             <table class="table table-striped row-clickeable-table">
                 <thead>
                     <tr>
-                        <th scope="row">Nombre/Razón social</th>
-                        <th scope="row">CUIT</th>
-                        <th scope="row">Banco</th>
-                        <th scope="row">Tipo Cuenta</th>
+                        <th scope="row"><a href="?sort=organization_name&dir={% if request.GET.sort == 'organization_name' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Nombre/Razón social {% if request.GET.sort == 'organization_name' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=document_number&dir={% if request.GET.sort == 'document_number' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">CUIT {% if request.GET.sort == 'document_number' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=bank_entity&dir={% if request.GET.sort == 'bank_entity' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Banco {% if request.GET.sort == 'bank_entity' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=account_type&dir={% if request.GET.sort == 'account_type' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Tipo Cuenta {% if request.GET.sort == 'account_type' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=account_number&dir={% if request.GET.sort == 'account_number' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Nro Cuenta {% if request.GET.sort == 'account_number' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=cbu&dir={% if request.GET.sort == 'cbu' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">CBU {% if request.GET.sort == 'cbu' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row">Eventos</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -30,8 +38,17 @@
                     <tr onclick="window.location='{% url 'provider_detail' pk=provider.pk %}';" class="clikeable">
                         <td >{{ provider.organization_name }}</td>
                         <td>{{ provider.document_number }}</td>
-                        <td> {{ provider.bank_entity}}</td>
-                        <td> {{ provider.get_account_type_display}}</td>
+                        <td>{{ provider.bank_entity }}</td>
+                        <td>
+                            {% if provider.account_type == 'CA' %}
+                                <i class="fas fa-piggy-bank text-primary" title="Caja de ahorros"></i> Caja de ahorros
+                            {% else %}
+                                <i class="fas fa-university text-info" title="Cuenta corriente"></i> Cuenta corriente
+                            {% endif %}
+                        </td>
+                        <td>{{ provider.account_number }}</td>
+                        <td>{{ provider.cbu }}</td>
+                        <td><span class="badge badge-info">{{ provider.events_count }}</span></td>
                     </tr>
                 {% empty %}
                     <tr>

@@ -1,36 +1,259 @@
 {% extends "members_base_paginated_list.html" %}
 
+{% block extra_statics %}
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+    .bar { fill: #28a745; }
+    .bar-warning { fill: #ffc107; }
+    .bar-danger { fill: #dc3545; }
+    .bar-dark { fill: #343a40; }
+    .axis text { font-size: 11px; }
+    .chart-container { background: #fff; padding: 15px; border-radius: 5px; border: 1px solid #dee2e6; }
+</style>
+{% endblock %}
+
 {% block route-navigator %}
-<nav aria-label="breadcrumb">
+<nav aria-label="breadcrumb" class="mt-3">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><i class="fas fa-home"></i> <a href="{% url 'reports_main' %}">Inicio</a></li>
-      <li class="breadcrumb-item" aria-current="page">Miembros</li>
+      <li class="breadcrumb-item"><a href="{% url 'app_landing' %}"><i class="fas fa-home"></i> Inicio</a></li>
+      <li class="breadcrumb-item"><i class="fas fa-users"></i> <a href="{% url 'reports_main' %}">Socios</a></li>
+      <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-list"></i> Listado de Miembros</li>
     </ol>
 </nav>
-
-
 {% endblock %}
+
 {% block list_title %}
 <h1>Miembros</h1>
-{%endblock%}
+
+<!-- Summary Card with Visual Bars -->
+<div class="card mb-4 p-3 bg-light">
+    <h4>Resumen General de Miembros</h4>
+    <div class="row mb-3">
+        <div class="col text-center">
+            <a href="?debt_status=uptodate" class="text-decoration-none text-success">
+                <div class="p-2 border bg-white rounded shadow-sm">
+                    <h5>Miembros al día</h5>
+                    <h3>{{ summary.total_up_to_date }}</h3>
+                </div>
+            </a>
+        </div>
+        <div class="col text-center">
+            <a href="?debt_status=debtors" class="text-decoration-none text-danger">
+                <div class="p-2 border bg-white rounded shadow-sm">
+                    <h5>Miembros con Deuda</h5>
+                    <h3>{{ summary.total_debt }}</h3>
+                </div>
+            </a>
+        </div>
+        <div class="col text-center">
+            <a href="?pending=true" class="text-decoration-none text-warning">
+                <div class="p-2 border bg-white rounded shadow-sm">
+                    <h5>Miembros Pendientes</h5>
+                    <h3>{{ summary.total_pending }}</h3>
+                </div>
+            </a>
+        </div>
+        <div class="col text-center">
+            <a href="?category=Baja" class="text-decoration-none text-secondary">
+                <div class="p-2 border bg-white rounded shadow-sm">
+                    <h5>Bajas</h5>
+                    <h3>{{ summary.total_shutdown }}</h3>
+                </div>
+            </a>
+        </div>
+        <div class="col text-center">
+            <a href="{% url 'members_list' %}" class="text-decoration-none text-dark">
+                <div class="p-2 border bg-white rounded shadow-sm font-weight-bold">
+                    <h5>Total Miembros</h5>
+                    <h3>{{ summary.total_members }}</h3>
+                </div>
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <h5>Miembros x Categoría y Deuda:</h5>
+            <!-- D3.js Interactive Chart -->
+            <div class="chart-container mt-2">
+                <div id="d3-bar-chart" class="d-flex justify-content-center"></div>
+            </div>
+
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    const rawData = [
+                        {% for cat_name, data in summary.categories_matrix.items %}
+                        { category: "{{ cat_name }}", uptodate: {{ data.uptodate }}, small: {{ data.small }}, medium: {{ data.medium }}, large: {{ data.large }} },
+                        {% endfor %}
+                    ];
+
+                    const margin = {top: 20, right: 30, bottom: 60, left: 50},
+                          width = 800 - margin.left - margin.right,
+                          height = 320 - margin.top - margin.bottom;
+
+                    const svg = d3.select("#d3-bar-chart")
+                        .append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .append("g")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                    const categories = rawData.map(d => d.category);
+                    const subgroups = ["uptodate", "small", "medium", "large"];
+                    const subgroupNames = {"uptodate": "Al día", "small": "Pequeña Deuda (1-3m)", "medium": "Deuda Mediana (4-12m)", "large": "Grandes Deudas (>12m)"};
+
+                    const x = d3.scaleBand()
+                        .domain(categories)
+                        .range([0, width])
+                        .padding([0.2]);
+
+                    svg.append("g")
+                        .attr("transform", "translate(0," + height + ")")
+                        .call(d3.axisBottom(x))
+                        .selectAll("text")
+                        .attr("transform", "translate(-10,0)rotate(-20)")
+                        .style("text-anchor", "end");
+
+                    const y = d3.scaleLinear()
+                        .domain([0, d3.max(rawData, d => Math.max(d.uptodate, d.small, d.medium, d.large)) + 2])
+                        .range([height, 0]);
+
+                    svg.append("g").call(d3.axisLeft(y));
+
+                    const xSubgroup = d3.scaleBand()
+                        .domain(subgroups)
+                        .range([0, x.bandwidth()])
+                        .padding([0.05]);
+
+                    const color = d3.scaleOrdinal()
+                        .domain(subgroups)
+                        .range(["#28a745", "#ffc107", "#dc3545", "#343a40"]);
+
+                    const barGroups = svg.append("g")
+                        .selectAll("g")
+                        .data(rawData)
+                        .enter()
+                        .append("g")
+                        .attr("transform", d => "translate(" + x(d.category) + ",0)");
+
+                    barGroups.selectAll("rect")
+                        .data(function(d) { return subgroups.map(key => { return {key: key, value: d[key], category: d.category}; }); })
+                        .enter()
+                        .append("rect")
+                        .attr("x", d => xSubgroup(d.key))
+                        .attr("y", d => y(d.value))
+                        .attr("width", xSubgroup.bandwidth())
+                        .attr("height", d => height - y(d.value))
+                        .attr("fill", d => color(d.key))
+                        .on("click", function(event, d) {
+                            window.location.href = `?category_name=${d.category}&debt_status=${d.key}`;
+                        })
+                        .style("cursor", "pointer")
+                        .append("title")
+                        .text(d => `${d.category} - ${subgroupNames[d.key]}: ${d.value} (Hacer clic para filtrar)`);
+
+                    barGroups.selectAll("text")
+                        .data(function(d) { return subgroups.map(key => { return {key: key, value: d[key], category: d.category}; }); })
+                        .enter()
+                        .append("text")
+                        .filter(d => d.value > 0)
+                        .attr("x", d => xSubgroup(d.key) + xSubgroup.bandwidth() / 2)
+                        .attr("y", d => y(d.value) - 4)
+                        .attr("text-anchor", "middle")
+                        .style("font-size", "10px")
+                        .style("fill", "#333")
+                        .text(d => d.value);
+                });
+            </script>
+
+            {% if summary.zero_categories %}
+            <small class="text-muted d-block mt-2">
+                Categorías sin miembros (0): {{ summary.zero_categories|join:", " }}
+            </small>
+            {% endif %}
+
+            {% if request.GET.category_name or request.GET.debt_filter %}
+            <div class="mt-3">
+                <a href="{% url 'members_list' %}" class="btn btn-sm btn-outline-secondary">Limpiar filtros de resumen</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block list_filter %}
+<form method='GET'>
+    {% if request.GET.debt_filter %}
+    <input type="hidden" name="debt_filter" value="{{ request.GET.debt_filter }}">
+    {% endif %}
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <input type="text" name="search" class="form-control" placeholder="Buscar por nombre, DNI, email..." value='{{ request.GET.search }}'>
+        </div>
+        <div class="col-md-3">
+            <select name="category" class="form-control">
+                <option value="">-- Todas las categorías --</option>
+                {% for cat in categories %}
+                <option value="{{ cat.name }}" {% if request.GET.category == cat.name or request.GET.category_name == cat.name %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="strategy" class="form-control">
+                <option value="">-- Pago --</option>
+                {% for key, val in platforms %}
+                <option value="{{ key }}" {% if request.GET.strategy == key %}selected{% endif %}>{{ val }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="per_page" class="form-control">
+                <option value="10" {% if request.GET.per_page == '10' %}selected{% endif %}>10 / pág</option>
+                <option value="20" {% if request.GET.per_page == '20' or not request.GET.per_page %}selected{% endif %}>20 / pág</option>
+                <option value="50" {% if request.GET.per_page == '50' %}selected{% endif %}>50 / pág</option>
+                <option value="100" {% if request.GET.per_page == '100' %}selected{% endif %}>100 / pág</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="submit" class="btn btn-success btn-block" value="Filtrar">
+        </div>
+    </div>
+</form>
+{% endblock %}
 
 {% block list_content %}
     <div class="row members-list">
         <div class="col-md-12">
-            <table class="table table-striped row-clickeable-table">
+            <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th scope="row">Legal ID</th>
-                        <th scope="row">Nombre/Razón social</th>
-                        <th scope="row">Documento</th>
+                        <th scope="row"><a href="?sort=legal_id&dir={% if request.GET.sort == 'legal_id' and request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.strategy %}&strategy={{ request.GET.strategy }}{% endif %}{% if request.GET.category_name %}&category_name={{ request.GET.category_name }}{% endif %}{% if request.GET.debt_status %}&debt_status={{ request.GET.debt_status }}{% endif %}{% if request.GET.debt_filter %}&debt_filter={{ request.GET.debt_filter }}{% endif %}">Legal ID <i class="fas fa-sort{% if request.GET.sort == 'legal_id' %}-{% if request.GET.dir == 'desc' %}down{% else %}up{% endif %}{% endif %}"></i></a></th>
+                        <th scope="row"><a href="?sort=name&dir={% if request.GET.sort == 'name' and request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.strategy %}&strategy={{ request.GET.strategy }}{% endif %}{% if request.GET.category_name %}&category_name={{ request.GET.category_name }}{% endif %}{% if request.GET.debt_status %}&debt_status={{ request.GET.debt_status }}{% endif %}{% if request.GET.debt_filter %}&debt_filter={{ request.GET.debt_filter }}{% endif %}">Nombre/Razón social <i class="fas fa-sort{% if request.GET.sort == 'name' %}-{% if request.GET.dir == 'desc' %}down{% else %}up{% endif %}{% endif %}"></i></a></th>
+                        <th scope="row"><a href="?sort=email&dir={% if request.GET.sort == 'email' and request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.strategy %}&strategy={{ request.GET.strategy }}{% endif %}{% if request.GET.category_name %}&category_name={{ request.GET.category_name }}{% endif %}{% if request.GET.debt_status %}&debt_status={{ request.GET.debt_status }}{% endif %}{% if request.GET.debt_filter %}&debt_filter={{ request.GET.debt_filter }}{% endif %}">Email <i class="fas fa-sort{% if request.GET.sort == 'email' %}-{% if request.GET.dir == 'desc' %}down{% else %}up{% endif %}{% endif %}"></i></a></th>
+                        <th scope="row"><a href="?sort=category&dir={% if request.GET.sort == 'category' and request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.strategy %}&strategy={{ request.GET.strategy }}{% endif %}{% if request.GET.category_name %}&category_name={{ request.GET.category_name }}{% endif %}{% if request.GET.debt_status %}&debt_status={{ request.GET.debt_status }}{% endif %}{% if request.GET.debt_filter %}&debt_filter={{ request.GET.debt_filter }}{% endif %}">Categoría <i class="fas fa-sort{% if request.GET.sort == 'category' %}-{% if request.GET.dir == 'desc' %}down{% else %}up{% endif %}{% endif %}"></i></a></th>
+                        <th scope="row">Cuotas adeudadas</th>
+                        <th scope="row">Última cuota</th>
+                        <th scope="row">Fecha último pago</th>
+                        <th scope="row">Estrategia de pago</th>
+                        <th scope="row"><a href="?sort=document&dir={% if request.GET.sort == 'document' and request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.strategy %}&strategy={{ request.GET.strategy }}{% endif %}{% if request.GET.category_name %}&category_name={{ request.GET.category_name }}{% endif %}{% if request.GET.debt_status %}&debt_status={{ request.GET.debt_status }}{% endif %}{% if request.GET.debt_filter %}&debt_filter={{ request.GET.debt_filter }}{% endif %}">Documento <i class="fas fa-sort{% if request.GET.sort == 'document' %}-{% if request.GET.dir == 'desc' %}down{% else %}up{% endif %}{% endif %}"></i></a></th>
+                        <th scope="row" class="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for member in members_list %}
-                    <tr onclick="window.location='{% url 'member_detail' pk=member.pk %}';" class="clikeable {% if member.shutdown_date %}shutdown{% endif %}">
+                    <tr class="{% if member.shutdown_date %}shutdown{% endif %}">
                         <td> {{ member.legal_id }}</td>
                         <td> {{ member.entity }}</td>
+                        <td> {{ member.entity.email }}</td>
+                        <td> {{ member.category_display }}</td>
+                        <td> <span class="badge {% if member.debt_count > 3 %}badge-danger{% elif member.debt_count > 1 %}badge-warning{% else %}badge-success{% endif %}">{{ member.debt_count }}</span></td>
+                        <td> {{ member.last_quota_str }}</td>
+                        <td> {{ member.last_payment_date }}</td>
+                        <td> {{ member.strategies_str }}</td>
                         <td> {{ member.entity.document_number }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'member_detail' pk=member.pk %}" class="btn btn-sm btn-info" title="Ver detalle"><i class="fas fa-eye"></i></a>
+                        </td>
                     </tr>
                 {% empty %}
                     <tr>
@@ -43,6 +266,4 @@
             </table>
         </div>
     </div>
-
-
 {% endblock %}

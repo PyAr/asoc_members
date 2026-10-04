@@ -1,17 +1,59 @@
 {% extends "events_base_paginated_list.html" %}
 
 {% block route-navigator %}
-<nav aria-label="breadcrumb">
+<nav aria-label="breadcrumb" class="mt-3">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
-      <li class="breadcrumb-item" aria-current="page"><i class="fas fa-user-friends"></i> Organizadores</li>
+      <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'events_home' %}"> Eventos</a></li>
+      <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-user-friends"></i> Organizadores</li>
     </ol>
 </nav>
 {% endblock %}
 
 {% block list_title %}
-<h1>Organizadores</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Organizadores</h1>
+    {% if perms.events.add_organizer %}
+    <a class="btn btn-primary" href="{% url 'organizer_signup' %}"><i class="fas fa-certificate"></i> Crear</a>
+    {% endif %}
+</div>
 {%endblock%}
+
+{% block list_filter %}
+<form method='GET'>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <input type="text" name="search" class="form-control" placeholder="Buscar por nombre, apellido, email, usuario..." value='{{ request.GET.search }}'>
+        </div>
+        <div class="col-md-3">
+            <select name="has_bank" class="form-control">
+                <option value="">-- Datos Bancarios --</option>
+                <option value="yes" {% if request.GET.has_bank == 'yes' %}selected{% endif %}>Con Datos Bancarios</option>
+                <option value="no" {% if request.GET.has_bank == 'no' %}selected{% endif %}>Sin Datos Bancarios</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="is_member" class="form-control">
+                <option value="">-- Socio AC --</option>
+                <option value="yes" {% if request.GET.is_member == 'yes' %}selected{% endif %}>Es Socio</option>
+                <option value="no" {% if request.GET.is_member == 'no' %}selected{% endif %}>No es Socio</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="per_page" class="form-control">
+                <option value="10" {% if request.GET.per_page == '10' %}selected{% endif %}>10 / pág</option>
+                <option value="20" {% if request.GET.per_page == '20' or not request.GET.per_page %}selected{% endif %}>20 / pág</option>
+                <option value="50" {% if request.GET.per_page == '50' %}selected{% endif %}>50 / pág</option>
+                <option value="100" {% if request.GET.per_page == '100' %}selected{% endif %}>100 / pág</option>
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-success btn-block"><i class="fas fa-filter"></i></button>
+        </div>
+    </div>
+    {% if request.GET.sort %}<input type="hidden" name="sort" value="{{ request.GET.sort }}">{% endif %}
+    {% if request.GET.dir %}<input type="hidden" name="dir" value="{{ request.GET.dir }}">{% endif %}
+</form>
+{% endblock %}
 
 {% block list_content %}
     <div class="row organizers-list">
@@ -19,9 +61,13 @@
             <table class="table table-striped row-clickeable-table">
                 <thead>
                     <tr>
-                        <th scope="row">Usuario</th>
-                        <th scope="row">Nombre</th>
-                        <th scope="row">Apellido</th>
+                        <th scope="row"><a href="?sort=username&dir={% if request.GET.sort == 'username' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.has_bank %}&has_bank={{ request.GET.has_bank }}{% endif %}{% if request.GET.is_member %}&is_member={{ request.GET.is_member }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}">Usuario {% if request.GET.sort == 'username' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=first_name&dir={% if request.GET.sort == 'first_name' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.has_bank %}&has_bank={{ request.GET.has_bank }}{% endif %}{% if request.GET.is_member %}&is_member={{ request.GET.is_member }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}">Nombre {% if request.GET.sort == 'first_name' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=last_name&dir={% if request.GET.sort == 'last_name' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.has_bank %}&has_bank={{ request.GET.has_bank }}{% endif %}{% if request.GET.is_member %}&is_member={{ request.GET.is_member }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}">Apellido {% if request.GET.sort == 'last_name' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=email&dir={% if request.GET.sort == 'email' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.has_bank %}&has_bank={{ request.GET.has_bank }}{% endif %}{% if request.GET.is_member %}&is_member={{ request.GET.is_member }}{% endif %}{% if request.GET.per_page %}&per_page={{ request.GET.per_page }}{% endif %}">Email {% if request.GET.sort == 'email' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row" class="text-center">Socio AC</th>
+                        <th scope="row" class="text-center">Datos Bancarios</th>
+                        <th scope="row" class="text-center">Eventos Asociados</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -30,6 +76,24 @@
                         <td>{{ organizer.user.username }}</td>
                         <td>{{ organizer.first_name }}</td>
                         <td>{{ organizer.last_name }}</td>
+                        <td>{{ organizer.email }}</td>
+                        <td class="text-center">
+                            {% if organizer.is_member %}
+                                <span class="badge badge-success">✅ Sí</span>
+                            {% else %}
+                                <span class="badge badge-secondary">❌ No</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if organizer.has_account_data %}
+                                <span class="badge badge-success">Sí</span>
+                            {% else %}
+                                <span class="badge badge-secondary">No</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge badge-info">{{ organizer.events.count }}</span>
+                        </td>
                     </tr>
                 
                 {% empty %}
@@ -45,9 +109,6 @@
     </div>
     <div class="row organizers-list-actions">
         <div class="col-md-12 text-right">
-            {% if perms.events.add_organizer %}
-            <a class="btn btn-primary col-2 float-right mx-1" href="{% url 'organizer_signup' %}"><i class="fas fa-certificate"></i> Crear</a>
-            {% endif %}
             <a class="btn btn-danger col-2 float-right mx-1" href="{{request.META.HTTP_REFERER}}"><i class="fas fa-undo"></i> Volver</a>
         </div>
     </div>

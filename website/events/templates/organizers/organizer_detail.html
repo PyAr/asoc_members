@@ -1,20 +1,25 @@
 {% extends "events_base.html" %}
 {% load static %}
 {% block content %}
-<div class="container">
+<div class="container" style="max-width: 88%;">
     {% block route-navigator %}
-    <nav aria-label="breadcrumb">
+    <nav aria-label="breadcrumb" class="mt-3">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+          <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'events_home' %}"> Eventos</a></li>
           <li class="breadcrumb-item"><i class="fas fa-user-friends"></i><a href="{% url 'organizer_list' %}"> Organizadores</a></li>
-          <li class="breadcrumb-item" aria-current="page"><i class="fas fa-user"></i> {{organizer.user.username}}</li>
+          <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-user"></i> {{organizer.user.username}}</li>
         </ol>
     </nav>
     {% endblock %}
 
     <div class="row organizer-detail">
         <div class="col-md-6">
-            <h3>Datos del organizador </h3>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0">Datos del organizador</h3>
+                {% if request.user.is_superuser or is_request_user %}
+                <a class="btn btn-primary btn-sm" href="{% url 'organizer_change' organizer.pk %}"><i class="fas fa-pencil-alt"></i> Editar</a>
+                {% endif %}
+            </div>
             <table class="table table-striped">
                 <tbody>
                     <tr>
@@ -29,18 +34,46 @@
                         <th scope="row">Usuario</th>
                         <td>{{ organizer.user.username }}</td>
                     </tr>
+                    <tr>
+                        <th scope="row">Correo Electrónico</th>
+                        <td>{{ organizer.email }}</td>
+                    </tr>
                 </tbody>
             </table>
-            {% if is_request_user %}
-            <a class="btn btn-primary btn-block text-uppercase" href="{% url 'organizer_change' organizer.pk %}"><i class="fas fa-pencil-alt"></i> Editar</a>
+
+            <h3 class="mt-4">Eventos Asociados</h3>
+            {% with events=organizer.get_associate_events.all %}
+            {% if events %}
+            <ul class="list-group mb-3">
+                {% for ev in events %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="{% url 'event_detail' ev.pk %}"><i class="fas fa-calendar-check"></i> {{ ev.name }}</a>
+                    <span class="badge badge-primary badge-pill">{{ ev.get_type_display }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="alert alert-secondary" role="alert">
+                Este organizador no tiene eventos asociados.
+            </div>
             {% endif %}
+            {% endwith %}
             {% if organizer.has_unpayment_refunds and perms.events.add_payment %}
                 <p>El organizador contiene reintegros sin pagar. Para agregar un comprobante de pago para los reintegros del organizador ingrese aquí</p> <br/>
                 <a class="btn btn-primary" role="button" aria-pressed="true" href="{% url 'organizer_refund_payment_create' pk=organizer.pk %}"><i class="fa fa-plus"></i> Comprobante de pago</a>
             {% endif %}
         </div>
         <div class="col-md-6">
-                <h3>Datos de cuenta bancaria</h3>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="mb-0">Datos de cuenta bancaria</h3>
+                    {% if request.user.is_superuser or is_request_user %}
+                        {% if organizer.account_data %}
+                        <a class="btn btn-primary btn-sm" href="{% url 'organizer_update_bank_account_data' organizer.account_data.pk %}"><i class="fas fa-pencil-alt"></i> Editar</a>
+                        {% else %}
+                        <a class="btn btn-primary btn-sm" href="{% url 'organizer_create_bank_account_data' organizer.pk %}"><i class="fas fa-money-check-alt"></i> Crear</a>
+                        {% endif %}
+                    {% endif %}
+                </div>
                 {% if organizer.account_data %}
                 <table class="table table-striped">
                     <tbody>
@@ -75,20 +108,6 @@
                         El Organizador no tiene cargados sus datos de cuenta bancaria.
                     </div>
                 {% endif %}
-                {% if is_request_user %}
-                    {% if organizer.account_data %}
-                    <a class="btn btn-primary btn-block text-uppercase" 
-                    href="{% url 'organizer_update_bank_account_data' organizer.account_data.pk %}"><i class="fas fa-money-check"></i> Actualizar cuenta</a>
-                    {% else %}
-                    <a class="btn btn-primary btn-block text-uppercase" 
-                    href="{% url 'organizer_create_bank_account_data' organizer.pk %}">
-                    {# onclick="return open_modal('{% url 'organizer_create_bank_account_data' organizer.pk %}')"> #}
-                    <i class="fas fa-money-check-alt"></i> Crear cuenta
-                    </a>
-                    {% endif %}
-                {% endif %}
-            
-        </div>
     </div>
     {% if is_request_user %}
     <div class="row user-account">
@@ -115,6 +134,66 @@
         </div>
     </div>
     {% endif %}
+
+    <div class="row my-4">
+        <div class="col-md-12">
+            <h3>Reintegros Pendientes</h3>
+            {% if pending_refunds %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Evento</th>
+                        <th>Descripción</th>
+                        <th>Monto</th>
+                        <th>Fecha Factura</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ref in pending_refunds %}
+                    <tr>
+                        <td><a href="{% url 'organizer_refund_detail' ref.pk %}">#{{ ref.pk }}</a></td>
+                        <td>{{ ref.event.name }}</td>
+                        <td>{{ ref.description }}</td>
+                        <td>${{ ref.amount }}</td>
+                        <td>{{ ref.invoice_date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="alert alert-success" role="alert">No hay reintegros pendientes.</div>
+            {% endif %}
+
+            <h3 class="mt-4">Reintegros Realizados (Pagados)</h3>
+            {% if completed_refunds %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Evento</th>
+                        <th>Descripción</th>
+                        <th>Monto</th>
+                        <th>Fecha Factura</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ref in completed_refunds %}
+                    <tr>
+                        <td><a href="{% url 'organizer_refund_detail' ref.pk %}">#{{ ref.pk }}</a></td>
+                        <td>{{ ref.event.name }}</td>
+                        <td>{{ ref.description }}</td>
+                        <td>${{ ref.amount }}</td>
+                        <td>{{ ref.invoice_date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="alert alert-secondary" role="alert">No hay reintegros realizados registrados.</div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 <div id="popup" class="modal fade" role="dialog">
 </div>
