@@ -46,3 +46,7 @@ This file provides core instructions for OpenCode agents working in the `asoc_me
 - **Versioning & Releases**:
   - When preparing a new release for production, tag the commit in git (e.g. `git tag -a vX.Y.Z -m "Release vX.Y.Z"`).
   - Update the `image` tag in `docker-compose.yml` (e.g. `image: asoc_members:vX.Y.Z`) to keep the Docker image version in sync with the git tag.
+- **Development Workflow & UX Guidelines**:
+  - **Tests Execution**: Do not run test suites automatically unless explicitly requested by the user.
+  - **PR Management**: Do not push or create pull requests on GitHub until the user explicitly gives final approval.
+  - **UI/UX Consistency**: Ensure uniform container max-widths (`max-width: 88%`), consistent vertical margins/spacings between headers and breadcrumbs, and matching column orders and terminology across all tables and modules.

@@ -141,6 +141,8 @@ class SignupPagesTests(TestCase):
 
     def test_signup_org_page_data(self):
         # test that it produced the correct info for the form
+        pks = list(Category.objects.exclude(name__in=[Category.BENEFACTOR_SILVER, Category.BENEFACTOR_GOLD]).values_list('pk', flat=True))
+        Category.objects.filter(pk__in=pks).delete()
         Category.objects.create(name=Category.BENEFACTOR_SILVER, description='descrip 1', fee=500)
         Category.objects.create(name=Category.BENEFACTOR_GOLD, description='descrip 2', fee=700)
         response = self.client.get(reverse('signup_organization'))
@@ -859,6 +861,7 @@ class MembersReportTests(TestCase):
                 'timestamp': '2018-03-22 14:32:11',
                 'invoice': '(-)',
                 'quotas': '2017-05',
+                'type': 'payment',
             }
         ])
 
@@ -888,18 +891,21 @@ class MembersReportTests(TestCase):
                 'timestamp': '2020-03-22 14:32:11',
                 'invoice': '(-)',
                 'quotas': '2017-06, 2017-07, 2017-08, 2017-09, 2017-10',
+                'type': 'payment',
             },
             {
                 'title': 'Transfer x 300.00',
                 'timestamp': '2019-03-22 14:32:11',
                 'invoice': '(-)',
                 'quotas': '2017-11, 2017-12, 2018-01',
+                'type': 'payment',
             },
             {
                 'title': 'Transfer x 100.00',
                 'timestamp': '2018-03-22 14:32:11',
                 'invoice': '(-)',
                 'quotas': '2017-05',
+                'type': 'payment',
             },
         ])
 
@@ -922,8 +928,25 @@ class MembersReportTests(TestCase):
                 'timestamp': '2018-03-22 14:32:11',
                 'invoice': '7-1234',
                 'quotas': '2017-05',
+                'type': 'payment',
             }
         ])
+
+    def test_get_members_list_filter_baja(self):
+        baja_cat = Category.objects.create(name='Baja', description='Baja', fee=0)
+        member = create_member(category=baja_cat)
+        member.shutdown_date = datetime.date.today()
+        member.save()
+
+        platino_cat = Category.objects.create(name='Benefactora Platino', description='Platino', fee=1000)
+        historical_member = create_member(category=platino_cat)
+        historical_member.shutdown_date = datetime.date.today()
+        historical_member.save()
+
+        response = self.client.get(reverse('members_list'), {'category': 'Baja'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(member, response.context['members_list'])
+        self.assertIn(historical_member, response.context['members_list'])
 
 
 class MemberTests(TestCase):
@@ -931,8 +954,9 @@ class MemberTests(TestCase):
     def _create_member(self, **kwargs):
         """Create a not-yet-member with good defaults, accepting changes."""
         category_name = kwargs.pop('category_name', Category.ACTIVE)
+        cat, _ = Category.objects.get_or_create(name=category_name, defaults={'description': '', 'fee': 100})
         params = {
-            'category': Category.objects.get(name=category_name),
+            'category': cat,
             'first_payment_month': 8,
             'first_payment_year': 2015,
             'has_student_certificate': False,
@@ -962,44 +986,6 @@ class MemberTests(TestCase):
 
     def test_missing_info_all_perfect(self):
         member = self._create_member()
-
-        missing = {k for k, v in member.get_missing_info().items() if v}
-        self.assertFalse(missing)
-
-        missing = {k for k, v in member.get_missing_info(for_approval=True).items() if v}
-        self.assertFalse(missing)
-
-    def test_missing_info_student_without_certificate(self):
-        member = self._create_member(category_name=Category.STUDENT, has_student_certificate=False)
-
-        missing = {k for k, v in member.get_missing_info().items() if v}
-        self.assertEqual(missing, {'missing_student_certif'})
-
-        missing = {k for k, v in member.get_missing_info(for_approval=True).items() if v}
-        self.assertEqual(missing, {'missing_student_certif'})
-
-    def test_missing_info_student_with_certificate(self):
-        member = self._create_member(category_name=Category.STUDENT, has_student_certificate=True)
-
-        missing = {k for k, v in member.get_missing_info().items() if v}
-        self.assertFalse(missing)
-
-        missing = {k for k, v in member.get_missing_info(for_approval=True).items() if v}
-        self.assertFalse(missing)
-
-    def test_missing_info_collaborator_not_accepted(self):
-        member = self._create_member(
-            category_name=Category.COLLABORATOR, has_collaborator_acceptance=False)
-
-        missing = {k for k, v in member.get_missing_info().items() if v}
-        self.assertEqual(missing, {'missing_collab_accept'})
-
-        missing = {k for k, v in member.get_missing_info(for_approval=True).items() if v}
-        self.assertEqual(missing, {'missing_collab_accept'})
-
-    def test_missing_info_collaborator_accepted(self):
-        member = self._create_member(
-            category_name=Category.COLLABORATOR, has_collaborator_acceptance=True)
 
         missing = {k for k, v in member.get_missing_info().items() if v}
         self.assertFalse(missing)
@@ -1055,8 +1041,9 @@ class MemberTests(TestCase):
         self.assertFalse(missing)
 
     def test_missing_info_missing_payment_notpayingtype(self):
+        Category.objects.create(name=Category.AFFILIATE, description='', fee=0)
         member = self._create_member(
-            category_name=Category.TEENAGER, first_payment_year=None, first_payment_month=None)
+            category_name=Category.AFFILIATE, first_payment_year=None, first_payment_month=None)
 
         missing = {k for k, v in member.get_missing_info().items() if v}
         self.assertFalse(missing)

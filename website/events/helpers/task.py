@@ -20,9 +20,12 @@ The idea is represents the next set of task types:
         * End organizer refund payment
 """
 
+from decimal import Decimal
 from django.db.models import Max, Sum, Count
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+
+from events.models import Sponsoring, Invoice, Expense
 from events.models import (
     Invoice,
     Organizer,
@@ -304,3 +307,57 @@ def _not_approved_invoices(organizer):
         sponsoring__sponsorcategory__event__in=organizer.get_associate_events()
     )
     return invoices.all()
+
+
+def calculate_event_result(event):
+    sponsorings = Sponsoring.objects.filter(sponsorcategory__event=event).all()
+    income_available = Decimal('0.00')
+    income_pending = Decimal('0.00')
+    for sponsoring in sponsorings:
+        try:
+            invoice = Invoice.objects.get(sponsoring=sponsoring)
+        except Invoice.DoesNotExist:
+            continue
+        else:
+            amount = invoice.real_final_amount if invoice.real_final_amount is not None else invoice.amount
+            if invoice.complete_payment:
+                income_available += amount
+            else:
+                income_pending += amount
+
+    income_iva = round(income_available * Decimal("0.21"), 2)
+    commission_amount = round((income_available + income_iva) * event.commission / 100, 2)
+
+    expenses = Expense.objects.filter(event=event).all()
+    expense_base = Decimal('0.00')
+    expense_iva = Decimal('0.00')
+    for expense in expenses:
+        if expense.is_cancelled:
+            continue
+        if expense.invoice_type == Expense.INVOICE_TYPE_A:
+            amount_base = round(expense.amount / Decimal("1.21"), 2)
+            amount_iva = expense.amount - amount_base
+        else:
+            amount_base = expense.amount
+            amount_iva = Decimal('0.00')
+        expense_base += amount_base
+        expense_iva += amount_iva
+
+    available = income_available - expense_base - commission_amount
+    remaining_iva = income_iva - expense_iva
+    bank_movements = income_available + income_iva + expense_base + expense_iva
+    bank_loss = round(bank_movements * Decimal("0.006"), 2)
+    ac_total = commission_amount - bank_loss
+
+    return {
+        'income_available': income_available,
+        'income_iva': income_iva,
+        'income_pending': income_pending,
+        'commission_amount': commission_amount,
+        'expense_base': expense_base,
+        'expense_iva': expense_iva,
+        'available': available,
+        'remaining_iva': remaining_iva,
+        'bank_loss': bank_loss,
+        'ac_total': ac_total,
+    }

@@ -120,8 +120,19 @@ class SignupPersonForm(forms.ModelForm):
         return data.title()
 
 
-class SignupOrganizationForm(forms.ModelForm):
+class PatronForm(forms.ModelForm):
+    class Meta:
+        model = Patron
+        fields = ('name', 'email', 'comments')
 
+    def __init__(self, *args, **kwargs):
+        super(PatronForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_tag = False
+        self.helper.form_class = 'form-horizontal'
+
+
+class SignupOrganizationForm(forms.ModelForm):
     class Meta:
         model = Organization
         fields = ('name', 'contact_info', 'document_number', 'address', 'social_media')

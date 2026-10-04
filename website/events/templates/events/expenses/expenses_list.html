@@ -1,27 +1,22 @@
 {% extends "events_base_paginated_list.html" %}
 {% load humanize %}
 {% block route-navigator %}
-<nav aria-label="breadcrumb" class="events-details-nav">
-    <div>
-        <ol class="breadcrumb">
-        <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
-        <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
-        <li class="breadcrumb-item"><i class="fas fa-calendar-check"></i><a href="{% url 'event_detail' pk=event.pk %}"> {{event.name}}</a></li>
-        <li class="breadcrumb-item" aria-current="page"><i class="fas fa-hand-holding-usd"></i> Gastos</li>
-        </ol>
-    </div>
-    <div>
-        Ir a:  
-        <i class="fa fa-cog"></i> 
-        <a title="editar evento" href="{% url 'event_detail' pk=event.pk %}">
-            General
-        </a>
-        |
-        <i class="fas fa-handshake"></i><a title="administrar evento" href="{% url 'sponsoring_list' event_pk=event.pk %}">
-            Sponsoreos
-        </a>
-    </div>
+<nav aria-label="breadcrumb" class="mt-3 mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
+      <li class="breadcrumb-item"><i class="fas fa-calendar-check"></i><a href="{% url 'event_detail' pk=event.pk %}"> {{event.name}}</a></li>
+      <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-hand-holding-usd"></i> Gastos</li>
+    </ol>
 </nav>
+
+<div class="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded border">
+    <span class="text-muted font-weight-bold">Secciones del evento:</span>
+    <div class="btn-group btn-group-sm" role="group">
+        <a class="btn btn-outline-primary" href="{% url 'event_detail' pk=event.pk %}"><i class="fas fa-cog"></i> Configuración</a>
+        <a class="btn btn-outline-primary" href="{% url 'sponsoring_list' event_pk=event.pk %}"><i class="fas fa-handshake"></i> Sponsoreos</a>
+        <a class="btn btn-outline-primary active" href="{% url 'expenses_list' event_pk=event.pk %}"><i class="fas fa-dollar-sign"></i> Gastos</a>
+    </div>
+</div>
 {% endblock %}
 
 {% block list_title %}
@@ -37,8 +32,8 @@
                     <tr>
                         <th scope="row">Tipo</th>
                         <th scope="row">Origen</th>
-                        <th scope="row">Monto</th>
-                        <th scope="row">Descripción</th>
+                        <th scope="row"><a href="?sort=amount&dir={% if request.GET.sort == 'amount' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Monto {% if request.GET.sort == 'amount' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=description&dir={% if request.GET.sort == 'description' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Descripción {% if request.GET.sort == 'description' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
                         <th class="text-center" scope="row">Pagado</th>
                     </tr>
                 </thead>

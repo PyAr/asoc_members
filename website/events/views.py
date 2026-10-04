@@ -56,6 +56,7 @@ from events.helpers.notifications import email_notifier
 from events.helpers.task import calculate_organizer_task, calculate_super_user_task
 from events.helpers.views import search_filtered_queryset
 from events.helpers.permissions import is_event_organizer, ORGANIZER_GROUP_NAME, is_organizer_user
+from members.models import Person
 from events.models import (
     BankAccountData,
     Event,
@@ -132,14 +133,27 @@ def organizer_signup(request):
     return render(request, 'organizers/organizer_signup.html', {'form': form})
 
 
-class EventsListView(LoginRequiredMixin, generic.ListView):
+class DynamicPaginationMixin:
+    def get_paginate_by(self, queryset):
+        try:
+            per_page = int(self.request.GET.get('per_page', DEFAULT_PAGINATION))
+            if per_page in [10, 20, 50, 100]:
+                return per_page
+        except (ValueError, TypeError):
+            pass
+        return DEFAULT_PAGINATION
+
+
+class EventsListView(LoginRequiredMixin, DynamicPaginationMixin, generic.ListView):
     model = Event
     context_object_name = 'event_list'
     template_name = 'events/event_list.html'
     paginate_by = DEFAULT_PAGINATION
     search_fields = {
         'name': 'icontains',
-        'place': 'icontains'
+        'place': 'icontains',
+        'description': 'icontains',
+        'type': 'icontains'
     }
 
     def get_queryset(self):
@@ -153,7 +167,26 @@ class EventsListView(LoginRequiredMixin, generic.ListView):
         search_value = self.request.GET.get('search', None)
         if search_value and search_value != '':
             queryset = search_filtered_queryset(queryset, self.search_fields, search_value)
-        return queryset
+
+        status_filter = self.request.GET.get('status', 'open')
+        if status_filter == 'open':
+            queryset = queryset.filter(close=False)
+        elif status_filter == 'closed':
+            queryset = queryset.filter(close=True)
+
+        sort_by = self.request.GET.get('sort', 'name')
+        direction = self.request.GET.get('dir', 'asc')
+        valid_sort_fields = {
+            'name': 'name',
+            'type': 'category',
+            'place': 'place',
+            'initial_date': 'start_date',
+            'finish_date': 'start_date',
+        }
+        db_field = valid_sort_fields.get(sort_by, 'name')
+        if direction == 'desc':
+            db_field = f'-{db_field}'
+        return queryset.order_by(db_field)
 
 
 class EventDetailView(PermissionRequiredMixin, generic.DetailView):
@@ -219,6 +252,8 @@ class BankOrganizerAccountDataUpdateView(PermissionRequiredMixin, generic.edit.U
     permission_required = 'events.change_bankaccountdata'
 
     def has_permission(self):
+        if self.request.user.is_superuser:
+            return True
         bank_account = self.get_object()
         ret = super(BankOrganizerAccountDataUpdateView, self).has_permission()
         try:
@@ -248,6 +283,13 @@ class BankOrganizerAccountDataUpdateView(PermissionRequiredMixin, generic.edit.U
         return self._get_organizer().get_absolute_url()
 
     def _get_organizer(self):
+        if self.request.user.is_superuser:
+            if 'pk' in self.kwargs:
+                return get_object_or_404(Organizer, pk=self.kwargs['pk'])
+            bank_account = self.get_object()
+            organizer = Organizer.objects.filter(account_data=bank_account).first()
+            if organizer:
+                return organizer
         return Organizer.objects.get(user=self.request.user)
 
     def get_context_data(self, **kwargs):
@@ -264,11 +306,12 @@ class BankOrganizerAccountDataCreateView(PermissionRequiredMixin, generic.edit.C
     permission_required = 'events.add_bankaccountdata'
 
     def has_permission(self):
+        if self.request.user.is_superuser:
+            return True
         ret = super(BankOrganizerAccountDataCreateView, self).has_permission()
         try:
             Organizer.objects.get(user=self.request.user)
         except Organizer.DoesNotExist:
-            # TODO: add message requiring be an organizer user
             self.permission_denied_message = MUST_BE_ORGANIZER_MESSAGE
             return False
         return ret
@@ -347,7 +390,7 @@ class SponsorCategoryCreateView(PermissionRequiredMixin, generic.edit.CreateView
             return super(SponsorCategoryCreateView, self).handle_no_permission()
 
 
-class OrganizersListView(PermissionRequiredMixin, generic.ListView):
+class OrganizersListView(PermissionRequiredMixin, DynamicPaginationMixin, generic.ListView):
     model = Organizer
     context_object_name = 'organizer_list'
     template_name = 'organizers/organizers_list.html'
@@ -356,6 +399,7 @@ class OrganizersListView(PermissionRequiredMixin, generic.ListView):
     search_fields = {
         'first_name': 'icontains',
         'last_name': 'icontains',
+        'email': 'icontains',
         'user__username': 'icontains'
     }
 
@@ -364,7 +408,39 @@ class OrganizersListView(PermissionRequiredMixin, generic.ListView):
         search_value = self.request.GET.get('search', None)
         if search_value and search_value != '':
             queryset = search_filtered_queryset(queryset, self.search_fields, search_value)
-        return queryset
+
+        has_bank_filter = self.request.GET.get('has_bank', None)
+        if has_bank_filter == 'yes':
+            queryset = queryset.filter(account_data__isnull=False)
+        elif has_bank_filter == 'no':
+            queryset = queryset.filter(account_data__isnull=True)
+
+        is_member_filter = self.request.GET.get('is_member', None)
+        if is_member_filter in ['yes', 'no']:
+            member_emails = set(Person.objects.exclude(email='').values_list('email', flat=True))
+            member_emails = {e.lower() for e in member_emails}
+            filtered_ids = []
+            for org in queryset:
+                email = (org.user.email or '').lower()
+                is_mem = email in member_emails
+                if is_member_filter == 'yes' and is_mem:
+                    filtered_ids.append(org.pk)
+                elif is_member_filter == 'no' and not is_mem:
+                    filtered_ids.append(org.pk)
+            queryset = queryset.filter(pk__in=filtered_ids)
+
+        sort_by = self.request.GET.get('sort', 'last_name')
+        direction = self.request.GET.get('dir', 'asc')
+        valid_sort_fields = {
+            'first_name': 'first_name',
+            'last_name': 'last_name',
+            'email': 'email',
+            'username': 'user__username',
+        }
+        db_field = valid_sort_fields.get(sort_by, 'last_name')
+        if direction == 'desc':
+            db_field = f'-{db_field}'
+        return queryset.order_by(db_field)
 
 
 class OrganizerDetailView(PermissionRequiredMixin, generic.DetailView):
@@ -379,6 +455,8 @@ class OrganizerDetailView(PermissionRequiredMixin, generic.DetailView):
         # Check that the user can see organizers and obtain them
         user = self.request.user
         context['is_request_user'] = organizer.user == user
+        context['pending_refunds'] = organizer.refunds.filter(payment__isnull=True).all()
+        context['completed_refunds'] = organizer.refunds.filter(payment__isnull=False).all()
         return context
 
     def has_permission(self):
@@ -396,26 +474,41 @@ class OrganizerChangeView(PermissionRequiredMixin, generic.edit.UpdateView):
     permission_required = ''
 
     def has_permission(self):
-        return self.request.user == self.get_object().user
+        return self.request.user.is_superuser or self.request.user == self.get_object().user
 
 
-class SponsorsListView(LoginRequiredMixin, generic.ListView):
+class SponsorsListView(LoginRequiredMixin, DynamicPaginationMixin, generic.ListView):
     model = Sponsor
     context_object_name = 'sponsor_list'
     template_name = 'sponsors/sponsors_list.html'
     paginate_by = DEFAULT_PAGINATION
     search_fields = {
         'organization_name': 'icontains',
-        'document_number': 'icontains'
+        'document_number': 'icontains',
+        'address': 'icontains',
+        'contact_info': 'icontains',
+        'vat_condition': 'icontains'
     }
 
     def get_queryset(self):
         queryset = super(SponsorsListView, self).get_queryset()
-        # queryset = Sponsor.objects.all()
         search_value = self.request.GET.get('search', None)
         if search_value and search_value != '':
             queryset = search_filtered_queryset(queryset, self.search_fields, search_value)
-        return queryset
+
+        sort_by = self.request.GET.get('sort', 'organization_name')
+        direction = self.request.GET.get('dir', 'asc')
+        valid_sort_fields = {
+            'organization_name': 'organization_name',
+            'document_number': 'document_number',
+            'vat_condition': 'vat_condition',
+            'address': 'address',
+            'contact_info': 'contact_info',
+        }
+        db_field = valid_sort_fields.get(sort_by, 'organization_name')
+        if direction == 'desc':
+            db_field = f'-{db_field}'
+        return queryset.order_by(db_field)
 
 
 class SponsorCreateView(PermissionRequiredMixin, generic.edit.CreateView):
@@ -585,7 +678,7 @@ class SponsoringCreateView(PermissionRequiredMixin, generic.edit.CreateView):
             return super(SponsoringCreateView, self).handle_no_permission()
 
 
-class SponsoringListView(PermissionRequiredMixin, generic.ListView):
+class SponsoringListView(PermissionRequiredMixin, DynamicPaginationMixin, generic.ListView):
     model = Sponsoring
     context_object_name = 'sponsoring_list'
     template_name = 'events/sponsorings/sponsoring_list.html'
@@ -808,23 +901,39 @@ class InvoiceAffectCreateView(PermissionRequiredMixin, generic.edit.CreateView):
             return super(InvoiceAffectCreateView, self).handle_no_permission()
 
 
-class ProvidersListView(LoginRequiredMixin, generic.ListView):
+class ProvidersListView(LoginRequiredMixin, DynamicPaginationMixin, generic.ListView):
     model = Provider
     context_object_name = 'provider_list'
     template_name = 'providers/providers_list.html'
     paginate_by = DEFAULT_PAGINATION
     search_fields = {
         'organization_name': 'icontains',
-        'document_number': 'icontains'
+        'document_number': 'icontains',
+        'bank_entity': 'icontains',
+        'account_number': 'icontains',
+        'cbu': 'icontains'
     }
 
     def get_queryset(self):
         queryset = super(ProvidersListView, self).get_queryset()
-        # queryset = Sponsor.objects.all()
         search_value = self.request.GET.get('search', None)
         if search_value and search_value != '':
             queryset = search_filtered_queryset(queryset, self.search_fields, search_value)
-        return queryset
+
+        sort_by = self.request.GET.get('sort', 'organization_name')
+        direction = self.request.GET.get('dir', 'asc')
+        valid_sort_fields = {
+            'organization_name': 'organization_name',
+            'document_number': 'document_number',
+            'bank_entity': 'bank_entity',
+            'account_type': 'account_type',
+            'account_number': 'account_number',
+            'cbu': 'cbu',
+        }
+        db_field = valid_sort_fields.get(sort_by, 'organization_name')
+        if direction == 'desc':
+            db_field = f'-{db_field}'
+        return queryset.order_by(db_field)
 
 
 class ProviderCreateView(PermissionRequiredMixin, generic.edit.CreateView):
@@ -846,7 +955,7 @@ class ProviderDetailView(LoginRequiredMixin, generic.DetailView):
     template_name = 'providers/provider_detail.html'
 
 
-class ExpensesListView(PermissionRequiredMixin, generic.ListView):
+class ExpensesListView(PermissionRequiredMixin, DynamicPaginationMixin, generic.ListView):
     model = Expense
     context_object_name = 'expenses_list'
     template_name = 'events/expenses/expenses_list.html'
@@ -866,7 +975,17 @@ class ExpensesListView(PermissionRequiredMixin, generic.ListView):
         search_value = self.request.GET.get('search', None)
         if search_value and search_value != '':
             queryset = search_filtered_queryset(queryset, self.search_fields, search_value)
-        return queryset
+
+        sort_by = self.request.GET.get('sort', 'amount')
+        direction = self.request.GET.get('dir', 'asc')
+        valid_sort_fields = {
+            'amount': 'amount',
+            'description': 'description',
+        }
+        db_field = valid_sort_fields.get(sort_by, 'amount')
+        if direction == 'desc':
+            db_field = f'-{db_field}'
+        return queryset.order_by(db_field)
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context.

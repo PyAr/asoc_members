@@ -2,15 +2,14 @@
 {% load static %}
 {% load humanize %}
 {% block content %}
-<div class="container">
+<div class="container" style="max-width: 88%;">
     {% block route-navigator %}
-    <nav aria-label="breadcrumb">
+    <nav aria-label="breadcrumb" class="mt-3">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
           <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
           <li class="breadcrumb-item"><i class="fas fa-calendar-check"></i><a href="{% url 'event_detail' event.pk %}"> {{event.name}}</a></li>
           <li class="breadcrumb-item"><i class="fas fa-handshake"></i><a href="{% url 'sponsoring_list' event.pk %}"> Sponsoreos</a></li>
-          <li class="breadcrumb-item" aria-current="page"><i class="fas fa-donate"></i> {{sponsoring.sponsor.organization_name}} ({{sponsoring.sponsorcategory.name}})</li>
+          <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-donate"></i> {{sponsoring.sponsor.organization_name}} ({{sponsoring.sponsorcategory.name}})</li>
         </ol>
     </nav>
     {% endblock %}
@@ -58,10 +57,8 @@
             <strong>Última modificación:</strong> {{sponsoring.invoice.modified}}<br/>
             <!-- PREVIEW -->
             {% if sponsoring.invoice.extension == ".pdf" %}
-            <div id="invoice-pdf-div" invoice-url="{{sponsoring.invoice.document.url}}">
-                <a href="{{sponsoring.invoice.document.url}}" target="_blank">
-                    <canvas class="rounded border border-dark" id="pdf-canvas"></canvas>
-                </a>
+            <div class="alert alert-info" role="alert">
+                <i class="fas fa-file-pdf"></i> Documento PDF adjunto: <a href="{{sponsoring.invoice.document.url}}" target="_blank" download>Descargar archivo</a>
             </div>
             {% elif sponsoring.invoice.is_image_document %}
             <img src="{{sponsoring.invoice.document.url}}" style="width: 400px;">
@@ -118,9 +115,14 @@
         </div>
         <!-- Afectaciones -->
         <div class="col-md-7">
-            <h4>Afectaciones</h4> 
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h4 class="mb-0">Afectaciones</h4> 
+                {% if not sponsoring.close and sponsoring.invoice.invoice_ok and perms.events.add_invoiceaffect %}
+                <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#NewSponsoringInvoiceAffect"><i class="fas fa-plus"></i> Agregar</button>
+                {% endif %}
+            </div>
+            
             {% if not sponsoring.close and sponsoring.invoice.invoice_ok and perms.events.add_invoiceaffect %}
-            <button class="btn btn-block btn-primary my-1" data-toggle="modal" data-target="#NewSponsoringInvoiceAffect"><i class="fas fa-plus"></i> Agregar</button>
             <!-- NewSponsoringInvoice Modal -->
             <div class="modal fade" id="NewSponsoringInvoiceAffect" tabindex="-1" aria-labelledby="NewSponsoringInvoiceAffectLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
@@ -343,9 +345,10 @@
 </div>
 {% endblock %}
 {% block extra_js %}
-<script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.8.335/pdf.min.js" integrity="sha512-SG4yH2eYtAR5eK4/VL0bhqOsIb6AZSWAJjHOCmfhcaqTkDviJFoar/VYdG96iY7ouGhKQpAg3CMJ22BrZvhOUA==" crossorigin="anonymous"></script>
 <script src="{% static 'js/load_pdf_files.js' %}"></script>
 <script>
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.8.335/pdf.worker.min.js';
     $("#sponsorDescribeTable").addClass("table-sm");
     $("#eventDescribeTable").addClass("table-sm");
 </script>

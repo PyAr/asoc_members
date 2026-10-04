@@ -2,12 +2,13 @@
 {% load static %}
 {% load humanize %}
 {% block content %}
-<div class="container">
-    <nav aria-label="breadcrumb">
+<div class="container" style="max-width: 88%;">
+    <div class="route-navigator mt-3">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-home"></i> Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'app_landing' %}"><i class="fas fa-home"></i> Inicio</a></li>
+            <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-calendar-alt"></i> Eventos</li>
         </ol>
-    </nav>
+    </div>
     <div class="dashboard_options">
         <div class="row">
             <!--Events-->

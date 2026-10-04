@@ -5,6 +5,7 @@ from django.urls import path
 from members import views
 
 urlpatterns = [
+    path('', views.app_landing, name='app_landing'),
     path('solicitud-alta/', views.signup_initial, name='signup'),
     path('solicitud-alta/persona/', views.signup_form_person, name='signup_person'),
     path('solicitud-alta/persona/gracias',
@@ -24,4 +25,11 @@ urlpatterns = [
 
     path('reportes/miembros', views.members_list, name="members_list"),
     path('reportes/miembros/<pk>/', views.member_detail, name='member_detail'),
+    path('reportes/miembros/<pk>/editar/persona/', views.member_edit_person, name='member_edit_person'),
+    path('reportes/miembros/<pk>/editar/organizacion/', views.member_edit_org, name='member_edit_org'),
+    path('reportes/miembros/<pk>/editar/patron/', views.member_edit_patron, name='member_edit_patron'),
+    path('reportes/miembros/<pk>/baja/', views.member_shutdown, name='member_shutdown'),
+    path('reportes/miembros/<pk>/cambiar-categoria/', views.member_change_category, name='member_change_category'),
+    path('reportes/miembros/<pk>/firmar-carta/', views.member_mark_signed, name='member_mark_signed'),
+    path('reportes/incompletos/firmar-carta/', views.member_mark_signed, name='members_mark_signed_bulk'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

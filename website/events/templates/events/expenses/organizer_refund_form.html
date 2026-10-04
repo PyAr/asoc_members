@@ -1,15 +1,14 @@
 {% extends "events_base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
-<div class="container">
+<div class="container" style="max-width: 88%;">
     {% block route-navigator %}
-    <nav aria-label="breadcrumb">
+    <nav aria-label="breadcrumb" class="mt-3">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
           <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
           <li class="breadcrumb-item"><i class="fas fa-calendar-check"></i><a href="{% url 'event_detail' pk=event.pk %}"> {{event.name}}</a></li>
           <li class="breadcrumb-item"><i class="fas fa-hand-holding-usd"></i><a href="{% url 'expenses_list' event_pk=event.pk %}"> Gastos</a></li>
-          <li class="breadcrumb-item" aria-current="page"><i class="fas fa-wallet"></i> Crear</li>
+          <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-wallet"></i> Crear</li>
         </ol>
     </nav>
     {% endblock %}

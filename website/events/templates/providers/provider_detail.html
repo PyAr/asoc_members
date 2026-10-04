@@ -1,26 +1,26 @@
 {% extends "events_base.html" %}
 {% load static %}
 {% block content %}
-<div class="container">
+<div class="container" style="max-width: 88%;">
     {% block route-navigator %}
-    <nav aria-label="breadcrumb">
+    <nav aria-label="breadcrumb" class="mt-3">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
+            <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'event_list' %}"> Eventos</a></li>
             <li class="breadcrumb-item"><i class="fas fa-dolly"></i><a href="{% url 'provider_list' %}"> Proveedores</a></li>
-            {% if form.instance.pk %}
-            <li class="breadcrumb-item"><a href="{% url 'sponsor_detail' pk=form.instance.pk %}"><i class="fas fa-dolly-flatbed"></i> {{provider.organization_name}}</a></li>
-            <li class="breadcrumb-item" aria-current="page"><a href="#">Edición</a></li>
-            {% else %}
-            <li class="breadcrumb-item" aria-current="page"><i class="fas fa-dolly-flatbed"></i> {{provider.organization_name}}</li>
-            {% endif %}
+            <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-dolly-flatbed"></i> {{provider.organization_name}}</li>
         </ol>
     </nav>
     {% endblock %}
 
     <div class="row provider-detail">
-        <div class="col-md-2"></div>
-        <div class="col-md-8">
-            <h3>Datos del proveedor </h3>
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>Datos del proveedor</h3>
+                {% if perms.events.change_provider %}
+                <a class="btn btn-primary" href="{% url 'provider_change' provider.pk %}"><i class="fas fa-pencil-alt"></i> Editar</a>
+                {% endif %}
+            </div>
             <table class="table table-striped">
                 <tbody>
                     <tr>
@@ -49,12 +49,47 @@
                     </tr>
                 </tbody>
             </table>
-            {% if perms.events.change_provider %}
-            <a class="btn btn-primary col-2 float-right mx-1" href="{% url 'provider_change' provider.pk %}"><i class="fas fa-pencil-alt"></i> Editar</a>
-            {% endif %}
-            <a class="btn btn-danger col-2 float-right mx-1" href="{% url 'provider_list' %}"><i class="fas fa-undo"></i> Volver</a>
+
+            <h4 class="mt-4">Pagos y Eventos Asociados</h4>
+            <table class="table table-striped mt-2">
+                <thead>
+                    <tr>
+                        <th>ID Gasto</th>
+                        <th>Evento</th>
+                        <th>Descripción</th>
+                        <th>Monto</th>
+                        <th>Comprobante de Pago</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in provider.expenses.all %}
+                    <tr>
+                        <td><a href="{% url 'provider_expense_detail' expense.pk %}">#{{ expense.pk }}</a></td>
+                        <td><a href="{% url 'event_detail' expense.event.pk %}">{{ expense.event.name }}</a></td>
+                        <td>{{ expense.description|default:"-" }}</td>
+                        <td>${{ expense.amount|floatformat:2 }}</td>
+                        <td>
+                            {% if expense.payment and expense.payment.document %}
+                            <a href="{{ expense.payment.document.url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-file-invoice-dollar"></i> Ver Pago / Factura
+                            </a>
+                            {% else %}
+                            <span class="text-muted">Sin pago registrado</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No hay pagos ni eventos asociados a este proveedor.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="mt-4 clearfix">
+                <a class="btn btn-danger float-right mx-1" href="{% url 'provider_list' %}"><i class="fas fa-undo"></i> Volver</a>
+            </div>
         </div>
-        <div class="col-md-2"></div>
     </div>
 </div>
 

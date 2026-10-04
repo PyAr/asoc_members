@@ -99,15 +99,6 @@ class Member(TimeStampedModel):
         If `for_approval` is indicated, some data will not be reported as missing (as they
         are not really needed for legal approval).
         """
-        cat_student = Category.objects.get(name=Category.STUDENT)
-        cat_collab = Category.objects.get(name=Category.COLLABORATOR)
-
-        # simple flags with "Not Applicable" situation
-        missing_student_certif = (
-            self.category == cat_student and not self.has_student_certificate)
-        missing_collab_accept = (
-            self.category == cat_collab and not self.has_collaborator_acceptance)
-
         # info from Person
         missing_nickname = self.person.nickname == ""
         # picture is complicated, bool() is used to check if the Image field has an associated
@@ -129,11 +120,9 @@ class Member(TimeStampedModel):
 
         return {
             'missing_signed_letter': missing_signed_letter,
-            'missing_student_certif': missing_student_certif,
             'missing_payment': missing_payment,
             'missing_nickname': missing_nickname,
             'missing_picture': missing_picture,
-            'missing_collab_accept': missing_collab_accept,
         }
 
 
@@ -246,23 +235,19 @@ class Category(TimeStampedModel):
     """Membership category."""
     ACTIVE = "Activo"
     SUPPORTER = "Adherente"
-    STUDENT = "Estudiante"
-    COLLABORATOR = "Colaborador"
-    TEENAGER = "Cadete"
+    AFFILIATE = "Afiliado"
     BENEFACTOR_PLATINUM = "Benefactora Platino"
     BENEFACTOR_GOLD = "Benefactora Oro"
     BENEFACTOR_SILVER = "Benefactora Plata"
     CATEGORY_CHOICES = (
         (ACTIVE, ACTIVE),
         (SUPPORTER, SUPPORTER),
-        (STUDENT, STUDENT),
-        (COLLABORATOR, COLLABORATOR),
-        (TEENAGER, TEENAGER),
+        (AFFILIATE, AFFILIATE),
         (BENEFACTOR_PLATINUM, BENEFACTOR_PLATINUM),
         (BENEFACTOR_GOLD, BENEFACTOR_GOLD),
         (BENEFACTOR_SILVER, BENEFACTOR_SILVER),
     )
-    HUMAN_CATEGORIES = {ACTIVE, SUPPORTER, STUDENT, COLLABORATOR, TEENAGER}
+    HUMAN_CATEGORIES = {ACTIVE, SUPPORTER, AFFILIATE}
 
     class Meta:
         verbose_name_plural = "categories"
@@ -285,6 +270,9 @@ class Category(TimeStampedModel):
             return False
 
         return self.name == other_name
+
+    def __hash__(self):
+        return hash(self.name)
 
 
 class Patron(TimeStampedModel):

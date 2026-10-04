@@ -1,16 +1,21 @@
 {% extends "events_base_paginated_list.html" %}
 
 {% block route-navigator %}
-<nav aria-label="breadcrumb">
+<nav aria-label="breadcrumb" class="mt-3">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><i class="fas fa-home"></i><a href="{% url 'events_home' %}"> Inicio</a></li>
-      <li class="breadcrumb-item" aria-current="page"><i class="fas fa-handshake"></i> Sponsors</li>
+      <li class="breadcrumb-item"><i class="fas fa-calendar-alt"></i><a href="{% url 'events_home' %}"> Eventos</a></li>
+      <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-handshake"></i> Sponsors</li>
     </ol>
 </nav>
 {% endblock %}
 
 {% block list_title %}
-<h1>Sponsors</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Sponsors</h1>
+    {% if perms.events.add_sponsor %}
+    <a class="btn btn-primary" href="{% url 'sponsor_create' %}"><i class="fas fa-certificate"></i> Crear</a>
+    {% endif %}
+</div>
 {%endblock%}
 
 {% block list_content %}
@@ -19,9 +24,13 @@
             <table class="table table-striped row-clickeable-table">
                 <thead>
                     <tr>
-                        <th scope="row">Razón social</th>
-                        <th scope="row">CUIT</th>
-                        <th scope="row">Estado</th>
+                        <th scope="row"><a href="?sort=organization_name&dir={% if request.GET.sort == 'organization_name' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Razón social {% if request.GET.sort == 'organization_name' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=document_number&dir={% if request.GET.sort == 'document_number' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">CUIT {% if request.GET.sort == 'document_number' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=vat_condition&dir={% if request.GET.sort == 'vat_condition' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Condición IVA {% if request.GET.sort == 'vat_condition' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=address&dir={% if request.GET.sort == 'address' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Dirección {% if request.GET.sort == 'address' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row"><a href="?sort=contact_info&dir={% if request.GET.sort == 'contact_info' and request.GET.dir != 'desc' %}desc{% else %}asc{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Contacto {% if request.GET.sort == 'contact_info' %}{% if request.GET.dir == 'desc' %}<i class="fas fa-sort-down"></i>{% else %}<i class="fas fa-sort-up"></i>{% endif %}{% else %}<i class="fas fa-sort text-muted"></i>{% endif %}</a></th>
+                        <th scope="row" class="text-center">Sponsorships</th>
+                        <th scope="row" class="text-center">Habilitado</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -31,11 +40,15 @@
                         
                         <td >{{ sponsor.organization_name }}</td>
                         <td>{{ sponsor.document_number }}</td>
-                        <td>
+                        <td>{{ sponsor.vat_condition_short }}</td>
+                        <td>{{ sponsor.address|default:"-" }}</td>
+                        <td>{{ sponsor.contact_info|default:"-" }}</td>
+                        <td class="text-center"><span class="badge badge-info">{{ sponsor.sponsorings_count }}</span></td>
+                        <td class="text-center">
                             {% if sponsor.enabled %}
-                            <span class="text-success"><strong>Habilitado</strong></span>
+                            <i class="fas fa-check-circle text-success" title="Habilitado"></i>
                             {% else %}
-                            <span class="text-danger"><strong>Sin habilitar</strong></span>
+                            <i class="fas fa-times-circle text-danger" title="Sin habilitar"></i>
                             {% endif %}
                             
                         </td>
