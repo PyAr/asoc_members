@@ -1,54 +1,170 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="container">
+    <div class="container" style="max-width: 88%;">
+        <div class="route-navigator mt-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'reports_main' %}">Inicio</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Socios con deudas</li>
+            </ol>
+        </div>
+
         {% block heading %}
-        <h1 class="text-center">Reportes</h1>
-        <h2 class="text-center">Socios con deudas</h2>
+        <h1 class="text-center mt-3">Reportes</h1>
+        <h2 class="text-center text-danger">Socios con deudas</h2>
         {% endblock %}
+        
+        <!-- Summary Card -->
+        <div class="card mb-4 p-3 bg-light">
+            <div class="row text-center">
+                <div class="col-md-3">
+                    <h5>Total Deudores</h5>
+                    <h3>{{ total_debtors }}</h3>
+                </div>
+                <div class="col-md-3">
+                    <h5>Pequeñas deudas (1-3m)</h5>
+                    <h3><a href="?limit_year={{ limit_year }}&limit_month={{ limit_month }}&debt_range=small" class="badge badge-warning text-dark p-2">{{ summary_counts.small }}</a></h3>
+                </div>
+                <div class="col-md-3">
+                    <h5>Deudas medianas (4-12m)</h5>
+                    <h3><a href="?limit_year={{ limit_year }}&limit_month={{ limit_month }}&debt_range=medium" class="badge badge-danger p-2">{{ summary_counts.medium }}</a></h3>
+                </div>
+                <div class="col-md-3">
+                    <h5>Grandes deudas (>12m)</h5>
+                    <h3><a href="?limit_year={{ limit_year }}&limit_month={{ limit_month }}&debt_range=large" class="badge badge-dark p-2">{{ summary_counts.large }}</a></h3>
+                </div>
+            </div>
+        </div>
+
         <div class="inner-content">
             {% block inner-content %}
-                <div>
-                    <form action="{% url 'report_debts' %}" t>
-                        Socies que pagaron solamente hasta (inclusive): 
-                        <input type="text" name="limit_year" value="{{ limit_year }}" style="text-align: right; width: 4em;"/>
-                        <input type="text" name="limit_month" value="{{ limit_month }}" style="text-align: right; width: 4em;"/>
-                        <button id="filter" type="submit">Filtrar</button>
+                <div class="card mb-3 p-3 bg-white border">
+                    <form method="GET" class="form-inline justify-content-between">
+                        <div class="form-group mb-2">
+                            <label class="mr-2">Pagaron hasta (Año/Mes):</label>
+                            <input type="text" name="limit_year" value="{{ limit_year }}" class="form-control mr-1 text-right" style="width: 5em;"/>
+                            <input type="text" name="limit_month" value="{{ limit_month }}" class="form-control mr-3 text-right" style="width: 4em;"/>
+                            
+                            <label class="mr-2">Categoría:</label>
+                            <select name="category" class="form-control mr-3">
+                                <option value="">-- Todas --</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.name }}" {% if request.GET.category == cat.name %}selected{% endif %}>{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                            
+                            {% if request.GET.debt_range %}
+                            <input type="hidden" name="debt_range" value="{{ request.GET.debt_range }}">
+                            {% endif %}
+                            
+                            <button id="filter" type="submit" class="btn btn-primary">Filtrar</button>
+                            {% if request.GET.category or request.GET.debt_range %}
+                            <a href="?limit_year={{ limit_year }}&limit_month={{ limit_month }}" class="btn btn-outline-secondary ml-2">Limpiar filtros</a>
+                            {% endif %}
+                        </div>
                     </form>
                 </div>
-                <br/>
-                <div>
-                    <form method="post" action"{% url 'report_missing' %}">
-                        {% csrf_token %}
-                        ¿Mandar mails a los seleccionados?
-                        <button id="selected" type="submit">Mandar</button>
-                </div>
-                <br/>
-                <div>
-                <table class="table">
-                <tr> 
-                    <th>Nro de socie</th>
-                    <th>Tipo</th>
-                    <th>Entidad</th>
-                    <th>Mail</th>
-                    <th>Cuotas adeudadas</th>
-                    <th>¿Mandar mail?</th>
-                </tr>
-                {% for item in debts %}
-                    <tr> 
-                        <td>{{ item.member.legal_id }}</td>
-                        <td>{{ item.member.category }}</td>
-                        <td>{{ item.member.entity }}</td>
-                        <td>{{ item.member.entity.email }}</td>
-                        <td>{{ item.debt }}</td>
-                        <td>
-                            <input type="checkbox" name="sendmail" value="{{ item.member.id }}" />
-                        </td>
-                    </tr>
-                {% endfor %}
-                </table>
+                
+                <form method="post" action="{% url 'report_debts' %}">
+                    {% csrf_token %}
+                    <div class="mb-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <span>¿Mandar mails de reclamo a lxs seleccionadxs?</span>
+                        </div>
+                        <button id="selected" type="submit" class="btn btn-success">Mandar Mails</button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered bg-white">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Legal ID</th>
+                                    <th>Nombre/Razón social</th>
+                                    <th>Email</th>
+                                    <th>Categoría</th>
+                                    <th>Cuotas adeudadas</th>
+                                    <th>Documento</th>
+                                    <th class="text-center">¿Mandar mail?</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for item in debts %}
+                                <tr class="clikeable"> 
+                                    <td>{{ item.member.legal_id }}</td>
+                                    <td><a href="{% url 'member_detail' pk=item.member.pk %}">{{ item.member.entity }}</a></td>
+                                    <td>{{ item.member.entity.email }}</td>
+                                    <td>{{ item.category_display }}</td>
+                                    <td>
+                                        <span class="badge {% if item.debt_len > 12 %}badge-dark{% elif item.debt_len > 3 %}badge-danger{% else %}badge-warning text-dark{% endif %} p-2">
+                                            {{ item.debt }}
+                                        </span>
+                                    </td>
+                                    <td>{{ item.member.entity.document_number }}</td>
+                                    <td class="text-center" onclick="event.stopPropagation();">
+                                        <input type="checkbox" name="sendmail" value="{{ item.member.id }}" />
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="100%" class="text-center py-4">
+                                        <strong>No hay socios con deudas para mostrar con estos filtros.</strong>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </form>
-                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li>
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&limit_year={{ limit_year }}&limit_month={{ limit_month }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.debt_range %}&debt_range={{ request.GET.debt_range }}{% endif %}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="disabled page-item"> 
+                            <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for i in paginator.page_range %}
+                            {% if page_obj.number == i %}
+                            <li class="page-item active">
+                                <a class="page-link" href="#">{{ i }} 
+                                    <span class="sr-only">
+                                        (current)
+                                    </span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li><a class="page-link" href="?page={{ i }}&limit_year={{ limit_year }}&limit_month={{ limit_month }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.debt_range %}&debt_range={{ request.GET.debt_range }}{% endif %}">{{ i }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <li>
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}&limit_year={{ limit_year }}&limit_month={{ limit_month }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.debt_range %}&debt_range={{ request.GET.debt_range }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="disabled page-item">
+                            <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+
             {% endblock %}
         </div>
     </div>

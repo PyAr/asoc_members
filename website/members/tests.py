@@ -823,9 +823,17 @@ class MembersReportTests(TestCase):
         self.addCleanup(self.client.logout)
 
     def test_get_members_list_page(self):
+        create_member(first_payment_year=2017, first_payment_month=5)
         response = self.client.get(reverse('members_list'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'members/members_list.html')
+        
+        # Test filtering options
+        response_filtered = self.client.get(reverse('members_list'), {'debt_filter': 'small'})
+        self.assertEqual(response_filtered.status_code, 200)
+
+        response_cat = self.client.get(reverse('members_list'), {'category_name': 'testcategory', 'debt_status': 'uptodate'})
+        self.assertEqual(response_cat.status_code, 200)
 
     def test_get_member_detail_page(self):
         member = create_member(first_payment_year=2017, first_payment_month=5)
@@ -940,8 +948,14 @@ class MemberTests(TestCase):
             'nickname': 'test-nick',
             'picture': 'fake-pic',
         }
+        picture_override = kwargs.pop('picture', None)
         params = {k: kwargs.pop(k, v) for k, v in params.items()}
-        Person.objects.create(**params)
+        if picture_override is not None:
+            if picture_override is not False:
+                params['picture'] = picture_override
+        p = Person.objects.create(**params)
+        if picture_override is False:
+            Person.objects.filter(pk=p.pk).update(picture='False')
 
         assert not kwargs, kwargs  # would indicate a misuse of the parameters
         return member

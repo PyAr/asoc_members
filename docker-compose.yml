@@ -1,23 +1,20 @@
-version: '2'
-
 volumes:
   pgdata:
 
 services:
   postgres:
-    # Pinned: postgres 18+ changed its expected data dir layout and refuses to
-    # start against a volume mounted directly at /var/lib/postgresql/data.
-    image: postgres:16
+    image: postgres:18
     restart: always
     environment:
       - POSTGRES_DB=memberships
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=secret
     volumes:
-      - pgdata:/var/lib/postgresql/data/
+      - pgdata:/var/lib/postgresql/data/data/
 
   web:
     build: .
+    image: asoc_members:latest
     ports:
       - "8127:8127"
     volumes:

@@ -1,7 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="container">
+    <div class="container" style="max-width: 88%;">
+        <div class="route-navigator mt-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item active" aria-current="page">Inicio</li>
+            </ol>
+        </div>
+
         {% block heading %}
         <h1 class="text-center">Reportes</h1>
         {% endblock %}

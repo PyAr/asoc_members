@@ -1,7 +1,7 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.html import format_html
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from django.core.exceptions import ValidationError
 from django.core.files.images import get_image_dimensions
@@ -112,7 +112,10 @@ class Member(TimeStampedModel):
         missing_nickname = self.person.nickname == ""
         # picture is complicated, bool() is used to check if the Image field has an associated
         # filename, and False itself is used as the "dont want a picture!" flag
-        missing_picture = not self.person.picture and self.person.picture is not False
+        picture_val = self.person.picture
+        is_false = (picture_val is False) or (str(picture_val) == 'False') or (getattr(picture_val, 'name', None) == 'False')
+        has_name = bool(getattr(picture_val, 'name', picture_val)) and str(picture_val) != 'False' and getattr(picture_val, 'name', None) != 'False'
+        missing_picture = not has_name and not is_false
 
         # info from Member itself
         missing_payment = self.first_payment_month is None and self.category.fee > 0
@@ -194,13 +197,24 @@ class Person(TimeStampedModel):
 
     @property
     def thumbnail(self):
+        photo = None
         if self.picture:
-            photo = self.picture.url
-        else:
+            try:
+                # Check if the file actually exists in storage when possible
+                if hasattr(self.picture, 'storage') and self.picture.storage.exists(self.picture.name):
+                    photo = self.picture.url
+                elif not hasattr(self.picture, 'storage'):
+                    photo = self.picture.url
+            except Exception:
+                pass
+        
+        if not photo:
             photo = static("images/default_thumbnail.jpg")
+
         return format_html(
-            f'<a href="{photo}"><img src="{photo}" \
-                    class="img-thumbnail" width="150"></a>')
+            '<a href="{}"><img src="{}" class="img-thumbnail" width="150"></a>',
+            photo, photo
+        )
 
     def __str__(self):
         return f"{self.last_name}, {self.first_name}"

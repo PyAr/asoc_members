@@ -12,15 +12,16 @@ from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.utils.timezone import now
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import TemplateView, CreateView, ListView, DetailView
+from django.core.paginator import Paginator
 
 from members import logic, utils
 from members.constants import DEFAULT_PAGINATION
 from events.helpers.views import search_filtered_queryset
 from members.forms import SignupPersonForm, SignupOrganizationForm
-from members.models import Person, Organization, Category, Member, Quota, Payment
+from members.models import Person, Organization, Category, Member, Quota, Payment, PaymentStrategy
 
 logger = logging.getLogger(__name__)
 
@@ -148,38 +149,86 @@ class ReportDebts(OnlyAdminsViewMixin, View):
         return render(request, 'members/mail_sent.html', context)
 
     def _get_yearmonth(self, request):
+        currently = now()
+        default_year, default_month = logic.decrement_year_month(currently.year, currently.month)
         try:
-            year = int(request.GET['limit_year'])
-            month = int(request.GET['limit_month'])
+            year = int(request.GET.get('limit_year', default_year))
+            month = int(request.GET.get('limit_month', default_month))
         except (KeyError, ValueError):
-            # get by default one month before now, as it's the first month not really
-            # paid (current month is not yet finished)
-            currently = now()
-            year, month = logic.decrement_year_month(currently.year, currently.month)
+            year, month = default_year, default_month
         return year, month
 
     def get(self, request):
         """Produce the report with the given year/month limits."""
         limit_year, limit_month = self._get_yearmonth(request)
+        category_filter = request.GET.get('category', None)
+        debt_range_filter = request.GET.get('debt_range', None)
 
         # get those already confirmed members
-        members = Member.objects\
+        members_qs = Member.objects\
             .filter(legal_id__isnull=False, category__fee__gt=0, shutdown_date__isnull=True)\
-            .order_by('legal_id').all()
+            .select_related('category', 'person', 'organization')\
+            .order_by('legal_id')
+
+        if category_filter:
+            members_qs = members_qs.filter(category__name=category_filter)
 
         debts = []
-        for member in members:
+        summary_counts = {'small': 0, 'medium': 0, 'large': 0}
+
+        category_icons = {
+            'Activo': '⭐ Activo',
+            'Adherente': '🤝 Adherente',
+            'Estudiante': '🎓 Estudiante',
+            'Colaborador': '🛠️ Colaborador',
+            'Honorario': '🎖️ Honorario'
+        }
+
+        for member in members_qs:
+            if not member.registration_date:
+                continue
             debt = logic.get_debt_state(member, limit_year, limit_month)
             if debt:
+                d_len = len(debt)
+                if 1 < d_len <= 3:
+                    summary_counts['small'] += 1
+                    r_type = 'small'
+                elif 3 < d_len <= 12:
+                    summary_counts['medium'] += 1
+                    r_type = 'medium'
+                elif d_len > 12:
+                    summary_counts['large'] += 1
+                    r_type = 'large'
+                else:
+                    r_type = 'other'
+
+                if debt_range_filter and debt_range_filter != r_type:
+                    continue
+
+                cat_name = member.category.name if member.category else ''
                 debts.append({
                     'member': member,
+                    'category_display': category_icons.get(cat_name, cat_name),
                     'debt': utils.build_debt_string(debt),
+                    'debt_len': d_len,
+                    'debt_type': r_type,
                 })
 
+        # Pagination support
+        paginator = Paginator(debts, DEFAULT_PAGINATION)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
         context = {
-            'debts': debts,
+            'debts': page_obj,
+            'is_paginated': page_obj.has_other_pages(),
+            'page_obj': page_obj,
+            'paginator': paginator,
             'limit_year': limit_year,
             'limit_month': limit_month,
+            'categories': Category.objects.all(),
+            'summary_counts': summary_counts,
+            'total_debtors': len(debts),
         }
         return render(request, 'members/report_debts.html', context)
 
@@ -388,11 +437,182 @@ class MembersListView(LoginRequiredMixin, ListView):
     }
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related('category', 'person', 'organization').prefetch_related('patron__paymentstrategy_set')
         search_value = self.request.GET.get('search', None)
         if search_value and search_value != '':
             queryset = search_filtered_queryset(queryset, self.search_fields, search_value)
+
+        category_filter = self.request.GET.get('category', None)
+        if category_filter:
+            queryset = queryset.filter(category__name=category_filter)
+
+        category_name_filter = self.request.GET.get('category_name', None)
+        debt_status = self.request.GET.get('debt_status', None)
+        if category_name_filter:
+            if category_name_filter == 'Sin categoría':
+                queryset = queryset.filter(category__isnull=True)
+            else:
+                queryset = queryset.filter(category__name=category_name_filter)
+
+            if debt_status:
+                today = datetime.date.today()
+                filtered_ids = []
+                for m in queryset:
+                    if (m.category and m.category.fee == 0) or not m.registration_date:
+                        d_len = 0
+                    else:
+                        debt = logic.get_debt_state(m, today.year, today.month)
+                        d_len = len(debt) if debt else 0
+                    
+                    if debt_status == 'uptodate' and d_len <= 1:
+                        filtered_ids.append(m.pk)
+                    elif debt_status == 'small' and 1 < d_len <= 3:
+                        filtered_ids.append(m.pk)
+                    elif debt_status == 'medium' and 3 < d_len <= 12:
+                        filtered_ids.append(m.pk)
+                    elif debt_status == 'large' and d_len > 12:
+                        filtered_ids.append(m.pk)
+                queryset = queryset.filter(pk__in=filtered_ids)
+
+        strategy_platform = self.request.GET.get('strategy', None)
+        if strategy_platform:
+            queryset = queryset.filter(patron__paymentstrategy__platform=strategy_platform).distinct()
+
+        debt_filter = self.request.GET.get('debt_filter', None)
+        if debt_filter:
+            today = datetime.date.today()
+            filtered_ids = []
+            for m in queryset:
+                if (m.category and m.category.fee == 0) or not m.registration_date:
+                    d_len = 0
+                else:
+                    debt = logic.get_debt_state(m, today.year, today.month)
+                    d_len = len(debt) if debt else 0
+                
+                if debt_filter == 'small' and 1 < d_len <= 3:
+                    filtered_ids.append(m.pk)
+                elif debt_filter == 'medium' and 3 < d_len <= 12:
+                    filtered_ids.append(m.pk)
+                elif debt_filter == 'large' and d_len > 12:
+                    filtered_ids.append(m.pk)
+            queryset = queryset.filter(pk__in=filtered_ids)
+
+        strategy_icons = {
+            'mercado pago': '💳 Mercado Pago',
+            'todo pago': '💳 Todo Pago',
+            'transfer': '🏦 Transferencia',
+            'credit': '🎁 Crédito Bonificado'
+        }
+
+        category_icons = {
+            'Activo': '⭐ Activo',
+            'Adherente': '🤝 Adherente',
+            'Estudiante': '🎓 Estudiante',
+            'Colaborador': '🛠️ Colaborador',
+            'Honorario': '🎖️ Honorario'
+        }
+
+        today = datetime.date.today()
+        for m in queryset:
+            if (m.category and m.category.fee == 0) or not m.registration_date:
+                m.debt_count = 0
+            else:
+                debt = logic.get_debt_state(m, today.year, today.month)
+                m.debt_count = len(debt) if debt else 0
+            
+            last_strategy = '-'
+            last_payment_date = '-'
+            last_quota_str = '-'
+
+            if m.patron:
+                last_payment = Payment.objects.filter(strategy__patron=m.patron).order_by('-timestamp').first()
+                if last_payment:
+                    if last_payment.strategy:
+                        raw_strat = last_payment.strategy.platform
+                        last_strategy = strategy_icons.get(raw_strat, last_payment.strategy.platform_name)
+                    last_payment_date = last_payment.timestamp.strftime('%Y-%m-%d')
+                    
+                    # Find quotas associated with this last payment and show only the latest/max quota code
+                    quotas = Quota.objects.filter(payment=last_payment).order_by('-year', '-month')
+                    if quotas.exists():
+                        latest_q = quotas.first()
+                        last_quota_str = latest_q.code
+                else:
+                    strat = m.patron.paymentstrategy_set.first()
+                    if strat:
+                        raw_strat = strat.platform
+                        last_strategy = strategy_icons.get(raw_strat, strat.platform_name)
+
+            m.strategies_str = last_strategy
+            m.last_payment_date = last_payment_date
+            m.last_quota_str = last_quota_str
+            
+            cat_name = m.category.name if m.category else ''
+            m.category_display = category_icons.get(cat_name, cat_name)
+
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = Category.objects.all()
+        context['platforms'] = PaymentStrategy.PLATFORM_CHOICES
+
+        today = datetime.date.today()
+        all_members = Member.objects.filter(shutdown_date__isnull=True).select_related('category').prefetch_related('patron__paymentstrategy_set')
+        
+        categories_matrix = {}
+        for cat in Category.objects.all():
+            categories_matrix[cat.name] = {'uptodate': 0, 'small': 0, 'medium': 0, 'large': 0}
+        categories_matrix['Sin categoría'] = {'uptodate': 0, 'small': 0, 'medium': 0, 'large': 0}
+
+        total_active = 0
+        total_up_to_date = 0
+        total_debt = 0
+        total_pending = 0
+
+        for m in all_members:
+            if m.legal_id is None:
+                total_pending += 1
+                continue
+
+            total_active += 1
+            if (m.category and m.category.fee == 0) or not m.registration_date:
+                debt_len = 0
+            else:
+                debt = logic.get_debt_state(m, today.year, today.month)
+                debt_len = len(debt) if debt else 0
+            
+            m.debt_count = debt_len
+            strategies = []
+            if m.patron:
+                strategies = [s.platform_name for s in m.patron.paymentstrategy_set.all()]
+            m.strategies_str = ', '.join(strategies) if strategies else '-'
+
+            cat_name = m.category.name if m.category else 'Sin categoría'
+            if cat_name not in categories_matrix:
+                categories_matrix[cat_name] = {'uptodate': 0, 'small': 0, 'medium': 0, 'large': 0}
+
+            if debt_len <= 1:
+                total_up_to_date += 1
+                categories_matrix[cat_name]['uptodate'] += 1
+            else:
+                total_debt += 1
+
+            if 1 < debt_len <= 3:
+                categories_matrix[cat_name]['small'] += 1
+            elif 3 < debt_len <= 12:
+                categories_matrix[cat_name]['medium'] += 1
+            elif debt_len > 12:
+                categories_matrix[cat_name]['large'] += 1
+
+        context['summary'] = {
+            'total_active': total_active,
+            'total_up_to_date': total_up_to_date,
+            'total_debt': total_debt,
+            'total_pending': total_pending,
+            'categories_matrix': categories_matrix,
+        }
+        return context
 
     def get(self, request, *args, **kwargs):
         """
@@ -400,8 +620,11 @@ class MembersListView(LoginRequiredMixin, ListView):
             redirect to member_detail view, else display the filtered
             list of members
         """
-        if self.get_queryset().count() == 1:
-            return redirect('member_detail', self.get_queryset().first().pk)
+        # Only redirect if search is direct and unique, not when filtering by dropdowns
+        search_value = request.GET.get('search', None)
+        if search_value and search_value != '' and not request.GET.get('category') and not request.GET.get('strategy'):
+            if self.get_queryset().count() == 1:
+                return redirect('member_detail', self.get_queryset().first().pk)
         return super().get(request, *args, **kwargs)
 
 
