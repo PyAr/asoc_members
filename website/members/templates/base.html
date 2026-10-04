@@ -49,8 +49,32 @@
 				</button>
 				<div class="collapse navbar-collapse" id="navbarSupportedContent">
 					<ul class="navbar-nav mr-auto text-uppercase">
-						<li class="nav-item"><a class="nav-link" href="{% url 'reports_main' %}"><i class="fas fa-users"></i> Socios</a></li>
-						<li class="nav-item"><a class="nav-link" href="{% url 'events_home' %}"><i class="fas fa-calendar-alt"></i> Eventos</a></li>
+						<li class="nav-item dropdown {% if request.path|slice:':10' == '/reportes/' or request.path == '/' or request.path|slice:':10' == '/solicitud' %}active{% endif %}">
+							<a class="nav-link dropdown-toggle" href="#" id="sociosDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								<i class="fas fa-users"></i> Socios
+							</a>
+							<div class="dropdown-menu" aria-labelledby="sociosDropdown">
+								<a class="dropdown-item" href="{% url 'reports_main' %}"><i class="fas fa-chart-pie"></i> Panel de Reportes</a>
+								<a class="dropdown-item" href="{% url 'members_list' %}"><i class="fas fa-list"></i> Listado de Miembros</a>
+								<a class="dropdown-item" href="{% url 'report_debts' %}"><i class="fas fa-file-invoice-dollar"></i> Socios con Deudas</a>
+								<a class="dropdown-item" href="{% url 'report_complete' %}"><i class="fas fa-check-circle"></i> Miembros Completos</a>
+								<a class="dropdown-item" href="{% url 'report_missing' %}"><i class="fas fa-exclamation-circle"></i> Miembros Incompletos</a>
+								<a class="dropdown-item" href="{% url 'report_income_quotas' %}"><i class="fas fa-money-check"></i> Ingreso de Cuotas</a>
+								<a class="dropdown-item" href="{% url 'report_income_money' %}"><i class="fas fa-wallet"></i> Ingreso de Dinero</a>
+							</div>
+						</li>
+						<li class="nav-item dropdown {% if request.path|slice:':9' == '/eventos/' %}active{% endif %}">
+							<a class="nav-link dropdown-toggle" href="#" id="eventosDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								<i class="fas fa-calendar-alt"></i> Eventos
+							</a>
+							<div class="dropdown-menu" aria-labelledby="eventosDropdown">
+								<a class="dropdown-item" href="{% url 'events_home' %}"><i class="fas fa-home"></i> Inicio Eventos</a>
+								<a class="dropdown-item" href="{% url 'event_list' %}"><i class="fas fa-calendar-check"></i> Listado de Eventos</a>
+								<a class="dropdown-item" href="{% url 'organizer_list' %}"><i class="fas fa-user-friends"></i> Organizadores</a>
+								<a class="dropdown-item" href="{% url 'sponsor_list' %}"><i class="fas fa-handshake"></i> Sponsors</a>
+								<a class="dropdown-item" href="{% url 'provider_list' %}"><i class="fas fa-truck"></i> Proveedores</a>
+							</div>
+						</li>
 					</ul>
 					{% block extra_navbar_menu %}
 					{% endblock %}
