@@ -39,7 +39,7 @@
 		 </div> -->
 		<!-- end preloader -->
 		<!-- start navigation -->
-		<div class="container">
+		<div class="container" style="max-width: 88%;">
 			<nav class="navbar sticky-top navbar-expand-lg navbar-light bg-light">
 				<a class="navbar-brand" href="{% url 'events_home' %}">
 					<img src="{% static 'images/acpyar.png' %}" alt="Logo de la Asociación Civil Python Argentina" width="120px">
@@ -49,15 +49,19 @@
 				</button>
 				<div class="collapse navbar-collapse" id="navbarSupportedContent">
 					<ul class="navbar-nav mr-auto text-uppercase">
-						<!-- <li><a href="#feature">Misión</a></li> -->
-						<li class="nav-item"><a class="nav-link" href="https://python.org.ar/" target="_blank"><i class="fas fa-globe"></i> Python Argentina</a></li>
-						<li class="nav-item"><a class="nav-link" href="https://ac.python.org.ar" target="_blank"><i class="fas fa-globe-americas"></i> Asociación Civil</a></li>
-						{% if user.is_staff %}
-						<li class="nav-item"><a class="nav-link"href="https://pyar.aquiles.com.ar" target="_blank"><i class="fas fa-file-invoice-dollar"></i> Aquiles</a></li>
-						{% endif  %}
+						<li class="nav-item"><a class="nav-link" href="{% url 'reports_main' %}"><i class="fas fa-users"></i> Socios</a></li>
+						<li class="nav-item"><a class="nav-link" href="{% url 'events_home' %}"><i class="fas fa-calendar-alt"></i> Eventos</a></li>
 					</ul>
 					{% block extra_navbar_menu %}
 					{% endblock %}
+
+					<ul class="navbar-nav ml-auto text-uppercase">
+						<li class="nav-item"><a class="nav-link" href="https://python.org.ar/" target="_blank"><i class="fas fa-globe"></i> Sitio PyAr <i class="fas fa-external-link-alt fa-xs text-muted"></i></a></li>
+						<li class="nav-item"><a class="nav-link" href="https://ac.python.org.ar" target="_blank"><i class="fas fa-globe-americas"></i> Sitio AC <i class="fas fa-external-link-alt fa-xs text-muted"></i></a></li>
+						{% if user.is_staff %}
+						<li class="nav-item"><a class="nav-link" href="https://pyar.aquiles.com.ar" target="_blank"><i class="fas fa-file-invoice-dollar"></i> Aquiles <i class="fas fa-external-link-alt fa-xs text-muted"></i></a></li>
+						{% endif  %}
+					</ul>
 
 					{% if user.is_authenticated %}
 					<ul class="navbar-nav navbar-right">
@@ -66,10 +70,10 @@
 							aria-haspopup="true" aria-expanded="false" href="#">
 							<i class="fa fa-user"></i> {{ user.username }} </a>
 							
-							<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+							<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
 								<a class="dropdown-item" href="{% url 'profile' %}"><i class="fab fa-whmcs"></i> Datos cuenta</a>
 								{% if user.is_superuser %}
-								<a class="dropdown-item" href="{% url 'admin:index' %}" target="_blank"><i class="fas fa-user-shield"></i> Admin Site</a>
+								<a class="dropdown-item" href="{% url 'admin:index' %}" target="_blank"><i class="fas fa-user-shield"></i> Admin Site <i class="fas fa-external-link-alt fa-xs text-muted"></i></a>
 								{% endif %}
 								{% if user.organizer %}
 								<a class="dropdown-item" href="{% url 'organizer_detail' pk=user.organizer.pk %}"><i class="fas fa-user-cog"></i> Datos Organizador</a>
